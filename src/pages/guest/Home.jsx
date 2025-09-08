@@ -1,10 +1,12 @@
 import React from "react";
+import Banner from "../../layouts/guest/Banner";
 
 const Home = () => {
   return (
     <div className="">
-      Bạn muốn mình gợi ý font cho từng phần như header, product card, form, hay
-      admin dashboard không? Hoặc tạo sẵn cấu hình Tailwind cho font bạn chọn?
+      <div>
+        <Banner />
+      </div>
     </div>
   );
 };

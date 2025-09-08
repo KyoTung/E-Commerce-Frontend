@@ -8,6 +8,7 @@ import { FiShoppingCart, FiUser, FiSearch, FiX } from "react-icons/fi";
 import "../../App.css";
 import { FaAngleDown } from "react-icons/fa6";
 
+
 const Header = () => {
   const { user, token, setToken, setUser } = useStateContext();
   const [query, setQuery] = useState("");
@@ -88,7 +89,7 @@ const Header = () => {
                         }}
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
-                        Thông tin tài khoản
+                        Tài khoản
                       </Link>
                       <Link
                         to="#"
@@ -191,14 +192,17 @@ const Header = () => {
               <Link to="/cart" className="relative">
                 <FiShoppingCart className="h-6 w-6 text-white" />
 
-                <span className="absolute -right-2 -top-2 rounded-full bg-white px-2 py-1 text-xs text-red-600">
-                  0
+                <span className="absolute -right-2 -top-2 rounded-full bg-white px-1.5 py-0.5 text-xs text-red-600">
+                  5
                 </span>
               </Link>
             </div>
           </div>
+         
         </div>
+        
       </header>
+     
     </>
   );
 };

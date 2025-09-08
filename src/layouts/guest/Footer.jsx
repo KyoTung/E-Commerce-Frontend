@@ -27,22 +27,22 @@ const Footer = () => {
                 <div className="flex flex-col gap-8 md:grid md:grid-cols-4 md:gap-8">
                     {/* About Us */}
                     <div className="space-y-2 text-center md:text-left">
-                        <h3 className="mb-4 text-lg font-bold text-gray-800">About Us</h3>
+                        <h3 className="mb-4 text-lg font-bold text-gray-800">Về chúng tôi</h3>
                         <p className="text-gray-600 hover:text-red-600">
-                            Specializing in providing genuine technology products at reasonable prices.
+                            Chuyên cung cấp các sản phẩm công nghệ chính hãng với giá cả hợp lý.
                         </p>
                     </div>
 
                     {/* Quick Links */}
                     <div className="text-center md:text-left">
-                        <h3 className="mb-4 text-lg font-bold text-gray-800">Quick Links</h3>
+                        <h3 className="mb-4 text-lg font-bold text-gray-800">Liên kết nhanh</h3>
                         <ul className="space-y-2">
                             <li>
                                 <Link
                                     to="/"
                                     className="text-gray-600 transition-colors duration-200 hover:text-red-600"
                                 >
-                                    Home
+                                    Trang chủ
                                 </Link>
                             </li>
                             <li>
@@ -50,15 +50,15 @@ const Footer = () => {
                                     to="/products"
                                     className="text-gray-600 transition-colors duration-200 hover:text-red-600"
                                 >
-                                    Products
+                                    Sản phẩm
                                 </Link>
                             </li>
                             <li>
                                 <Link
-                                    to="/about"
+                                    to="/blogs"
                                     className="text-gray-600 transition-colors duration-200 hover:text-red-600"
                                 >
-                                    About Us
+                                    Blogs
                                 </Link>
                             </li>
                             <li>
@@ -66,7 +66,7 @@ const Footer = () => {
                                     to="/contact"
                                     className="text-gray-600 transition-colors duration-200 hover:text-red-600"
                                 >
-                                    Contact
+                                    Liên hệ
                                 </Link>
                             </li>
                         </ul>
@@ -74,14 +74,14 @@ const Footer = () => {
 
                     {/* Policies */}
                     <div className="text-center md:text-left">
-                        <h3 className="mb-4 text-lg font-bold text-gray-800">Policies</h3>
+                        <h3 className="mb-4 text-lg font-bold text-gray-800">Chính sách</h3>
                         <ul className="space-y-2">
                             <li>
                                 <Link
                                     to="/shipping-policy"
                                     className="text-gray-600 transition-colors duration-200 hover:text-red-600"
                                 >
-                                    Shipping Policy
+                                    Chính sách vận chuyển
                                 </Link>
                             </li>
                             <li>
@@ -89,7 +89,7 @@ const Footer = () => {
                                     to="/return-policy"
                                     className="text-gray-600 transition-colors duration-200 hover:text-red-600"
                                 >
-                                    Return Policy
+                                    Chính sách hoàn trả
                                 </Link>
                             </li>
                             <li>
@@ -97,7 +97,7 @@ const Footer = () => {
                                     to="/privacy-policy"
                                     className="text-gray-600 transition-colors duration-200 hover:text-red-600"
                                 >
-                                    Privacy Policy
+                                    Chính sách bảo mật
                                 </Link>
                             </li>
                             <li>
@@ -105,7 +105,7 @@ const Footer = () => {
                                     to="/terms"
                                     className="text-gray-600 transition-colors duration-200 hover:text-red-600"
                                 >
-                                    Terms of Use
+                                    Điều khoản sử dụng
                                 </Link>
                             </li>
                         </ul>
@@ -116,7 +116,7 @@ const Footer = () => {
                         id="contact"
                         className="flex flex-col items-center text-center md:items-start md:text-left"
                     >
-                        <h3 className="mb-4 text-lg font-bold text-gray-800">Connect With Us</h3>
+                        <h3 className="mb-4 text-lg font-bold text-gray-800">Kết nối với chúng tôi</h3>
                         <div className="flex justify-center space-x-4 md:justify-start">
                             <a
                                 href="https://facebook.com"
@@ -156,7 +156,7 @@ const Footer = () => {
                         <div className="mt-6 space-y-2 text-sm">
                             <p className="text-gray-600">Email: support@neststore.com</p>
                             <p className="text-gray-600">Hotline: 1900 1234</p>
-                            <p className="text-gray-600">Working hours: 8:00 - 22:00</p>
+                            <p className="text-gray-600">Giờ làm việc: 8:00 - 22:00</p>
                         </div>
                     </div>
                 </div>
