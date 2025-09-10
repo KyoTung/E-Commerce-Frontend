@@ -23,7 +23,7 @@ const slideImages = [
 
 const Banner = () => {
   return (
-    <div className="slide-container overflow-hidden px-4 sm:px-2 lg:px-4 py-4 max-w-screen-xl mx-auto">
+    <div className="slide-container overflow-hidden px-4 sm:px-2 lg:px-4 py-8 max-w-screen-xl mx-auto">
       <Swiper
         spaceBetween={20}
         loop={true}
@@ -43,7 +43,7 @@ const Banner = () => {
         {slideImages.map((slideImage, index) => (
           <SwiperSlide key={index}>
             <a href="#">
-              <div className="flex items-center justify-center h-32 sm:h-20 md:h-24 lg:h-24 bg-cover bg-center">
+              <div className="flex items-center justify-center sm:h-14 md:h-32 lg:h-24 bg-cover bg-center shadow-md">
               <img
                 src={slideImage.url}
                 alt={`Slide ${index}`}

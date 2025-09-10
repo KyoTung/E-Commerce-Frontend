@@ -131,13 +131,13 @@ const Header = () => {
                 <div className="flex space-x-4">
                   <Link
                     to="/register"
-                    className="rounded-md px-3 py-2 text-sm font-medium"
+                    className="rounded-md px-3 py-2 text-sm font-medium bg-white text-red-700"
                   >
                     Đăng ký
                   </Link>
                   <Link
                     to="/login"
-                    className="rounded-md px-3 py-2 text-sm font-medium"
+                    className="rounded-md px-3 py-2 text-sm font-medium bg-white text-red-700"
                   >
                     Đăng nhập
                   </Link>
@@ -191,7 +191,6 @@ const Header = () => {
             <div className="flex items-center space-x-6">
               <Link to="/cart" className="relative">
                 <FiShoppingCart className="h-6 w-6 text-white" />
-
                 <span className="absolute -right-2 -top-2 rounded-full bg-white px-1.5 py-0.5 text-xs text-red-600">
                   5
                 </span>

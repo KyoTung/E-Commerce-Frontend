@@ -1,16 +1,19 @@
-*{
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-a{
+a {
   text-emphasis: none;
   display: inline-block;
 }
 :root {
-    --primary-color: #d0011b;
-    --star-color: #ffce3d;
+  --primary-color: #d0011b;
+  --star-color: #ffce3d;
 }
-.header_bg_color{
+.header_bg_color {
   background-color: var(--primary-color);
+}
+.main_text_color {
+  color: var(--primary-color);
 }
