@@ -43,7 +43,7 @@ const Banner = () => {
         {slideImages.map((slideImage, index) => (
           <SwiperSlide key={index}>
             <a href="#">
-              <div className="flex items-center justify-center sm:h-14 md:h-32 lg:h-24 bg-cover bg-center shadow-md">
+              <div className="flex items-center justify-center sm:h-14 md:h-32 lg:h-24 bg-cover bg-center shadow-sm border rounded-s-md">
               <img
                 src={slideImage.url}
                 alt={`Slide ${index}`}
