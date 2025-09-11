@@ -131,13 +131,13 @@ const Header = () => {
                 <div className="flex space-x-4">
                   <Link
                     to="/register"
-                    className="rounded-md px-3 py-2 text-sm font-medium bg-white text-red-700"
+                    className="rounded-md px-3 py-2 text-sm font-medium bg-red-400 text-white hover:bg-red-500"
                   >
                     Đăng ký
                   </Link>
                   <Link
                     to="/login"
-                    className="rounded-md px-3 py-2 text-sm font-medium bg-white text-red-700"
+                    className="rounded-md px-3 py-2 text-sm font-medium bg-red-400 text-white hover:bg-red-500"
                   >
                     Đăng nhập
                   </Link>
@@ -166,7 +166,7 @@ const Header = () => {
                   placeholder="Tìm kiếm sản phẩm..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 py-2 pl-5 pr-10 text-black focus:outline-none text-sm sm:text-base"
+                  className="ml-0 w-full rounded-lg border border-gray-300 py-2 pl-1 pr-10 text-black focus:outline-none text-sm placeholder:text-xs sm:placeholder:text-sm sm:pl-5"
                 />
                 <button
                   type="submit"
