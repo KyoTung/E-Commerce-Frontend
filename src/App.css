@@ -3,6 +3,13 @@
   padding: 0;
   box-sizing: border-box;
 }
+body {
+  font-family:
+    Helvetica Neue,
+    Helvetica,
+    Arial,
+    sans-serif;
+}
 a {
   text-emphasis: none;
   display: inline-block;

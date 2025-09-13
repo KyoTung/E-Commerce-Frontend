@@ -2,6 +2,7 @@ import React from "react";
 import Banner from "../../layouts/guest/Banner";
 import Brands from "./Brands";
 import Categories from "./Categories";
+import FeaturedProduct from "./FeaturedProduct";
 
 const Home = () => {
   return (
@@ -14,6 +15,9 @@ const Home = () => {
       </div>
       <div>
         <Categories/>
+      </div>
+      <div>
+        <FeaturedProduct/>
       </div>
     </div>
   );

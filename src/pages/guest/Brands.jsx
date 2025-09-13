@@ -14,7 +14,7 @@ const brands = [
 
 const Brands = () => {
   return (
-    <div id="brands" className="pb-6 pt-4">
+    <div id="brands" className="">
       <h2 className="py-2 px-4 sm:px-2 lg:px-4 font-bold lg:text-xl">Điện thoại</h2>
       <div className="mx-auto flex max-w-7xl justify-start px-4 flex-wrap gap-4">
         {brands.map((brand, i) => (
@@ -26,7 +26,7 @@ const Brands = () => {
             <img
               src={`/assets/${brand.name}.webp`}
               alt={brand.name}
-              className="h-8 w-24 rounded border object-contain"
+              className="sm:h-10 sm:w-24 h-8 w-20 rounded border object-contain"
             />
           </Link>
         ))}

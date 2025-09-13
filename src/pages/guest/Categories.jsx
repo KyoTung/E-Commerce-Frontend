@@ -20,17 +20,17 @@ const Categories = () => {
               <Link
                 key={i}
                 to={`/product-brand/${brand.name.toLowerCase()}`}
-                className="min-w-20 py-2 bg-gray-100 rounded-md"
+                className="px-2 py-1 sm:px-4 sm:py-1 bg-gray-100 rounded-xl"
               >
                 <div className="flex items-center justify-center">
                     <img
                   src={`/assets/${brand.name}.webp`}
                   alt={brand.name}
-                  className=" w-24 rounded object-contain"
+                  className=" w-16 sm:w-24 rounded object-contain"
                 />
                 </div>
             
-                <p className="text-center text-sm mt-2 w-24 break-words line-clamp-2-center">{brand.name}</p>
+                <p className="text-center text-xs mt-2 w-24 break-words line-clamp-2-center">{brand.name}</p>
               </Link>
             ))}
           </div>
