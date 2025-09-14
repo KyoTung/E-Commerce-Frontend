@@ -1,19 +1,24 @@
-import React from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import React, { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useStateContext } from "../../contexts/contextProvider";
-import { useState, useEffect, useRef, useContext } from "react";
-import { FiShoppingCart, FiUser, FiSearch, FiX } from "react-icons/fi";
-import "../../App.css";
+import { FiShoppingCart, FiUser, FiSearch, FiX, FiLogOut } from "react-icons/fi";
 import { FaAngleDown } from "react-icons/fa6";
-
+import { TiThMenu } from "react-icons/ti";
 
 const Header = () => {
-  const { user, token, setToken, setUser } = useStateContext();
   const [query, setQuery] = useState("");
+  const [isOpenMenu, setIsOpenMenu] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScroll, setIsScroll] = useState(false);
   const inputRef = useRef();
+  const menuRef = useRef();
+  const modalRef = useRef();
   const navigate = useNavigate();
+
+  // Giả lập dữ liệu user
+  const user = null;
+  const token = null;
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -26,54 +31,80 @@ const Header = () => {
   const handleClearInput = () => {
     setQuery("");
   };
+
+  const handleLogout = () => {
+    toast.success("Đăng xuất thành công");
+    setIsMenuOpen(false);
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setIsScroll(true);
+      } else {
+        setIsScroll(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Đóng menu khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <>
-      <header className="header_bg_color sticky top-0 z-50 shadow-md">
+      <header className={`sticky top-0 z-50 shadow-md transition-all duration-300 ${isScroll ? 'bg-[#d0011b]' : 'bg-[#d0011b]/90'}`}>
         <ToastContainer />
+        
         {/* Top Navigation */}
-        <div className="py-2 text-white shadow-sm">
-          <nav className="container relative mx-auto flex flex-wrap items-center justify-between px-4 md:flex-row md:px-1">
-            <ul className="flex gap-4">
-              <li className="hover:text-gray-300">
-                <Link to="/" className="rounded-md  text-sm font-medium">
+        <div className="py-2 text-white shadow-sm hidden md:block">
+          <div className="container mx-auto px-4 flex justify-between items-center">
+            {/* Left-aligned menu */}
+            <ul className="flex gap-6">
+              <li className="hover:text-gray-300 transition-colors">
+                <Link to="/" className="text-sm font-medium">
                   Trang chủ
                 </Link>
               </li>
-              <li className="dropdown flex items-center gap-1 cursor-pointer hover:text-gray-300">
-                <Link to="/" className="rounded-md  text-sm font-medium">
-                  Danh mục
-                </Link>
-                <FaAngleDown/>
-              </li>
-
-              <li className="hover:text-gray-300">
-                <Link to="#contact" className="rounded-md  text-sm font-medium">
+              <li className="hover:text-gray-300 transition-colors">
+                <Link to="#contact" className="text-sm font-medium">
                   Kết nối
                 </Link>
               </li>
-              <li className="hover:text-gray-300">
-                <Link to="#about" className="rounded-md  text-sm font-medium">
+              <li className="hover:text-gray-300 transition-colors">
+                <Link to="#about" className="text-sm font-medium">
                   Về chúng tôi
                 </Link>
               </li>
-               <li className="hover:text-gray-300">
-                <Link to="#blog" className="rounded-md  text-sm font-medium">
+              <li className="hover:text-gray-300 transition-colors">
+                <Link to="#blog" className="text-sm font-medium">
                   Blogs
                 </Link>
               </li>
             </ul>
 
-            {/* User Section */}
+            {/* Right-aligned user section */}
             <div className="flex items-center">
               {user ? (
                 <div className="relative" ref={menuRef}>
                   <button
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="flex items-center"
-                    aria-label="User menu"
+                    className="flex items-center gap-1"
                   >
-                    <FiUser className="h-6 w-6" />
-                    <span className="ml-2">{user.name}</span>
+                    <FiUser className="h-5 w-5" />
+                    <span className="ml-1">Tài khoản</span>
+                    <FaAngleDown className={`transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {isMenuOpen && (
@@ -83,44 +114,28 @@ const Header = () => {
                     >
                       <Link
                         to="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setShowAccountModal(true);
-                        }}
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         Tài khoản
                       </Link>
                       <Link
                         to="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setShowAccountModal(true);
-                        }}
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         Danh sách yêu thích
                       </Link>
                       <Link
-                        to={`/order-history/${user.id}`}
+                        to="#"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         Lịch sử đơn hàng
                       </Link>
-                      {(user.role === 1 || user.role === 2) && (
-                        <Link
-                          to="/admin"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          Truy cập trang quản trị
-                        </Link>
-                      )}
                       <div className="mt-2 border-t">
                         <button
                           onClick={handleLogout}
                           className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                         >
-                          <FiUser className="mr-2 h-4 w-4" />
+                          <FiLogOut className="mr-2 h-4 w-4" />
                           Đăng xuất
                         </button>
                       </div>
@@ -128,35 +143,45 @@ const Header = () => {
                   )}
                 </div>
               ) : (
-                <div className="flex space-x-4">
+                <div className="flex space-x-3">
                   <Link
                     to="/register"
-                    className="rounded-md px-3 py-2 text-sm font-medium bg-red-400 text-white hover:bg-red-500"
+                    className="rounded-md px-3 py-1.5 text-sm font-medium bg-white text-[#d0011b] hover:bg-gray-100 transition-colors"
                   >
                     Đăng ký
                   </Link>
                   <Link
                     to="/login"
-                    className="rounded-md px-3 py-2 text-sm font-medium bg-red-400 text-white hover:bg-red-500"
+                    className="rounded-md px-3 py-1.5 text-sm font-medium bg-white text-[#d0011b] hover:bg-gray-100 transition-colors"
                   >
                     Đăng nhập
                   </Link>
                 </div>
               )}
             </div>
-          </nav>
+          </div>
         </div>
 
         {/* Main Header */}
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="container mx-auto flex items-center justify-between px-2 py-4 md:py-2">
-            {/* Logo */}
-            <Link to="/" className="text-xl font-bold text-white">
-              Nest Store
-            </Link>
+        <div className="mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-3">
+            {/* Logo and Mobile Menu Button */}
+            <div className="flex items-center">
+              <button 
+                className="md:hidden mr-3 text-white"
+                onClick={() => setIsOpenMenu(!isOpenMenu)}
+              >
+                <TiThMenu className="w-6 h-6" />
+              </button>
+              <Link to="/" className="text-xl font-bold text-white">
+                Nest Store
+              </Link>
+            </div>
+
+            {/* Search Bar - Hidden on mobile */}
             <form
               onSubmit={handleSearch}
-              className="relative mx-4 max-w-full flex-1 sm:mx-6 md:mx-8 md:max-w-xl"
+              className="hidden md:block relative mx-4 max-w-full flex-1 md:max-w-xl"
               autoComplete="off"
             >
               <div className="relative flex justify-center items-center">
@@ -166,19 +191,19 @@ const Header = () => {
                   placeholder="Tìm kiếm sản phẩm..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="ml-0 w-full rounded-lg border border-gray-300 py-2 pl-1 pr-10 text-black focus:outline-none text-sm placeholder:text-xs sm:placeholder:text-sm sm:pl-5"
+                  className="w-full rounded-lg border border-gray-300 py-2 pl-4 pr-10 text-black focus:outline-none text-sm"
                 />
                 <button
                   type="submit"
-                  className="absolute right-2 sm:right-3 rounded bg-red-600 px-3 py-2 hover:bg-red-700"
+                  className="absolute right-2 rounded bg-[#d0011b] p-1.5 hover:bg-[#b00117] transition-colors"
                   aria-label="Search"
                 >
-                  <FiSearch className="text-white" />
+                  <FiSearch className="text-white h-4 w-4" />
                 </button>
                 {query && (
                   <button
                     type="button"
-                    className="absolute right-12 sm:right-16 top-2 p-1 text-gray-400 hover:text-red-600"
+                    className="absolute right-10 top-2 p-1 text-gray-400 hover:text-red-600"
                     onClick={handleClearInput}
                     aria-label="Xóa"
                   >
@@ -187,21 +212,123 @@ const Header = () => {
                 )}
               </div>
             </form>
-            {/* Cart */}
-            <div className="flex items-center space-x-6">
-              <Link to="/cart" className="relative">
-                <FiShoppingCart className="h-6 w-6 text-white" />
-                <span className="absolute -right-2 -top-2 rounded-full bg-white px-1.5 py-0.5 text-xs text-red-600">
+
+            {/* Cart and Mobile Search */}
+            <div className="flex items-center space-x-4">
+              {/* Mobile Search Button */}
+              
+              
+              {/* Cart */}
+              <Link to="/cart" className="relative text-white">
+                <FiShoppingCart className="h-6 w-6" />
+                <span className="absolute -right-2 -top-2 rounded-full bg-white px-1.5 py-0.5 text-xs text-[#d0011b] font-bold">
                   5
                 </span>
               </Link>
             </div>
           </div>
-         
         </div>
-        
+
+        {/* Mobile Search Bar - Visible only on mobile when active */}
+        <div className="md:hidden px-4 pb-3">
+          <form onSubmit={handleSearch} className="relative" autoComplete="off">
+            <input
+              type="text"
+              placeholder="Tìm kiếm sản phẩm..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 py-2 pl-3 pr-10 text-black focus:outline-none text-sm"
+            />
+            <button
+              type="submit"
+              className="absolute right-2 top-2 text-gray-500"
+              aria-label="Search"
+            >
+              <FiSearch className="h-5 w-5" />
+            </button>
+          </form>
+        </div>
+
+        {/* Mobile Menu */}
+        <div className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 z-50 md:hidden ${isOpenMenu ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="p-5 border-b">
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-bold text-[#d0011b]">Menu</span>
+              <button onClick={() => setIsOpenMenu(false)} className="text-gray-500">
+                <FiX className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+          
+          <div className="p-5">
+            <ul className="space-y-4">
+              <li>
+                <Link to="/" className="text-gray-800 font-medium" onClick={() => setIsOpenMenu(false)}>
+                  Trang chủ
+                </Link>
+              </li>
+              <li>
+                <Link to="#contact" className="text-gray-800 font-medium" onClick={() => setIsOpenMenu(false)}>
+                  Kết nối
+                </Link>
+              </li>
+              <li>
+                <Link to="#about" className="text-gray-800 font-medium" onClick={() => setIsOpenMenu(false)}>
+                  Về chúng tôi
+                </Link>
+              </li>
+              <li>
+                <Link to="#blog" className="text-gray-800 font-medium" onClick={() => setIsOpenMenu(false)}>
+                  Blogs
+                </Link>
+              </li>
+            </ul>
+            
+            <div className="mt-8 pt-4 border-t">
+              {user ? (
+                <>
+                  <div className="flex items-center mb-4">
+                    <FiUser className="h-5 w-5 text-[#d0011b] mr-2" />
+                    <span className="font-medium">Xin chào, User</span>
+                  </div>
+                  <button 
+                    onClick={handleLogout}
+                    className="flex items-center text-red-600"
+                  >
+                    <FiLogOut className="h-5 w-5 mr-2" />
+                    Đăng xuất
+                  </button>
+                </>
+              ) : (
+                <div className="flex flex-col space-y-3">
+                  <Link
+                    to="/login"
+                    className="rounded-md px-4 py-2 text-center font-medium bg-[#d0011b] text-white"
+                    onClick={() => setIsOpenMenu(false)}
+                  >
+                    Đăng nhập
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="rounded-md px-4 py-2 text-center font-medium border border-[#d0011b] text-[#d0011b]"
+                    onClick={() => setIsOpenMenu(false)}
+                  >
+                    Đăng ký
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Overlay for mobile menu */}
+        {isOpenMenu && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+            onClick={() => setIsOpenMenu(false)}
+          ></div>
+        )}
       </header>
-     
     </>
   );
 };

@@ -3,6 +3,8 @@ import Banner from "../../layouts/guest/Banner";
 import Brands from "./Brands";
 import Categories from "./Categories";
 import FeaturedProduct from "./FeaturedProduct";
+import AllProducts from "./AllProducts";
+import BlogSession from "./BlogSession";
 
 const Home = () => {
   return (
@@ -18,6 +20,12 @@ const Home = () => {
       </div>
       <div>
         <FeaturedProduct/>
+      </div>
+      <div>
+        <AllProducts/>
+      </div>
+      <div>
+        <BlogSession/>
       </div>
     </div>
   );

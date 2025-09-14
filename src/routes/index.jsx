@@ -5,6 +5,7 @@ import GuestLayout from "../layouts/guest/Layout"
 import Home from "../pages/guest/Home"
 import About from "../pages/guest/About";
 import Contact from "../pages/guest/Contact"
+import ProductDetail from "../pages/guest/ProductDetail";
 
 export const router = createBrowserRouter([
      { path: "/login", element: <LoginForm /> },
@@ -22,6 +23,10 @@ export const router = createBrowserRouter([
             {
                 path:"/contact",
                 element: <Contact/>
+            },
+            {
+                path:"/product-detail",
+                element:<ProductDetail/>
             }
         ]}
 ])
