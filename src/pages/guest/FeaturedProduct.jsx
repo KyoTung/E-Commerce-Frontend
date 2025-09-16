@@ -40,7 +40,7 @@ const products = [
 
 const FeaturedProduct = () => {
   return (
-    <div className="px-1 sm:px-4 py-12 bg-red-500">
+    <div className="px-1 sm:px-4 py-5 bg-red-500">
       <div className="mx-auto max-w-7xl">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-white mb-4">SẢN PHẨM NỔI BẬT</h2>
