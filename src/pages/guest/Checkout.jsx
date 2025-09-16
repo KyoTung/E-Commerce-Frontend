@@ -1,35 +1,100 @@
-import React, { useState, useContext } from "react";
-import { useStateContext } from "../../contexts/contextProvider";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { FiUser, FiMail, FiPhone, FiMapPin, FiCreditCard, FiTruck } from "react-icons/fi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// Mock CartContext since it wasn't provided
-const CartContext = React.createContext();
+// Mock API gọi giỏ hàng
+const mockCartAPI = () =>
+  new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        {
+          id: 1,
+          name: "iPhone 15 Pro Max 256GB",
+          price: 28990000,
+          qty: 1,
+          image_url:
+            "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-15-pro-max_3.png",
+          color: "Titanium tự nhiên",
+          storage: "256GB",
+        },
+        {
+          id: 2,
+          name: "Samsung Galaxy S23 Ultra",
+          price: 21990000,
+          qty: 2,
+          image_url:
+            "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/2/s23-ultra-tim-1.png",
+          color: "Tím",
+          storage: "512GB",
+        },
+        {
+          id: 3,
+          name: "Xiaomi 13 Pro",
+          price: 17990000,
+          qty: 1,
+          image_url:
+            "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/x/i/xiaomi-13-pro-1.jpg",
+          color: "Đen",
+          storage: "256GB",
+        },
+      ]);
+    }, 700);
+  });
+
 const axiosClient = {
   post: () => Promise.resolve({ status: 200, data: { order_id: 123 } })
 };
 
 const Checkout = () => {
-  const { user } = useStateContext();
   const navigate = useNavigate();
-  const { cartData, subTotal, grandTotal, clearCart } = useContext(CartContext);
   const { shipping = 0, discount = 0 } = useParams();
-  
+
+  // State giỏ hàng
+  const [cartData, setCartData] = useState([]);
+  // State user giả lập hoặc lấy từ API hoặc local storage v.v.
+  const [user, setUser] = useState({
+    id: 1,
+    name: "Nguyễn Văn A",
+    email: "nguyenvana@example.com",
+    address: "123 Nguyễn Trãi, Hà Nội",
+    phone: "0912345678",
+  });
+  // State form
   const [formData, setFormData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    address: user?.address || "",
-    phone: user?.phone || "",
+    name: "",
+    email: "",
+    address: "",
+    phone: "",
     city: "",
     district: "",
     commune: "",
     payment_method: "",
   });
-
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Khi user hoặc cartData thay đổi, cập nhật form
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      name: user?.name || "",
+      email: user?.email || "",
+      address: user?.address || "",
+      phone: user?.phone || "",
+    }));
+  }, [user]);
+
+  // Lấy dữ liệu cart khi load
+  useEffect(() => {
+    mockCartAPI().then(setCartData);
+  }, []);
+
+  // Tính subTotal
+  const subTotal = cartData.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const discountValue = subTotal * discount;
+  const finalTotal = subTotal - discountValue + Number(shipping);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -37,8 +102,6 @@ const Checkout = () => {
       ...formData,
       [name]: value,
     });
-    
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors({
         ...errors,
@@ -65,22 +128,24 @@ const Checkout = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const clearCart = () => setCartData([]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     if (!validateForm()) {
       setIsSubmitting(false);
       return;
     }
-    
+
     const orderData = {
       ...formData,
       user_id: user?.id,
       sub_total: subTotal,
-      grand_total: grandTotal(),
-      discount: discount,
-      shipping: shipping,
+      grand_total: finalTotal,
+      discount,
+      shipping,
       payment_status: formData.payment_method === "bank" ? "paid" : "pending",
       status: "pending",
       cart: cartData,
@@ -107,10 +172,6 @@ const Checkout = () => {
       setIsSubmitting(false);
     }
   };
-
-  // Calculate order summary values
-  const discountValue = subTotal * discount;
-  const finalTotal = grandTotal ? grandTotal() : subTotal - discountValue + Number(shipping);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
