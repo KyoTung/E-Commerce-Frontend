@@ -1,6 +1,6 @@
 import { ChartColumn, Home, NotepadText, Package, PackagePlus, Settings, ShoppingBag, UserCheck, UserPlus, Users, LogOut } from "lucide-react";
-import ProfileImage from "@/assets/profile-image.jpg";
-import ProductImage from "@/assets/product-image.jpg";
+import ProfileImage from "../assets/profile-image.jpg";
+import ProductImage from "../assets/product-image.jpg";
 import { BiCategoryAlt } from "react-icons/bi";
 import { MdOutlineEventNote } from "react-icons/md";
 

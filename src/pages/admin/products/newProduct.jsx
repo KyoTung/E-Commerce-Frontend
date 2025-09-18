@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
-import axiosClient from "../../../axios-client";
+import Axios from "../../../Axios";
 import { useNavigate, Link } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -64,7 +64,7 @@ const NewProduct = ({ placeholder }) => {
                 payload.append(`gallery[${index}]`, imageId);
             });
 
-            const response = await axiosClient.post("/products", payload);
+            const response = await Axios.post("/products", payload);
 
             if (response.status === 200) {
                 toast.success(response.data.message || "Product Added Successfully");
@@ -89,7 +89,7 @@ const NewProduct = ({ placeholder }) => {
             const uploadPromises = Array.from(files).map(async (file) => {
                 const imageForm = new FormData();
                 imageForm.append("image", file);
-                const response = await axiosClient.post("/temp-images", imageForm, {
+                const response = await Axios.post("/temp-images", imageForm, {
                     headers: {
                         "Content-Type": "multipart/form-data",
                     },
@@ -115,7 +115,7 @@ const NewProduct = ({ placeholder }) => {
     };
     
     const getBrands = () => {
-        axiosClient
+        Axios
             .get("/brands")
             .then(({ data }) => {
                 setBrands(data.data);
@@ -125,7 +125,7 @@ const NewProduct = ({ placeholder }) => {
             });
     };
     const getCategories = () => {
-        axiosClient
+        Axios
             .get("/categories")
             .then(({ data }) => {
                 setCategories(data.data);

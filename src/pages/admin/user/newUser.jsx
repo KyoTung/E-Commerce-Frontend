@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axiosClient from "../../../axios-client";
+import Axios from "../../../Axios";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -22,7 +22,7 @@ const NewUser = () => {
         e.preventDefault();
 
         try {
-            const response = await axiosClient.post("/register", newUser);
+            const response = await Axios.post("/register", newUser);
             toast.success("Added user successfully!");
             setTimeout(() => {
                 navigate("/admin/users", { replace: true });

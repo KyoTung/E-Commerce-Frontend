@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { topProducts } from "@/constants";
 import { PencilLine, Trash } from "lucide-react";
-import axiosClient from "../../../axios-client";
+import Axios from "../../../Axios";
 import { useNavigate, Link } from "react-router-dom";
-import Loading from "../../../compoments/Loading";
+import Loading from "../../../components/Loading";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -21,7 +21,7 @@ const Categories = () => {
     // get all categories
     const getCate = () => {
         setIsLoading(true);
-        axiosClient
+        Axios
             .get("/categories")
             .then(({ data }) => {
                 setIsLoading(false);
@@ -36,7 +36,7 @@ const Categories = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axiosClient.post("/categories", newCate);
+            const response = await Axios.post("/categories", newCate);
             if (response.status === 200) {
                 toast.success(response.data.message || "Added category Success");
                 setTimeout(() => {
@@ -57,7 +57,7 @@ const Categories = () => {
     const handleUpdate = async (e) => {
         e.preventDefault();
         try {
-            const response = await axiosClient.put(`/categories/${editingCategory.id}`, editCate);
+            const response = await Axios.put(`/categories/${editingCategory.id}`, editCate);
 
             if (response.status === 200) {
                 toast.success("Category updated successfully");
@@ -80,7 +80,7 @@ const Categories = () => {
             return;
         }
 
-        axiosClient
+        Axios
             .delete(`/categories/${cate.id}`)
             .then((response) => {
                 if (response.status === 200) {

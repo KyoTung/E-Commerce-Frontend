@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { topProducts } from "@/constants";
 import { PencilLine, Trash } from "lucide-react";
-import axiosClient from "../../../axios-client";
+import Axios from "../../../Axios";
 import { useNavigate, Link } from "react-router-dom";
-import Loading from "../../../compoments/Loading";
+import Loading from "../../../components/Loading";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -32,7 +32,7 @@ const User = () => {
 
     const getUsers = () => {
         setIsLoading(true);
-        axiosClient
+        Axios
             .get("/users")
             .then(({ data }) => {
                 setIsLoading(false);
@@ -55,7 +55,7 @@ const User = () => {
         if (!window.confirm("Are you sure you want to delete this user ?")) {
             return;
         }
-        axiosClient.delete(`/users/${user.id}`).then(() => {
+        Axios.delete(`/users/${user.id}`).then(() => {
             getUsers();
         });
     };

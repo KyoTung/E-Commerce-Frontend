@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import axiosClient from "../../../axios-client";
+import Axios from "../../../Axios";
 import { useNavigate } from "react-router-dom";
-import Loading from "../../../compoments/Loading";
+import Loading from "../../../components/Loading";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -31,7 +31,7 @@ const Orders = () => {
 
     const getOrders = () => {
         setIsLoading(true);
-        axiosClient
+        Axios
             .get("/orders")
             .then(({ data }) => {
                 setIsLoading(false);

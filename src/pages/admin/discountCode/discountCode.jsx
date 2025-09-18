@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { PencilLine, Trash } from "lucide-react";
-import axiosClient from "../../../axios-client";
-import Loading from "../../../compoments/Loading";
+import Axios from "../../../Axios";
+import Loading from "../../../components/Loading";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -18,7 +18,7 @@ const DiscountCode = () => {
 
     const getCodes = () => {
         setIsLoading(true);
-        axiosClient
+        Axios
             .get("/discount-codes")
             .then(({ data }) => {
                 setIsLoading(false);
@@ -32,7 +32,7 @@ const DiscountCode = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axiosClient.post("/discount-codes", newCode);
+            const response = await Axios.post("/discount-codes", newCode);
             if (response.status === 200) {
                 toast.success(response.data.message || "Added discount code successfully");
                 setTimeout(() => {
@@ -57,7 +57,7 @@ const DiscountCode = () => {
     const handleUpdate = async (e) => {
         e.preventDefault();
         try {
-            const response = await axiosClient.put(`/discount-codes/${editingCode.id}`, editCode);
+            const response = await Axios.put(`/discount-codes/${editingCode.id}`, editCode);
             if (response.status === 200) {
                 toast.success("Discount code updated successfully");
                 setEditingCode(null);
@@ -86,7 +86,7 @@ const DiscountCode = () => {
         if (!window.confirm("Are you sure you want to delete this discount code?")) {
             return;
         }
-        axiosClient
+        Axios
             .delete(`/discount-codes/${code.id}`)
             .then((response) => {
                 if (response.status === 200) {

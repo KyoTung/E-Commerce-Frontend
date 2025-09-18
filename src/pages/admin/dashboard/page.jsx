@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axiosClient from "../../../axios-client";
+import Axios from "../../../Axios";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useTheme } from "@/hooks/use-theme";
 import { overviewData, recentSalesData, topProducts as demoTopProducts } from "@/constants";
@@ -19,11 +19,11 @@ const DashboardPage = () => {
         // Tạo các promise để fetch đồng thời
         setLoading(true);
         Promise.all([
-            axiosClient.get("/total-products"), // Tổng số lượng sản phẩm còn hàng
-            axiosClient.get("/total-paid-product"), // Tổng tiền đã bán
-            axiosClient.get("/total-users"), // Tổng số user
-            axiosClient.get("/total-sale-product"), // Tổng số lượng sản phẩm đã bán
-            axiosClient.get("/top-sale-product"), // Top 5 sản phẩm bán chạy nhất
+            Axios.get("/total-products"), // Tổng số lượng sản phẩm còn hàng
+            Axios.get("/total-paid-product"), // Tổng tiền đã bán
+            Axios.get("/total-users"), // Tổng số user
+            Axios.get("/total-sale-product"), // Tổng số lượng sản phẩm đã bán
+            Axios.get("/top-sale-product"), // Top 5 sản phẩm bán chạy nhất
         ])
             .then(([products, paidOrders, users, saleProduct, topProducts]) => {
                 setTotalProducts(products.data.total_quantity || 0);

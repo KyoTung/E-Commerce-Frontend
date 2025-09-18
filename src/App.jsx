@@ -1,9 +1,15 @@
-import {  RouterProvider } from "react-router-dom";
+
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+
+import { ThemeProvider } from "@/contexts/theme-context";
 import { router } from "./routes";
 
-
-export default function App() {
-  return (
-   <RouterProvider router={router} />
-  );
+function App() {
+    return (
+        <ThemeProvider storageKey="theme">
+            <RouterProvider router={router} />
+        </ThemeProvider>
+    );
 }
+
+export default App;

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { topProducts } from "@/constants";
 import { PencilLine, Trash } from "lucide-react";
-import axiosClient from "../../../axios-client";
+import Axios from "../../../Axios";
 import { useNavigate, Link, useParams } from "react-router-dom";
-import Loading from "../../../compoments/Loading";
+import Loading from "../../../components/Loading";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -36,7 +36,7 @@ const OrderDetail = () => {
 
     const getOrder = () => {
         setIsLoading(true);
-        axiosClient
+        Axios
             .get(`/orders/${id}`)
             .then(({ data }) => {
                 setOrder(data.data);
@@ -50,7 +50,7 @@ const OrderDetail = () => {
     };
     const getProduct = () => {
         setIsLoading(true);
-        axiosClient
+        Axios
             .get(`/products/${id}`)
             .then(({ data }) => {
                 setOrder(data.data);
@@ -74,7 +74,7 @@ const OrderDetail = () => {
 
     const handleSaveChanges = async () => {
         try {
-            await axiosClient.put(`/orders/${order.id}`, order);
+            await Axios.put(`/orders/${order.id}`, order);
             toast.success("Update successful");
             setTimeout(() => {
                 getOrder();

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { PencilLine, Trash } from "lucide-react";
-import axiosClient from "../../../axios-client";
+import Axios from "../../../Axios";
 import { useNavigate, Link } from "react-router-dom";
-import Loading from "../../../compoments/Loading";
+import Loading from "../../../components/Loading";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -20,7 +20,7 @@ const Brands = () => {
     // get all brands
     const getCate = () => {
         setIsLoading(true);
-        axiosClient
+        Axios
             .get("/brands")
             .then(({ data }) => {
                 setIsLoading(false);
@@ -35,7 +35,7 @@ const Brands = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axiosClient.post("/brands", newCate);
+            const response = await Axios.post("/brands", newCate);
             if (response.status === 200) {
                 toast.success(response.data.message || "Brand Added Success");
                 setTimeout(() => {
@@ -56,7 +56,7 @@ const Brands = () => {
     const handleUpdate = async (e) => {
         e.preventDefault();
         try {
-            const response = await axiosClient.put(`/brands/${editingCategory.id}`, editCate);
+            const response = await Axios.put(`/brands/${editingCategory.id}`, editCate);
 
             if (response.status === 200) {
                 toast.success("Brand updated successfully");
@@ -79,7 +79,7 @@ const Brands = () => {
             return;
         }
 
-        axiosClient
+        Axios
             .delete(`/brands/${cate.id}`)
             .then((response) => {
                 if (response.status === 200) {

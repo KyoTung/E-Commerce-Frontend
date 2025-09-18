@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import axiosClient from "../../../axios-client";
+import Axios from "../../../Axios";
 import { useNavigate, Link } from "react-router-dom";
-import Loading from "../../../compoments/Loading";
+import Loading from "../../../components/Loading";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PencilLine, Trash } from "lucide-react";
@@ -22,7 +22,7 @@ const Products = () => {
 
     const getProducts = () => {
         setIsLoading(true);
-        axiosClient
+        Axios
             .get("/products")
             .then(({ data }) => {
                 setIsLoading(false);
@@ -46,7 +46,7 @@ const Products = () => {
             return;
         }
 
-        axiosClient
+        Axios
             .delete(`/delete-product/${id}`)
             .then((response) => {
                 if (response.data.status === 200) {

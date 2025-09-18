@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
-import axiosClient from "../../../axios-client";
+import Axios from "../../../Axios";
 import { useNavigate, Link, useParams } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -29,7 +29,7 @@ const EditProduct = ({ placeholder }) => {
         formState: { errors },
     } = useForm({
         defaultValues: async () => {
-            axiosClient.get(`/products/${product_id}`).then(({ data }) => {
+            Axios.get(`/products/${product_id}`).then(({ data }) => {
                 console.log(data.data);
                 setProductImages(data.data.product_images);
                 reset({
@@ -83,7 +83,7 @@ const EditProduct = ({ placeholder }) => {
         try {
             console.log(formData);
 
-            const response = await axiosClient.put(`/products/${product_id}`, formData);
+            const response = await Axios.put(`/products/${product_id}`, formData);
 
             if (response.data.status === 200) {
                 toast.success(response.data.message || "Product updated Successfully");
@@ -102,7 +102,7 @@ const EditProduct = ({ placeholder }) => {
     };
 
     const getCategories = () => {
-        axiosClient
+        Axios
             .get("/categories")
             .then(({ data }) => {
                 setCategories(data.data);
@@ -113,7 +113,7 @@ const EditProduct = ({ placeholder }) => {
     };
 
     const getBrands = () => {
-        axiosClient
+        Axios
             .get("/brands")
             .then(({ data }) => {
                 setBrands(data.data);
@@ -132,7 +132,7 @@ const EditProduct = ({ placeholder }) => {
             const uploadPromises = Array.from(files).map(async (file) => {
                 const imageForm = new FormData();
                 imageForm.append("image", file);
-                const response = await axiosClient.post(`/save-product-image/${product_id}`, imageForm);
+                const response = await Axios.post(`/save-product-image/${product_id}`, imageForm);
                 return response.data.data; // Trả về data của mỗi ảnh
             });
 
@@ -151,7 +151,7 @@ const EditProduct = ({ placeholder }) => {
 
     const deleteImage = async (id) => {
         try {
-            const response = await axiosClient.delete(`delete-product-image/${id}`);
+            const response = await Axios.delete(`delete-product-image/${id}`);
 
             if (response.data.status == 200) {
                 const newProductImage = productImages.filter((productImage) => productImage.id != id);
@@ -166,7 +166,7 @@ const EditProduct = ({ placeholder }) => {
 
     const changeImage = async (image) => {
         try {
-            const response = await axiosClient.get(`update-default-image?product_id=${product_id}&image=${image}`);
+            const response = await Axios.get(`update-default-image?product_id=${product_id}&image=${image}`);
 
             if (response.data.status == 200) {
                 toast.success(response.data.message);

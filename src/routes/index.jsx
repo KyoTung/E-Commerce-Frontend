@@ -23,6 +23,7 @@ import NewProduct from "../pages/admin/products/newProduct";
 import EditProduct from "../pages/admin/products/editProduct";
 import Orders from "../pages/admin/orders/orders";
 import OrderDetail from "../pages/admin/orders/orderDetail";
+import DiscountCode from "../pages/admin/discountCode/discountCode"
 
 export const router = createBrowserRouter([
      { path: "/login", element: <LoginForm /> },

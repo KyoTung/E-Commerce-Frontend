@@ -6,7 +6,7 @@ import profileImg from "@/assets/profile-image.jpg";
 
 import PropTypes from "prop-types";
 import { useStateContext } from "../../contexts/contextProvider";
-import axiosClient from "../../axios-client";
+import Axios from "../../Axios";
 
 export const Header = ({ collapsed, setCollapsed }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -39,7 +39,7 @@ export const Header = ({ collapsed, setCollapsed }) => {
     }, []);
 
     const handleLogout = async () => {
-        const response = await axiosClient.post("/logout");
+        const response = await Axios.post("/logout");
         console.log(response);
         if (response.status === 200) {
             setUser(null);
@@ -49,7 +49,7 @@ export const Header = ({ collapsed, setCollapsed }) => {
     };
 
     useEffect(() => {
-        axiosClient.get("/user").then(({ data }) => {
+        Axios.get("/user").then(({ data }) => {
             setUser(data);
         });
     }, []);

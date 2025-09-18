@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axiosClient from "../../../axios-client";
+import Axios from "../../../Axios";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useStateContext } from "../../../contexts/contextProvider";
 import { ToastContainer, toast } from "react-toastify";
@@ -26,7 +26,7 @@ const EditUser = () => {
     if (id) {
         useEffect(() => {
             setLoading(true);
-            axiosClient
+            Axios
                 .get(`/users/${id}`)
                 .then(({ data }) => {
                     setLoading(false);
@@ -42,7 +42,7 @@ const EditUser = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axiosClient.put(`/users/${userEdit.id}`, userEdit);
+            await Axios.put(`/users/${userEdit.id}`, userEdit);
             toast.success("Updated user successfully!");
             setTimeout(() => {
                 navigate("/admin/users", { replace: true });
@@ -57,7 +57,7 @@ const EditUser = () => {
     };
 
     useEffect(() => {
-        axiosClient.get("/user").then(({ data }) => {
+        Axios.get("/user").then(({ data }) => {
             setUser(data);
         });
     }, []);
