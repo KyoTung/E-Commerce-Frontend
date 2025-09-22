@@ -5,8 +5,17 @@ import "react-toastify/dist/ReactToastify.css";
 import { FiShoppingCart, FiUser, FiSearch, FiX, FiLogOut } from "react-icons/fi";
 import { FaAngleDown } from "react-icons/fa6";
 import { TiThMenu } from "react-icons/ti";
+import { useStateContext } from "../../contexts/contextProvider";
+import Axios from "../../Axios"
 
 const Header = () => {
+ const { user, token, setToken, setUser } = useStateContext();
+ const [userInfo, setUserInfor] = useState({
+  fullName:"",
+  email:"",
+  address:"",
+  phone:""
+ })
   const [query, setQuery] = useState("");
   const [isOpenMenu, setIsOpenMenu] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,9 +25,27 @@ const Header = () => {
   const modalRef = useRef();
   const navigate = useNavigate();
 
-  // Giả lập dữ liệu user
-  const user = null;
-  const token = null;
+
+  useEffect(() => {
+    const fetchUser = async () => {
+        try {
+            const respon = await Axios.get(
+                `user/${user}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+            setUserInfor(respon.data);
+        } catch (error) {
+            console.error("Error fetching user:", error);
+        }
+    };
+
+    if (token) fetchUser();
+}, [setUserInfor, token]);
+
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -32,7 +59,14 @@ const Header = () => {
     setQuery("");
   };
 
-  const handleLogout = () => {
+  const handleLogout = async() => {
+    try{
+
+    }
+    catch(error){
+      
+    }
+
     toast.success("Đăng xuất thành công");
     setIsMenuOpen(false);
   };
@@ -103,7 +137,7 @@ const Header = () => {
                     className="flex items-center gap-1"
                   >
                     <FiUser className="h-5 w-5" />
-                    <span className="ml-1">Tài khoản</span>
+                    <span className="ml-1">{userInfo.fullName}</span>
                     <FaAngleDown className={`transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
 

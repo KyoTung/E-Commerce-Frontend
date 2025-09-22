@@ -1,9 +1,45 @@
-const LoginForm = () => {
+import React, { useState, useRef, useEffect } from "react";
+import { EyeOff, Eye } from "lucide-react";
+import Axios from "../../Axios";
+import { useStateContext } from "../../contexts/contextProvider";
+import { useNavigate } from "react-router-dom";
 
+const LoginForm = () => {
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const emailRef = useRef();
+  const passwordRef = useRef();
+  const [error, setError] = useState("");
+
+  const { setUser, setToken, user, token } = useStateContext();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const payLoad = {
+      email: emailRef.current.value,
+      password: passwordRef.current.value,
+    };
+
+    try {
+      console.log("Form submitted");
+      const response = await Axios.post("/user/login", payLoad);
+      const data = response.data;
+
+      setUser(data._id);
+      setToken(data.token);
+      navigate("/");
+    } catch (err) {
+      setError(err.response?.data?.error || "Login failed. Please try again.");
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-r ">
-      <form className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg border-red-700 border">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg border-red-700 border"
+      >
         <h2 className="mb-6 text-center text-3xl font-bold main_text_color">
           Login
         </h2>
@@ -12,6 +48,7 @@ const LoginForm = () => {
           <input
             type="email"
             name="email"
+            ref={emailRef}
             className="w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-700"
             required
           />
@@ -20,11 +57,19 @@ const LoginForm = () => {
           <label className="mb-2 block text-gray-700">Password</label>
           <div className="relative">
             <input
-              type= "password"
+              type={showPassword ? "text" : "password"}
+              ref={passwordRef}
               name="password"
               className="w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-700"
               required
             />
+            {/* <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 px-3 py-2 text-gray-600"
+            >
+              {showPassword ? <EyeOff /> : <Eye />}
+            </button> */}
           </div>
         </div>
         <button
