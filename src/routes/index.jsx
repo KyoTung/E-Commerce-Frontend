@@ -9,6 +9,7 @@ import ProductDetail from "../pages/guest/ProductDetail";
 import Cart from "../pages/guest/Cart";
 import Checkout from "../pages/guest/Checkout";
 import OrderConfirmation from "../pages/guest/OrderConfirmation";
+import BlogPage from "../pages/guest/BlogPage";
 
 
 import AdminLayout from "../layouts/admin/layout";
@@ -57,6 +58,10 @@ export const router = createBrowserRouter([
             {
                 path:"/order-confirmation",
                 element:<OrderConfirmation/>
+            },
+            {
+                path:"/blogs",
+                element:<BlogPage/>
             }
         ]},
 
