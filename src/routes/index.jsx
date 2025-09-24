@@ -10,7 +10,7 @@ import Cart from "../pages/guest/Cart";
 import Checkout from "../pages/guest/Checkout";
 import OrderConfirmation from "../pages/guest/OrderConfirmation";
 import BlogPage from "../pages/guest/BlogPage";
-
+import BlogDetail from "../pages/guest/BlogDetail";
 
 import AdminLayout from "../layouts/admin/layout";
 import DashboardPage from "../pages/admin/dashboard/page";
@@ -25,6 +25,7 @@ import EditProduct from "../pages/admin/products/editProduct";
 import Orders from "../pages/admin/orders/orders";
 import OrderDetail from "../pages/admin/orders/orderDetail";
 import DiscountCode from "../pages/admin/discountCode/discountCode"
+
 
 export const router = createBrowserRouter([
      { path: "/login", element: <LoginForm /> },
@@ -62,6 +63,10 @@ export const router = createBrowserRouter([
             {
                 path:"/blogs",
                 element:<BlogPage/>
+            },
+            {
+                path:"/blog-detail",
+                element:<BlogDetail/>
             }
         ]},
 
