@@ -11,6 +11,7 @@ import {
   FaClock,
 } from "react-icons/fa";
 
+
 // Mock BlogCategories component
 const BlogCategories = () => (
   <div className="bg-white rounded-lg shadow-sm p-6">
