@@ -61,13 +61,22 @@ const Header = () => {
 
   const handleLogout = async() => {
     try{
-
+       await Axios.get("/user/logout", 
+       {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+       )
+       setToken("");
+       setUser("");
+      toast.success("Đăng xuất thành công");
     }
     catch(error){
-      
+       toast.error("Đăng xuất thất bại");
     }
 
-    toast.success("Đăng xuất thành công");
+   
     setIsMenuOpen(false);
   };
 
