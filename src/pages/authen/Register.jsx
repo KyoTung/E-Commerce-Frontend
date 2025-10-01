@@ -3,6 +3,8 @@ import { EyeOff, Eye, User, Mail, Lock, Smartphone, MapPin } from "lucide-react"
 import Axios from "../../Axios";
 import { useStateContext } from "../../contexts/contextProvider";
 import { useNavigate, Link } from "react-router-dom";
+import "../../App.css"
+
 
 const RegisterForm = () => {
   const navigate = useNavigate();

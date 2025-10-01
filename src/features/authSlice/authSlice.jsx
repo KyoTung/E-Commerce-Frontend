@@ -18,14 +18,19 @@ const initialState = {
   message: "",
 };
 
+
+
 export const login = createAsyncThunk("auth/login", async (user, thunkAPI) => {
   try {
-    return authService.login(user);
+    //return authService.login(user);
+    const response = await authService.login(user);
+    return response;
   } catch (error) {
-    return thunkAPI.rejectWithValue(error);
+    const message =
+      error.response?.data?.message || error.message || "Đăng nhập thất bại";
+    return thunkAPI.rejectWithValue({ message });
   }
 });
-
 
 export const authSlice = createSlice({
   name: "auth",
@@ -40,11 +45,13 @@ export const authSlice = createSlice({
       state.isSuccess = true;
       state.user = action.payload;
     });
+
     builder.addCase(login.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
-      state.message = action.payload?.message || "Đăng nhập thất bại";
+      state.message =
+        action.payload?.message || "Đăng nhập thất bại. Vui lòng thử lại.";
       state.user = null;
     });
   },

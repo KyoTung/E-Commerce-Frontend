@@ -1,29 +1,22 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-  EyeOff,
-  Eye,
-  User,
-  Mail,
-  Lock,
-  Smartphone,
-  MapPin,
-} from "lucide-react";
+import {EyeOff,Eye, Mail,Lock} from "lucide-react";
 import Axios from "../../Axios";
 import { useStateContext } from "../../contexts/contextProvider";
 import { useNavigate, Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {login} from "../../features/authSlice/authSlice"
+import "../../App.css"
 
 const LoginForm = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-
-  const { setUser, setToken } = useStateContext();
+  const { user, isError,isLoading, isSuccess, message } = useSelector(state => state.auth);
+  const dispatch = useDispatch();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -47,8 +40,7 @@ const LoginForm = () => {
 
     if (!emailRegex.test(formData.email))
       newErrors.email = "Email không hợp lệ";
-    if (!phoneRegex.test(formData.phone))
-      newErrors.phone = "Số điện thoại không hợp lệ";
+  
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -56,10 +48,8 @@ const LoginForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
     if (!validateForm()) {
-      setIsLoading(false);
       return;
     }
 
@@ -68,22 +58,20 @@ const LoginForm = () => {
       password: formData.password,
     };
 
-    try {
-      const response = await Axios.post("/user/register", payLoad);
-      const data = response.data;
-
-      setUser(data.user);
-      setToken(data.token);
-      navigate("/");
-    } catch (err) {
-      setErrors({
-        submit:
-          err.response?.data?.error || "Đăng ký thất bại. Vui lòng thử lại.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+      dispatch(login(payLoad))
+ 
   };
+
+  useEffect(() =>{
+    if(user || isSuccess){
+      console.log("navigate home")
+    }
+    else{
+      setErrors({ 
+        submit: message || "Đăng nhập thất bại. Vui lòng thử lại." 
+      });
+    }
+  }, [user, isError,isLoading, isSuccess, message ])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center py-8 px-4">
