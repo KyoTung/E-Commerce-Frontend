@@ -1,10 +1,10 @@
 import { createBrowserRouter } from "react-router-dom";
 import LoginForm from "../pages/authen/Login";
 import RegisterForm from "../pages/authen/Register";
-import GuestLayout from "../layouts/guest/Layout"
-import Home from "../pages/guest/Home"
+import GuestLayout from "../layouts/guest/Layout";
+import Home from "../pages/guest/Home";
 import About from "../pages/guest/About";
-import Contact from "../pages/guest/Contact"
+import Contact from "../pages/guest/Contact";
 import ProductDetail from "../pages/guest/ProductDetail";
 import Cart from "../pages/guest/Cart";
 import Checkout from "../pages/guest/Checkout";
@@ -24,108 +24,110 @@ import NewProduct from "../pages/admin/products/newProduct";
 import EditProduct from "../pages/admin/products/editProduct";
 import Orders from "../pages/admin/orders/orders";
 import OrderDetail from "../pages/admin/orders/orderDetail";
-import DiscountCode from "../pages/admin/discountCode/discountCode"
-
+import DiscountCode from "../pages/admin/discountCode/discountCode";
 
 export const router = createBrowserRouter([
-     { path: "/login", element: <LoginForm /> },
-    { path: "/register", element: <RegisterForm /> },
-    {path:"/", element: <GuestLayout/>,
-        children:[
-            {
-                index: true,
-                element: <Home />,
-            },   
-            {
-                path: "/about",
-                element: <About/>
-            },
-            {
-                path:"/contact",
-                element: <Contact/>
-            },
-            {
-                path:"/product-detail",
-                element:<ProductDetail/>
-            },
-            {
-                path:"/cart",
-                element:<Cart/>
-            },
-            {
-                path:"/checkout",
-                element:<Checkout/>
-            },
-            {
-                path:"/order-confirmation",
-                element:<OrderConfirmation/>
-            },
-            {
-                path:"/blogs",
-                element:<BlogPage/>
-            },
-            {
-                path:"/blog-detail",
-                element:<BlogDetail/>
-            }
-        ]},
+  { path: "/login", element: <LoginForm /> },
+  { path: "/register", element: <RegisterForm /> },
+  {
+    path: "/",
+    element: <GuestLayout />,
+    children: [
+      {
+        index: true,
+        element: <Home />,
+      },
+      {
+        path: "/about",
+        element: <About />,
+      },
+      {
+        path: "/contact",
+        element: <Contact />,
+      },
+      {
+        path: "/product-detail",
+        element: <ProductDetail />,
+      },
+      {
+        path: "/cart",
+        element: <Cart />,
+      },
+      {
+        path: "/checkout",
+        element: <Checkout />,
+      },
+      {
+        path: "/order-confirmation",
+        element: <OrderConfirmation />,
+      },
+      {
+        path: "/blogs",
+        element: <BlogPage />,
+      },
+      {
+        path: "/blog-detail",
+        element: <BlogDetail />,
+      },
+    ],
+  },
 
-         {
-        path: "/admin",
-        element: <AdminLayout />,
-        children: [
-            {
-                index: true,
-                element: <DashboardPage />,
-            },
-            {
-                path: "users",
-                element: <User />,
-            },
-            {
-                path: "edit-user/:id",
-                element: <EditUser />,
-            },
-            {
-                path: "new-user",
-                element: <NewUser />,
-            },
-            {
-                path: "categories",
-                element: <Categories />,
-            },
-            {
-                path: "discount-code",
-                element: <DiscountCode />,
-            },
-            {
-                path: "brands",
-                element: <Brands />,
-            },
-            {
-                path: "products",
-                element: <Products />,
-            },
-            {
-                path: "new-product",
-                element: <NewProduct />,
-            },
-            {
-                path: "edit-product/:product_id",
-                element: <EditProduct />,
-            },
-            {
-                path: "orders",
-                element: <Orders />,
-            },
-            {
-                path: "order-detail/:id",
-                element: <OrderDetail />,
-            },
-            {
-                path: "settings",
-                element: <h1 className="title">Settings</h1>,
-            },
-        ],
-    },
-])
+  {
+    path: "/admin",
+    element: <AdminLayout />,
+    children: [
+      {
+        index: true,
+        element: <DashboardPage />,
+      },
+      {
+        path: "users",
+        element: <User />,
+      },
+      {
+        path: "edit-user/:id",
+        element: <EditUser />,
+      },
+      {
+        path: "new-user",
+        element: <NewUser />,
+      },
+      {
+        path: "categories",
+        element: <Categories />,
+      },
+      {
+        path: "discount-code",
+        element: <DiscountCode />,
+      },
+      {
+        path: "brands",
+        element: <Brands />,
+      },
+      {
+        path: "products",
+        element: <Products />,
+      },
+      {
+        path: "new-product",
+        element: <NewProduct />,
+      },
+      {
+        path: "edit-product/:product_id",
+        element: <EditProduct />,
+      },
+      {
+        path: "orders",
+        element: <Orders />,
+      },
+      {
+        path: "order-detail/:id",
+        element: <OrderDetail />,
+      },
+      {
+        path: "settings",
+        element: <h1 className="title">Settings</h1>,
+      },
+    ],
+  },
+]);

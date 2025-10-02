@@ -10,19 +10,20 @@ const userState = {
   token: null,
 };
 
+const getUserFromLocalstorage = localStorage.getItem("user")
+  ? JSON.parse(localStorage.getItem("user"))
+  : null;
+
 const initialState = {
-  user: userState,
+  user: getUserFromLocalstorage,
   isError: false,
   isSuccess: false,
   isLoading: false,
   message: "",
 };
 
-
-
 export const login = createAsyncThunk("auth/login", async (user, thunkAPI) => {
   try {
-    //return authService.login(user);
     const response = await authService.login(user);
     return response;
   } catch (error) {

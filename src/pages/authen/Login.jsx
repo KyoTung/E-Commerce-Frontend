@@ -64,7 +64,7 @@ const LoginForm = () => {
 
   useEffect(() =>{
     if(user || isSuccess){
-      console.log("navigate home")
+      navigate("/");
     }
     else{
       setErrors({ 

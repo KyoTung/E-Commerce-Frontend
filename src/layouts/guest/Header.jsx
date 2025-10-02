@@ -2,20 +2,29 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FiShoppingCart, FiUser, FiSearch, FiX, FiLogOut } from "react-icons/fi";
+import {
+  FiShoppingCart,
+  FiUser,
+  FiSearch,
+  FiX,
+  FiLogOut,
+} from "react-icons/fi";
 import { FaAngleDown } from "react-icons/fa6";
 import { TiThMenu } from "react-icons/ti";
-import { useStateContext } from "../../contexts/contextProvider";
-import Axios from "../../Axios"
+import { useSelector, useDispatch } from "react-redux";
+import { getUser } from "../../features/guestSlice/userSlice";
 
 const Header = () => {
- const { user, token, setToken, setUser } = useStateContext();
- const [userInfo, setUserInfor] = useState({
-  fullName:"",
-  email:"",
-  address:"",
-  phone:""
- })
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
+  const getUserFromUserSlice = useSelector((state) => state.user.user);
+  const isLoggedIn = useSelector((state) => !!state.auth.user?.token);
+  const [userInfo, setUserInfor] = useState({
+    fullName: "",
+    email: "",
+    address: "",
+    phone: "",
+  });
   const [query, setQuery] = useState("");
   const [isOpenMenu, setIsOpenMenu] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,27 +34,11 @@ const Header = () => {
   const modalRef = useRef();
   const navigate = useNavigate();
 
+  const userId = user?._id;
 
   useEffect(() => {
-    const fetchUser = async () => {
-        try {
-            const respon = await Axios.get(
-                `user/${user}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-            setUserInfor(respon.data);
-        } catch (error) {
-            console.error("Error fetching user:", error);
-        }
-    };
-
-    if (token) fetchUser();
-}, [setUserInfor, token]);
-
+    dispatch(getUser(userId));
+  }, [userId]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -59,24 +52,20 @@ const Header = () => {
     setQuery("");
   };
 
-  const handleLogout = async() => {
-    try{
-       await Axios.get("/user/logout", 
-       {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-       )
-       setToken("");
-       setUser("");
+  const handleLogout = async () => {
+    try {
+      await Axios.get("/user/logout", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setToken("");
+      setUser("");
       toast.success("Đăng xuất thành công");
-    }
-    catch(error){
-       toast.error("Đăng xuất thất bại");
+    } catch (error) {
+      toast.error("Đăng xuất thất bại");
     }
 
-   
     setIsMenuOpen(false);
   };
 
@@ -107,9 +96,13 @@ const Header = () => {
 
   return (
     <>
-      <header className={`sticky top-0 z-50 shadow-md transition-all duration-300 ${isScroll ? 'bg-[#d0011b]' : 'bg-[#d0011b]/90'}`}>
+      <header
+        className={`sticky top-0 z-50 shadow-md transition-all duration-300 ${
+          isScroll ? "bg-[#d0011b]" : "bg-[#d0011b]/90"
+        }`}
+      >
         <ToastContainer />
-        
+
         {/* Top Navigation */}
         <div className="py-2 text-white shadow-sm hidden md:block">
           <div className="container mx-auto px-4 flex justify-between items-center">
@@ -139,15 +132,21 @@ const Header = () => {
 
             {/* Right-aligned user section */}
             <div className="flex items-center">
-              {user ? (
+              {getUserFromUserSlice ? (
                 <div className="relative" ref={menuRef}>
                   <button
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
                     className="flex items-center gap-1"
                   >
                     <FiUser className="h-5 w-5" />
-                    <span className="ml-1">{userInfo.fullName}</span>
-                    <FaAngleDown className={`transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
+                    <span className="ml-1">
+                      {getUserFromUserSlice.fullName}
+                    </span>
+                    <FaAngleDown
+                      className={`transition-transform ${
+                        isMenuOpen ? "rotate-180" : ""
+                      }`}
+                    />
                   </button>
 
                   {isMenuOpen && (
@@ -173,6 +172,14 @@ const Header = () => {
                       >
                         Lịch sử đơn hàng
                       </Link>
+                      {getUserFromUserSlice.role === "admin" && (
+                        <Link
+                          to="/admin"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Truy cập trang quản trị
+                        </Link>
+                      )}
                       <div className="mt-2 border-t">
                         <button
                           onClick={handleLogout}
@@ -210,7 +217,7 @@ const Header = () => {
           <div className="flex items-center justify-between py-3">
             {/* Logo and Mobile Menu Button */}
             <div className="flex items-center">
-              <button 
+              <button
                 className="md:hidden mr-3 text-white"
                 onClick={() => setIsOpenMenu(!isOpenMenu)}
               >
@@ -259,8 +266,7 @@ const Header = () => {
             {/* Cart and Mobile Search */}
             <div className="flex items-center space-x-4">
               {/* Mobile Search Button */}
-              
-              
+
               {/* Cart */}
               <Link to="/cart" className="relative text-white">
                 <FiShoppingCart className="h-6 w-6" />
@@ -293,40 +299,63 @@ const Header = () => {
         </div>
 
         {/* Mobile Menu */}
-        <div className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 z-50 md:hidden ${isOpenMenu ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div
+          className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 z-50 md:hidden ${
+            isOpenMenu ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
           <div className="p-5 border-b">
             <div className="flex justify-between items-center">
               <span className="text-lg font-bold text-[#d0011b]">Menu</span>
-              <button onClick={() => setIsOpenMenu(false)} className="text-gray-500">
+              <button
+                onClick={() => setIsOpenMenu(false)}
+                className="text-gray-500"
+              >
                 <FiX className="h-5 w-5" />
               </button>
             </div>
           </div>
-          
+
           <div className="p-5">
             <ul className="space-y-4">
               <li>
-                <Link to="/" className="text-gray-800 font-medium" onClick={() => setIsOpenMenu(false)}>
+                <Link
+                  to="/"
+                  className="text-gray-800 font-medium"
+                  onClick={() => setIsOpenMenu(false)}
+                >
                   Trang chủ
                 </Link>
               </li>
               <li>
-                <Link to="#contact" className="text-gray-800 font-medium" onClick={() => setIsOpenMenu(false)}>
+                <Link
+                  to="#contact"
+                  className="text-gray-800 font-medium"
+                  onClick={() => setIsOpenMenu(false)}
+                >
                   Kết nối
                 </Link>
               </li>
               <li>
-                <Link to="#about" className="text-gray-800 font-medium" onClick={() => setIsOpenMenu(false)}>
+                <Link
+                  to="#about"
+                  className="text-gray-800 font-medium"
+                  onClick={() => setIsOpenMenu(false)}
+                >
                   Về chúng tôi
                 </Link>
               </li>
               <li>
-                <Link to="#blog" className="text-gray-800 font-medium" onClick={() => setIsOpenMenu(false)}>
+                <Link
+                  to="#blog"
+                  className="text-gray-800 font-medium"
+                  onClick={() => setIsOpenMenu(false)}
+                >
                   Blogs
                 </Link>
               </li>
             </ul>
-            
+
             <div className="mt-8 pt-4 border-t">
               {user ? (
                 <>
@@ -334,7 +363,7 @@ const Header = () => {
                     <FiUser className="h-5 w-5 text-[#d0011b] mr-2" />
                     <span className="font-medium">Xin chào, User</span>
                   </div>
-                  <button 
+                  <button
                     onClick={handleLogout}
                     className="flex items-center text-red-600"
                   >
@@ -366,7 +395,7 @@ const Header = () => {
 
         {/* Overlay for mobile menu */}
         {isOpenMenu && (
-          <div 
+          <div
             className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
             onClick={() => setIsOpenMenu(false)}
           ></div>
