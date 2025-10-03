@@ -57,9 +57,7 @@ const LoginForm = () => {
       email: formData.email,
       password: formData.password,
     };
-
-      dispatch(login(payLoad))
- 
+    dispatch(login(payLoad))
   };
 
   useEffect(() =>{

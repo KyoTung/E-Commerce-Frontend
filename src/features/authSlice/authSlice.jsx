@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import authService from "./authService";
 
+
+
 const userState = {
   _id: null,
   fullName: null,
@@ -10,9 +12,23 @@ const userState = {
   token: null,
 };
 
-const getUserFromLocalstorage = localStorage.getItem("user")
-  ? JSON.parse(localStorage.getItem("user"))
-  : null;
+//const tokenExpiryTime = Date.now() + 30*60*1000;
+const tokenExpiryTime = Date.now() + 1000;
+
+const getUserFromLocalstorage = (() => {
+  const storedUser = localStorage.getItem("user");
+  if (!storedUser) return null;
+
+  const user = JSON.parse(storedUser);
+  const now = Date.now();
+
+  if (user.expiresAt && now > user.expiresAt) {
+    localStorage.removeItem("user");
+    return null;
+  }
+
+  return user;
+})();
 
 const initialState = {
   user: getUserFromLocalstorage,

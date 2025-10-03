@@ -7,15 +7,20 @@ const login = async (userData) => {
 
   if (response.data && response.data.token) {
     console.log(response.data);
-    localStorage.setItem("user", JSON.stringify(response.data));
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        ...response,
+        expiresAt: tokenExpiryTime,
+      })
+    );
   }
 
-  return response.data; 
-}
-
+  return response.data;
+};
 
 const authService = {
-    login,
-}
+  login,
+};
 
 export default authService;
