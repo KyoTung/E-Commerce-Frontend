@@ -1,9 +1,13 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import userService from "./userService";
 
+const getUserFromLocalstorage = () => {
+  const user = localStorage.getItem("user_info");
+  return user ? JSON.parse(user) : null;
+}
 
 const initialState = {
-  user: {},
+  user: getUserFromLocalstorage(),
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -11,9 +15,9 @@ const initialState = {
 };
 
 
-export const getUser = createAsyncThunk("user/get-user", async (userId, thunkAPI) => {
+export const getUser = createAsyncThunk("user/get-user", async ({userId, token}, thunkAPI) => {
   try {
-    const response = await userService.getUser(userId);
+    const response = await userService.getUser(userId, token);
     return response;
   } catch (error) {
     const message =
@@ -36,6 +40,7 @@ export const userSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = true;
       state.user = action.payload;
+      localStorage.setItem("user_info", JSON.stringify(action.payload));
     });
 
     builder.addCase(getUser.rejected, (state, action) => {

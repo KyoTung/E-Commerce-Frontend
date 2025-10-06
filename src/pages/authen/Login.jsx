@@ -5,6 +5,7 @@ import { useStateContext } from "../../contexts/contextProvider";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {login} from "../../features/authSlice/authSlice"
+import { getUser } from "../../features/guestSlice/userSlice";
 import "../../App.css"
 
 const LoginForm = () => {
@@ -60,16 +61,24 @@ const LoginForm = () => {
     dispatch(login(payLoad))
   };
 
-  useEffect(() =>{
-    if(user || isSuccess){
-      navigate("/");
-    }
-    else{
-      setErrors({ 
-        submit: message || "Đăng nhập thất bại. Vui lòng thử lại." 
-      });
-    }
-  }, [user, isError,isLoading, isSuccess, message ])
+  //chuyển trang sau khi login thành công
+useEffect(() => {
+  if (isSuccess && user) {
+    //dispatch(getUser(user._id, user.token));
+     dispatch(getUser({ userId: user._id, token: user.token }));
+   navigate("/");
+  }
+}, [isSuccess, user, navigate]);
+
+
+//hiển thị lỗi khi login thất bại
+useEffect(() => {
+  if (isError) {
+    setErrors({
+      submit: message
+    });
+  }
+}, [isError, message]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center py-8 px-4">

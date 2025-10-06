@@ -12,8 +12,6 @@ const userState = {
   token: null,
 };
 
-//const tokenExpiryTime = Date.now() + 30*60*1000;
-const tokenExpiryTime = Date.now() + 1000;
 
 const getUserFromLocalstorage = (() => {
   const storedUser = localStorage.getItem("user");
@@ -49,6 +47,19 @@ export const login = createAsyncThunk("auth/login", async (user, thunkAPI) => {
   }
 });
 
+export const logout = createAsyncThunk("auth/logout", async ({token}, thunkAPI) => {
+  try {
+    const response = await authService.logout(token);
+    return response;
+  } catch (error) {
+    const message =
+      error.response?.data?.message || error.message || "Đăng xuất thất bại";
+    return thunkAPI.rejectWithValue({ message });
+  }
+});
+
+const tokenExpiryTime = Date.now() + 60*60*1000;
+
 export const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -61,6 +72,13 @@ export const authSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = true;
       state.user = action.payload;
+      localStorage.setItem(
+      "user",
+      JSON.stringify({
+        ...action.payload,
+        expiresAt: tokenExpiryTime,
+      })
+    );
     });
 
     builder.addCase(login.rejected, (state, action) => {
@@ -71,6 +89,26 @@ export const authSlice = createSlice({
         action.payload?.message || "Đăng nhập thất bại. Vui lòng thử lại.";
       state.user = null;
     });
+      builder.addCase(logout.fulfilled, (state) => {
+    state.isLoading = false;
+    state.isError = false;
+    state.isSuccess = false;
+    state.user = null;
+    state.message = "";
+    localStorage.removeItem("user", "user_info");
+  });
+  builder.addCase(logout.rejected, (state, action) => {
+    state.isLoading = false;
+    state.isError = true;
+    state.message =
+      action.payload?.message || "Đăng xuất thất bại. Vui lòng thử lại.";
+  });
+  builder.addCase(logout.pending, (state) => {
+    state.isLoading = true;
+    state.isError = false;
+    state.isSuccess = false;
+    state.message = "";
+  });
   },
 });
 
