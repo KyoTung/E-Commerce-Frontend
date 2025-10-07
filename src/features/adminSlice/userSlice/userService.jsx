@@ -13,12 +13,12 @@ const getUser = async (userId, token) => {
 }
 
 const getAllUser = async (token) =>{
-  const response = await axios.get(`${baseURL}/user`, {
+  const response = await axios.get(`${baseURL}/user/all-users`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
-  return response.data;
+  return response.data.data;
 };
 
 

@@ -1,13 +1,11 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import userService from "./userService";
 
-const getUserFromLocalstorage = () => {
-  const user = localStorage.getItem("user_info");
-  return user ? JSON.parse(user) : null;
-}
+
 
 const initialState = {
-  user: getUserFromLocalstorage(),
+  allUsers: [],
+  user: null,
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -26,7 +24,7 @@ export const getUser = createAsyncThunk("user/get-user", async ({userId, token},
   }
 });
 
-const getAllUser = createAsyncThunk("user/get-all-user", async (token, thunkAPI) => {
+export const getAllUser = createAsyncThunk("user/get-all-user", async (token, thunkAPI) => {
   try {
     const response = await userService.getAllUser(token);
     return response;
@@ -35,6 +33,7 @@ const getAllUser = createAsyncThunk("user/get-all-user", async (token, thunkAPI)
       error.response?.data?.message || error.message;
     return thunkAPI.rejectWithValue({ message });
   }
+   
 });
 
 export const userSlice = createSlice({
@@ -60,21 +59,22 @@ export const userSlice = createSlice({
         action.payload?.message;
       state.user = null;
     });
+
+
     builder.addCase(getAllUser.pending, (state) => {
       state.isLoading = true;
     });
     builder.addCase(getAllUser.fulfilled, (state, action) => {
       state.isLoading = false;
       state.isSuccess = true;
-      state.user = action.payload;
-      localStorage.setItem("all_user", JSON.stringify(action.payload));
+      state.allUsers = action.payload;
     });
     builder.addCase(getAllUser.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
       state.message = action.payload?.message;
-      state.user = null;
+      state.allUsers = [];
     });
   },
 });

@@ -8,20 +8,13 @@ import { Header } from "@/layouts/admin/header";
 
 import { cn } from "@/utils/cn";
 import { useEffect, useRef, useState } from "react";
-import { useStateContext } from "../../contexts/contextProvider";
+import { useDispatch, useSelector } from "react-redux"; 
 
 const AdminLayout = () => {
+    const user = useSelector((state) => state.auth);
     const isDesktopDevice = useMediaQuery("(min-width: 768px)");
     const [collapsed, setCollapsed] = useState(!isDesktopDevice);
 
-    const {user, token} = useStateContext();
-
-    if(!token){
-        return <Navigate to="/login" />
-    }
-    // if(token && user?.role === 1){
-    //     return <Navigate to="/admin" />
-    // }
 
     const sidebarRef = useRef(null);
 

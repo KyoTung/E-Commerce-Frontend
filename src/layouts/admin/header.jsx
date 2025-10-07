@@ -3,17 +3,18 @@ import { useRef, useState, useEffect } from "react";
 import { Bell, ChevronsLeft, Moon, Search, Sun, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import profileImg from "@/assets/profile-image.jpg";
-
+import { useSelector, useDispatch } from "react-redux";
 import PropTypes from "prop-types";
-import { useStateContext } from "../../contexts/contextProvider";
-import Axios from "../../Axios";
+
+
 
 export const Header = ({ collapsed, setCollapsed }) => {
+    const user = useSelector((state) => state.auth);
+    const getUserFromUserSlice = useSelector((state) => state.user.user);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef(null);
     const buttonRef = useRef(null);
     const { theme, setTheme } = useTheme();
-    const { user, setUser, setToken, token } = useStateContext();
     const navigate = useNavigate();
     // Đóng menu khi click bên ngoài
     useEffect(() => {
@@ -48,11 +49,7 @@ export const Header = ({ collapsed, setCollapsed }) => {
         }
     };
 
-    useEffect(() => {
-        Axios.get("/user").then(({ data }) => {
-            setUser(data);
-        });
-    }, []);
+    
 
     return (
         <header className="relative z-10 flex h-[60px] items-center justify-between bg-white px-4 shadow-md transition-colors dark:bg-slate-900">
@@ -125,8 +122,8 @@ export const Header = ({ collapsed, setCollapsed }) => {
                     {isMenuOpen && (
                         <div className="absolute right-0 z-50 mt-2 w-48 rounded-lg bg-white py-2 shadow-lg">
                             <div className="border-b px-4 py-2 text-sm text-gray-700">
-                                <p className="font-medium">{user.name}</p>
-                                <p className="truncate text-gray-500">{user.email}</p>
+                                <p className="font-medium">{getUserFromUserSlice.fullName}</p>
+                                <p className="truncate text-gray-500">{getUserFromUserSlice.email}</p>
                             </div>
 
                             <ul className="text-sm text-gray-700">

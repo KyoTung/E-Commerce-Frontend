@@ -1,14 +1,15 @@
 import { forwardRef } from "react";
 import { NavLink } from "react-router-dom";
 
-import { navbarLinks } from "../../constants";
+import { navbarLinks } from "@/constants";
 
-import logoLight from "../../assets/logo-light.svg";
+import logoLight from "@/assets/logo-light.svg";
 import logoDark from "@/assets/logo-dark.svg";
 
-import { cn } from "../../utils/cn";
+import { cn } from "@/utils/cn";
 
 import PropTypes from "prop-types";
+
 
 export const Sidebar = forwardRef(({ collapsed }, ref) => {
     return (

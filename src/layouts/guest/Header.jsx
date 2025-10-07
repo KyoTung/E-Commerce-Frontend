@@ -20,7 +20,7 @@ import { logout } from "../../features/authSlice/authSlice"
 
 const Header = () => {
   const dispatch = useDispatch();
-    const { user, isError,isLoading, isSuccess, message } = useSelector(state => state.auth);
+  const { user, isError,isLoading, isSuccess, message } = useSelector(state => state.auth);
   const getUserFromUserSlice = useSelector((state) => state.user.user);
   const isLoggedIn = useSelector((state) => !!state.auth.user?.token);
   const [userInfo, setUserInfor] = useState({
