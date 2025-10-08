@@ -12,19 +12,9 @@ const getUser = async (userId, token) => {
   return response.data;
 }
 
-const getAllUser = async (token) =>{
-  const response = await axios.get(`${baseURL}/user`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return response.data;
-};
-
 
 const userService = {
     getUser,
-    getAllUser,
 }
 
 export default userService;
