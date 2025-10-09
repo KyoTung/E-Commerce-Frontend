@@ -79,13 +79,13 @@ const User = () => {
         <div className="card-header flex items-center gap-2">
           <Link
             to="/admin/new-user"
-            className="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700" // Sửa class thành className
+            className="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
           >
             Add new
           </Link>
           <button
-            onClick={getUsers} // Sửa thành getUsers
-            className="rounded bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-700" // Sửa class thành className
+            onClick={getUsers} 
+            className="rounded bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-700" 
           >
             Refresh
           </button>

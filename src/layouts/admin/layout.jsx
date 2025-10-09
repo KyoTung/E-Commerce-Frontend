@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { useNavigate, Outlet } from "react-router-dom";
 
 import { useMediaQuery } from "@uidotdev/usehooks";
 import { useClickOutside } from "@/hooks/use-click-outside";
@@ -11,10 +11,15 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux"; 
 
 const AdminLayout = () => {
+    const navigate = useNavigate();
     const user = useSelector((state) => state.auth);
+    const currentUser =  useSelector((state) => state.user.user);
     const isDesktopDevice = useMediaQuery("(min-width: 768px)");
     const [collapsed, setCollapsed] = useState(!isDesktopDevice);
 
+    if(!user?.token && currentUser?.role !== 'admin'){
+        navigate("/")
+    }
 
     const sidebarRef = useRef(null);
 
