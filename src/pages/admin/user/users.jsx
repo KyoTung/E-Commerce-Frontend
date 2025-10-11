@@ -2,12 +2,12 @@ import React, { useEffect, useState } from "react";
 import { topProducts } from "@/constants";
 import { PencilLine, Trash } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { getAllUser } from "../../../features/adminSlice/customerSlice/customerSlice";
+import { getAllUser, deleteUser } from "../../../features/adminSlice/customerSlice/customerSlice";
 import { useNavigate, Link } from "react-router-dom";
 import Loading from "../../../components/Loading";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios"; 
+
 
 const User = () => {
   const dispatch = useDispatch();
@@ -19,8 +19,6 @@ const User = () => {
   const navigate = useNavigate();
 
   const allUsers = useSelector((state) => state.customer?.allUsers || []);
-
-  console.log("allUsers", allUsers);
 
   const getUsers = () => {
     dispatch(getAllUser(currentUser.token));
@@ -62,11 +60,9 @@ const User = () => {
       return;
     }
     try {
-      await axios.delete(`/users/${user._id || user.id}`);
-      getUsers(); 
+      dispatch(deleteUser({ userId: user._id || user.id, token: currentUser.token }));
       toast.success("User deleted successfully");
     } catch (error) {
-      console.error("Delete error:", error);
       toast.error("Failed to delete user");
     }
   };

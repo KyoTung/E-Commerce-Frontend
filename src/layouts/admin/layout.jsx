@@ -7,7 +7,7 @@ import { Sidebar } from "@/layouts/admin/sidebar";
 import { Header } from "@/layouts/admin/header";
 
 import { cn } from "@/utils/cn";
-import { useEffect, useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux"; 
 
 const AdminLayout = () => {
@@ -17,9 +17,11 @@ const AdminLayout = () => {
     const isDesktopDevice = useMediaQuery("(min-width: 768px)");
     const [collapsed, setCollapsed] = useState(!isDesktopDevice);
 
-    if(!user?.token && currentUser?.role !== 'admin'){
+    useEffect(() => {
+        if(!user?.token && currentUser?.role !== 'admin'){
         navigate("/")
     }
+    }, [user, currentUser, navigate])
 
     const sidebarRef = useRef(null);
 
