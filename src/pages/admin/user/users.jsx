@@ -2,17 +2,22 @@ import React, { useEffect, useState } from "react";
 import { topProducts } from "@/constants";
 import { PencilLine, Trash } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { getAllUser, deleteUser } from "../../../features/adminSlice/customerSlice/customerSlice";
+import {
+  getAllUser,
+  deleteUser,
+  blockUser,
+  unBlockUser,
+} from "../../../features/adminSlice/customerSlice/customerSlice";
 import { useNavigate, Link } from "react-router-dom";
 import Loading from "../../../components/Loading";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-
+import { MdLockOutline } from "react-icons/md";
+import { MdLockOpen } from "react-icons/md";
 const User = () => {
   const dispatch = useDispatch();
   const currentUser = useSelector((state) => state.auth.user);
- 
+  const [isBlocking, setIsBlocking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
@@ -60,10 +65,71 @@ const User = () => {
       return;
     }
     try {
-      dispatch(deleteUser({ userId: user._id || user.id, token: currentUser.token }));
-      toast.success("User deleted successfully");
+      const resultAction = await dispatch(
+        deleteUser({ userId: user._id || user.id, token: currentUser.token })
+      );
+
+      if (deleteUser.fulfilled.match(resultAction)) {
+        toast.success("User deleted successfully");
+        dispatch(getAllUser(currentUser.token));
+      } else {
+        toast.error("Failed to delete user");
+        toast.error(resultAction.payload || "Error: Create user failed!");
+      }
     } catch (error) {
       toast.error("Failed to delete user");
+    }
+  };
+
+  const handleRefresh = () => {
+    setIsLoading(true);
+    dispatch(getAllUser(currentUser.token));
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+  };
+
+  const onBlockUser = async (user) => {
+    if (!window.confirm("Are you sure you want to block this user?")) {
+      return;
+    }
+    try {
+      const resultAction = await dispatch(
+        blockUser({ userId: user._id || user.id, token: currentUser.token })
+      );
+
+      if (blockUser.fulfilled.match(resultAction)) {
+        setIsBlocking(true);
+        toast.success("User blocked successfully");
+        dispatch(getAllUser(currentUser.token));
+      } else {
+        toast.error("Failed to block user");
+        toast.error(resultAction.payload || "Error: Create user failed!");
+      }
+    } catch (error) {
+      toast.error("Failed to block user");
+    }
+  };
+
+  const onUnBlockUser = async (user) => {
+    if (!window.confirm("Are you sure you want to unblock this user?")) {
+      return;
+    }
+    try {
+      const resultAction = await dispatch(
+        unBlockUser({ userId: user._id || user.id, token: currentUser.token })
+      );
+
+      if (unBlockUser.fulfilled.match(resultAction)) {
+        setIsBlocking(false);
+        toast.success("User unblocked successfully");
+        dispatch(getAllUser(currentUser.token));
+      } else {
+        toast.error("Failed to unblock user");
+        toast.error(resultAction.payload || "Error: Create user failed!");
+      }
+    } catch (error) {
+      toast.error("Failed to unblock user");
     }
   };
 
@@ -80,8 +146,8 @@ const User = () => {
             Add new
           </Link>
           <button
-            onClick={getUsers} 
-            className="rounded bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-700" 
+            onClick={handleRefresh}
+            className="rounded bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-700"
           >
             Refresh
           </button>
@@ -138,6 +204,7 @@ const User = () => {
                         <td className="table-cell">
                           <div className="flex items-center gap-x-4">
                             <button
+                              title="Edit User"
                               onClick={() =>
                                 navigate(
                                   `/admin/edit-user/${user._id || user.id}`
@@ -148,11 +215,29 @@ const User = () => {
                               <PencilLine size={20} />
                             </button>
                             <button
+                              title="Delete User"
                               onClick={() => onDelete(user)}
                               className="text-red-500 hover:text-red-800"
                             >
                               <Trash size={20} />
                             </button>
+                            {user.isBlock ? (
+                              <button
+                                title="Unblock User"
+                                onClick={() => onUnBlockUser(user)}
+                                className="text-red-500 hover:text-red-800"
+                              >
+                                <MdLockOpen size={20} />
+                              </button>
+                            ) : (
+                              <button
+                                title="Block User"
+                                onClick={() => onBlockUser(user)}
+                                className="text-red-500 hover:text-red-800"
+                              >
+                                <MdLockOutline size={20} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -163,7 +248,9 @@ const User = () => {
                         colSpan={8}
                         className="py-8 text-center text-gray-500"
                       >
-                        {search.trim() ? "Không tìm thấy kết quả phù hợp." : "No users found."}
+                        {search.trim()
+                          ? "Không tìm thấy kết quả phù hợp."
+                          : "No users found."}
                       </td>
                     </tr>
                   )}

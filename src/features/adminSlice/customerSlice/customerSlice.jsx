@@ -67,6 +67,27 @@ export const deleteUser = createAsyncThunk("user/delete-user", async ({userId, t
   }
 });
 
+export const blockUser = createAsyncThunk("user/block-user", async({userId, token}, thunkAPI) =>{
+  try {
+    const response = await customerService.blockUser(userId, token);
+    return response;
+  } catch (error) {
+    const message =
+      error.response?.data?.message || error.message;
+    return thunkAPI.rejectWithValue({ message });
+  }
+})
+
+export const unBlockUser = createAsyncThunk("user/unblock-user", async({userId, token}, thunkAPI) =>{
+  try {
+    const response = await customerService.unBlockUser(userId, token);
+    return response;
+  } catch (error) {
+    const message =
+      error.response?.data?.message || error.message;
+    return thunkAPI.rejectWithValue({ message });
+  }
+})
 
 export const customerSlice = createSlice({
   name: "customer",
@@ -149,6 +170,40 @@ export const customerSlice = createSlice({
       state.isSuccess = false;
       state.message = action.payload?.message;
     });  
+    builder.addCase(blockUser.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(blockUser.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      const index = state.allUsers.findIndex(user => user._id === action.payload._id);
+      if(index !== -1){
+        state.allUsers[index] = action.payload;
+      }
+    });
+    builder.addCase(blockUser.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload?.message;
+    });
+    builder.addCase(unBlockUser.pending, (state) => {
+      state.isLoading = true;
+    });   
+    builder.addCase(unBlockUser.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      const index = state.allUsers.findIndex(user => user._id === action.payload._id);    
+      if(index !== -1){
+        state.allUsers[index] = action.payload;
+      }   
+    });
+    builder.addCase(unBlockUser.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload?.message;
+    });
   },
 });
 

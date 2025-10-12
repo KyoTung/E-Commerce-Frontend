@@ -40,12 +40,28 @@ const deleteUser = async (userId, token) => {
   return response.data;
 };
 
+const blockUser = async (userId, token) => {
+  const response = await axios.put(`${baseURL}/user/block-user/${userId}`, {}, {
+    headers: {  Authorization: `Bearer ${token}`      }
+  });
+  return response.data;
+};
+
+const unBlockUser = async (userId, token) => {
+  const response = await axios.put(`${baseURL}/user/unblock-user/${userId}`, {}, {
+    headers: {  Authorization: `Bearer ${token}`      }
+  });
+  return response.data;
+}
+
 const customerService = {
     getUserDetail,
     getAllUser,
     createUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    blockUser,
+    unBlockUser,
 }
 
 export default customerService;
