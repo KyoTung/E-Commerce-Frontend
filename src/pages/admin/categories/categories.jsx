@@ -6,11 +6,16 @@ import { useNavigate, Link } from "react-router-dom";
 import Loading from "../../../components/Loading";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useSelector, useDispatch } from "react-redux";
+import { getAllCategory } from "../../../features/adminSlice/category/categorySlice";
 
 const Categories = () => {
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+   const currentUser = useSelector((state) => state.auth.user);
+    const { categories, loading, error } = useSelector((state) => state.categoryAdmin);
     const [editingCategory, setEditingCategory] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [cate, setCate] = useState([]);
+
     const [editCate, setEditCate] = useState({ name: "" });
     const [newCate, setNewCate] = useState({ name: "" });
 
@@ -20,16 +25,7 @@ const Categories = () => {
 
     // get all categories
     const getCate = () => {
-        setIsLoading(true);
-        Axios
-            .get("/categories")
-            .then(({ data }) => {
-                setIsLoading(false);
-                setCate(data.data);
-            })
-            .catch(() => {
-                setIsLoading(false);
-            });
+       dispatch(getAllCategory({token: currentUser.token}))
     };
 
     // added category
@@ -129,7 +125,7 @@ const Categories = () => {
                 </div>
 
                 <div className="card-header"></div>
-                {isLoading ? (
+                {loading ? (
                     <Loading className="flex items-center justify-center text-center" />
                 ) : (
                     <div className="card-body p-0">
@@ -144,7 +140,7 @@ const Categories = () => {
                                 </thead>
 
                                 <tbody className="table-body">
-                                    {cate.map((cate, index) => (
+                                    {categories.map((cate, index) => (
                                         <tr
                                             key={index}
                                             className="table-row"

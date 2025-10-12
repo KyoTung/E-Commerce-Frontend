@@ -1,4 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
+import ProtectedRoute from "./ProtectedRout";
+
 import LoginForm from "../pages/authen/Login";
 import RegisterForm from "../pages/authen/Register";
 import GuestLayout from "../layouts/guest/Layout";
@@ -74,7 +76,13 @@ export const router = createBrowserRouter([
 
   {
     path: "/admin",
-    element: <AdminLayout />,
+
+    element: (
+      <ProtectedRoute requiredRole="admin">
+        <AdminLayout />
+      </ProtectedRoute>
+    ),
+
     children: [
       {
         index: true,

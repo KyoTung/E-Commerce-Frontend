@@ -71,7 +71,7 @@ const User = () => {
 
       if (deleteUser.fulfilled.match(resultAction)) {
         toast.success("User deleted successfully");
-        dispatch(getAllUser(currentUser.token));
+        getUsers();
       } else {
         toast.error("Failed to delete user");
         toast.error(resultAction.payload || "Error: Create user failed!");
@@ -83,7 +83,7 @@ const User = () => {
 
   const handleRefresh = () => {
     setIsLoading(true);
-    dispatch(getAllUser(currentUser.token));
+    getUsers();
     setTimeout(() => {
       setIsLoading(false);
     }, 500);
@@ -101,7 +101,7 @@ const User = () => {
       if (blockUser.fulfilled.match(resultAction)) {
         setIsBlocking(true);
         toast.success("User blocked successfully");
-        dispatch(getAllUser(currentUser.token));
+        getUsers();
       } else {
         toast.error("Failed to block user");
         toast.error(resultAction.payload || "Error: Create user failed!");
@@ -123,7 +123,7 @@ const User = () => {
       if (unBlockUser.fulfilled.match(resultAction)) {
         setIsBlocking(false);
         toast.success("User unblocked successfully");
-        dispatch(getAllUser(currentUser.token));
+        getUsers();
       } else {
         toast.error("Failed to unblock user");
         toast.error(resultAction.payload || "Error: Create user failed!");
