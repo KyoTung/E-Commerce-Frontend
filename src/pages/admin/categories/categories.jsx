@@ -95,7 +95,6 @@ const Categories = () => {
     if (!window.confirm("Are you sure you want to delete this category ?")) {
       return;
     }
-    console.log("Deleting category with ID:", categoryId);
     try {
       const resultAction = await dispatch(
         deleteCategory({ categoryId: categoryId, token: currentUser.token })

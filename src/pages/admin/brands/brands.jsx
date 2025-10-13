@@ -62,42 +62,53 @@ const Brands = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      const response = await Axios.put(
-        `/brands/${editingCategory.id}`,
-        editCate
+      const resultAction = await dispatch(
+        updateBrand({
+          brandId: editingBrand._id || editBrand.id,
+          brandData: editBrand,
+          token: currentUser.token,
+        })
       );
-
-      if (response.status === 200) {
+      if (updateBrand.fulfilled.match(resultAction)) {
         toast.success("Brand updated successfully");
-        setEditingCategory(null);
-        getCate();
+        setEditingBrand(null);
+        getBrands();
+      } else {
+        toast.error("Failed to update brand");
+        toast.error(resultAction.payload || "Error: Update brand failed!");
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Error updating brand");
+      toast.error("Error updating brand");
     }
   };
 
-  const startEdit = (category) => {
-    setEditingCategory(category);
-    setEditCate(category);
+  const startEdit = (brand) => {
+    setEditingBrand(brand);
+    setEditBrand(brand);
   };
 
-  // delete category
-  const onDelete = (cate) => {
+  // delete brand
+  const onDelete = async (brand) => {
     if (!window.confirm("Are you sure you want to delete this brand ?")) {
       return;
     }
-
-    Axios.delete(`/brands/${cate.id}`)
-      .then((response) => {
-        if (response.status === 200) {
-          toast.success(response.data?.message || "Brand deleted successfully");
-          getCate();
-        }
-      })
-      .catch(() => {
-        toast.error(response?.data?.error || "Deleted fail ");
-      });
+    try {
+      const resultAction = await dispatch(
+        deleteBrand({
+          brandId: brand._id || brand.id,
+          token: currentUser.token,
+        })
+      );
+      if (deleteBrand.fulfilled.match(resultAction)) {
+        toast.success("Brand deleted successfully");
+        getBrands();
+      } else {
+        toast.error("Failed to delete brand");
+        toast.error(resultAction.payload || "Error: Delete brand failed!");
+      }
+    } catch {
+      toast.error("Error deleting brand");
+    }
   };
 
   return (
