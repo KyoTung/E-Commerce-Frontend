@@ -7,6 +7,27 @@ const initialState = {
   error: null,
 };
 
+export const createCategory = createAsyncThunk("admin/category/create-category",
+  async ({ categoryData, token }, thunkAPI) => {
+    try {
+      const response = await categoryService.createCategory(categoryData, token);
+      return response;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue({ message });
+    }
+  });
+
+export const updateCategory = createAsyncThunk("admin/category/update", async ({ categoryId, categoryData, token }, thunkAPI) => {
+  try {
+    const response = await categoryService.updateCategory(categoryId, categoryData, token);
+    return response;
+  } catch (error) {
+    const message = error.response?.data?.message || error.message;
+    return thunkAPI.rejectWithValue({ message });
+  }
+});
+
  export const getAllCategory = createAsyncThunk(
   "admin/category/get-all-category",
   async (token, thunkAPI) => {
@@ -20,6 +41,25 @@ const initialState = {
   }
 );
 
+export const getCategory = createAsyncThunk("admin/category/get-category", async ({ categoryId, token }, thunkAPI) => {
+  try {
+    const response = await categoryService.getCategory(categoryId, token);  
+    return response;
+  } catch (error) {
+    const message = error.response?.data?.message || error.message;
+    return thunkAPI.rejectWithValue({ message });
+  }
+});
+
+export const deleteCategory = createAsyncThunk("admin/category/delete-category", async ({ categoryId, token }, thunkAPI) => {
+  try {
+    const response = await categoryService.deleteCategory(categoryId, token);
+    return response;
+  } catch (error) {
+    const message = error.response?.data?.message || error.message;
+    return thunkAPI.rejectWithValue({ message });
+  }
+});
 
 export const categorySlice = createSlice({
   name: "category-admin",
@@ -27,6 +67,65 @@ export const categorySlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      .addCase(createCategory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createCategory.fulfilled, (state, action) => {
+        state.loading = false;
+        state.categories.push(action.payload);
+      })
+      .addCase(createCategory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Failed to create category";
+      })
+
+      .addCase(updateCategory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateCategory.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.categories.findIndex(cat => cat.id === action.payload.id);
+        if (index !== -1) {
+          state.categories[index] = action.payload;
+        }
+      })
+      .addCase(updateCategory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Failed to update category";
+      })
+
+      .addCase(deleteCategory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteCategory.fulfilled, (state, action) => {
+        state.loading = false;
+        state.categories = state.categories.filter(cat => cat.id !== action.payload.id);
+      })
+      .addCase(deleteCategory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Failed to delete category";
+      })
+
+
+    .addCase(getCategory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getCategory.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.categories.findIndex(cat => cat.id === action.payload.id);
+        if (index !== -1) {
+          state.categories[index] = action.payload;
+        }
+      })
+      .addCase(getCategory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Failed to fetch category";
+      })
+
       .addCase(getAllCategory.pending, (state) => {
         state.loading = true;
         state.error = null;

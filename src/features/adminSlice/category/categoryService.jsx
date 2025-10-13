@@ -19,12 +19,7 @@ const updateCategory = async (categoryId, categoryData, token) => {
   return response.data;
 };
 
-const deleteCategory = async (categoryId, token) => {
-  const response = await axios.delete(`${baseURL}/category/${categoryId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data;
-};
+
 const getAllCategory = async (token) => {
   const response = await axios.get(`${baseURL}/category`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -34,6 +29,13 @@ const getAllCategory = async (token) => {
 
 const getCategory = async (categoryId, token) => {
   const response = await axios.get(`${baseURL}/category/${categoryId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+const deleteCategory = async (categoryId, token) => {
+  const response = await axios.delete(`${baseURL}/category/${categoryId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;
