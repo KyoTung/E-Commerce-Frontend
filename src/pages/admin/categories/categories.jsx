@@ -65,18 +65,23 @@ const Categories = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      const response = await Axios.put(
-        `/categories/${editingCategory.id}`,
-        editCate
+      const resultAction = await dispatch(
+        updateCategory({
+          categoryId: editingCategory._id,
+          categoryData: editCate,
+          token: currentUser.token,
+        })
       );
-
-      if (response.status === 200) {
+      if (updateCategory.fulfilled.match(resultAction)) {
         toast.success("Category updated successfully");
         setEditingCategory(null);
         getCate();
+      } else {
+        toast.error("Failed to update category");
+        toast.error(resultAction.payload || "Error: Update category failed!");
       }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Error updating category");
+    } catch {
+      toast.error("Error updating category");
     }
   };
 
@@ -86,23 +91,25 @@ const Categories = () => {
   };
 
   // delete category
-  const onDelete = (cate) => {
+  const onDelete = async (categoryId) => {
     if (!window.confirm("Are you sure you want to delete this category ?")) {
       return;
     }
-
-    Axios.delete(`/categories/${cate.id}`)
-      .then((response) => {
-        if (response.status === 200) {
-          toast.success(
-            response.data?.message || "Category deled successfully"
-          );
-          getCate();
-        }
-      })
-      .catch(() => {
-        toast.error(response?.data?.error || "Deleted fail ");
-      });
+    console.log("Deleting category with ID:", categoryId);
+    try {
+      const resultAction = await dispatch(
+        deleteCategory({ categoryId: categoryId, token: currentUser.token })
+      );
+      if (deleteCategory.fulfilled.match(resultAction)) {
+        toast.success("Category deleted successfully");
+        getCate();
+      } else {
+        toast.error("Failed to delete category");
+        toast.error(resultAction.payload || "Error: Delete category failed!");
+      }
+    } catch {
+      toast.error("Error deleting category");
+    }
   };
 
   return (
@@ -175,7 +182,7 @@ const Categories = () => {
                             <PencilLine size={20} />
                           </button>
                           <button
-                            onClick={(e) => onDelete(cate)}
+                            onClick={(e) => onDelete(cate._id)}
                             className="text-red-500 hover:text-red-800"
                           >
                             <Trash size={20} />
@@ -200,12 +207,12 @@ const Categories = () => {
                 <label className="mb-1 block text-sm font-medium">Name</label>
                 <input
                   type="text"
-                  value={editCate.name}
+                  value={editCate.title}
                   onChange={(e) =>
-                    setEditCate({ ...editCate, name: e.target.value })
+                    setEditCate({ ...editCate, title: e.target.value })
                   }
                   className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Category name"
+                  placeholder="Category title"
                 />
               </div>
               <div className="flex justify-end gap-2">
