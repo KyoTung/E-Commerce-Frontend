@@ -17,13 +17,13 @@ import { MdLockOpen } from "react-icons/md";
 const User = () => {
   const dispatch = useDispatch();
   const currentUser = useSelector((state) => state.auth.user);
-  const [isBlocking, setIsBlocking] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
   const navigate = useNavigate();
 
-  const allUsers = useSelector((state) => state.customer?.allUsers || []);
+   const { allUsers, isLoading, error } = useSelector(
+      (state) => state.customer
+    );
 
   const getUsers = () => {
     dispatch(getAllUser(currentUser.token));
@@ -31,7 +31,7 @@ const User = () => {
 
   useEffect(() => {
     getUsers();
-  }, [currentUser, dispatch]);
+  }, []);
 
   const formatDate = (dateString) => {
     const options = {
@@ -81,13 +81,7 @@ const User = () => {
     }
   };
 
-  const handleRefresh = () => {
-    setIsLoading(true);
-    getUsers();
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-  };
+
 
   const onBlockUser = async (user) => {
     if (!window.confirm("Are you sure you want to block this user?")) {
@@ -146,7 +140,7 @@ const User = () => {
             Add new
           </Link>
           <button
-            onClick={handleRefresh}
+            onClick={() => getUsers()}
             className="rounded bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-700"
           >
             Refresh
