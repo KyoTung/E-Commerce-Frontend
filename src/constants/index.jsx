@@ -3,6 +3,10 @@ import ProfileImage from "../assets/profile-image.jpg";
 import ProductImage from "../assets/product-image.jpg";
 import { BiCategoryAlt } from "react-icons/bi";
 import { MdOutlineEventNote } from "react-icons/md";
+import { MdOutlineInvertColors } from "react-icons/md";
+import { RiQuestionAnswerLine } from "react-icons/ri";
+import { BsFillFileEarmarkPostFill } from "react-icons/bs";
+import { RiCoupon2Line } from "react-icons/ri";
 
 const _path = "/admin";
 
@@ -45,6 +49,15 @@ export const navbarLinks = [
             },
         ],
     },
+     {
+        links: [
+            {
+                label: "Colors",
+                icon: MdOutlineInvertColors,
+                path: `${_path}/colors`,
+            },
+        ],
+    },
     {
         links: [
             {
@@ -66,12 +79,41 @@ export const navbarLinks = [
     {
         links: [
             {
-                label: "Discount code",
-                icon: MdOutlineEventNote,
-                path: `${_path}/discount-code`,
+                label: "Coupons",
+                icon: RiCoupon2Line,
+                path: `${_path}/coupons`,
             },
         ],
     },
+   
+    {
+        links: [
+            {
+                label: "Enquiries",
+                icon: RiQuestionAnswerLine,
+                path: `${_path}/enquiries`,
+            },
+        ],
+    },
+     {
+        links: [
+            {
+                label: "Blog categories",
+                icon: MdOutlineEventNote,
+                path: `${_path}/blog-categories`,
+            },
+        ],
+    },
+     {
+        links: [
+            {
+                label: "Blogs",
+                icon: BsFillFileEarmarkPostFill,
+                path: `${_path}/blogs`,
+            },
+        ],
+    },
+
     {
         links: [
             {
