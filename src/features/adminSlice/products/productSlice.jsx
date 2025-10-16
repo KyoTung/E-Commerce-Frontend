@@ -1,16 +1,16 @@
-import brandService from "./productService";
+import productService from "./productService";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 const initialState = {
-  brands: [],
+  products: [],
   loading: false,
   error: null,
 };
 
-export const createBrand = createAsyncThunk("admin/brand/create-brand",
-  async ({ brandData, token }, thunkAPI) => {
+export const createProduct = createAsyncThunk("admin/product/create-product",
+  async ({ productData, token }, thunkAPI) => {
     try {
-      const response = await brandService.createBrand(brandData, token);
+      const response = await productService.createProduct(productData, token);
       return response;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -18,9 +18,9 @@ export const createBrand = createAsyncThunk("admin/brand/create-brand",
     }
   });
 
-export const updateBrand = createAsyncThunk("admin/brand/update", async ({ brandId, brandData, token }, thunkAPI) => {
+export const updateProduct = createAsyncThunk("admin/product/update", async ({ productId, productData, token }, thunkAPI) => {
   try {
-    const response = await brandService.updateBrand(brandId, brandData, token);
+    const response = await productService.updateProduct(productId, productData, token);
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;
@@ -28,11 +28,11 @@ export const updateBrand = createAsyncThunk("admin/brand/update", async ({ brand
   }
 });
 
- export const getAllBrand = createAsyncThunk(
-  "admin/brand/get-all-brand",
+ export const getAllProducts = createAsyncThunk(
+  "admin/product/get-all-products",
   async (token, thunkAPI) => {
     try {
-      const response = await brandService.getAllBrand(token);
+      const response = await productService.getAllProducts(token);
       return response;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -41,9 +41,9 @@ export const updateBrand = createAsyncThunk("admin/brand/update", async ({ brand
   }
 );
 
-export const getBrand = createAsyncThunk("admin/brand/get-brand", async ({ brandId, token }, thunkAPI) => {
+export const getProduct = createAsyncThunk("admin/product/get-product", async ({ productId, token }, thunkAPI) => {
   try {
-    const response = await brandService.getBrand(brandId, token);
+    const response = await productService.getProduct(productId, token);
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;
@@ -51,9 +51,9 @@ export const getBrand = createAsyncThunk("admin/brand/get-brand", async ({ brand
   }
 });
 
-export const deleteBrand = createAsyncThunk("admin/brand/delete-brand", async ({ brandId, token }, thunkAPI) => {
+export const deleteProduct = createAsyncThunk("admin/product/delete-product", async ({ productId, token }, thunkAPI) => {
   try {
-    const response = await brandService.deleteBrand(brandId, token);
+    const response = await productService.deleteProduct(productId, token);
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;
@@ -61,81 +61,81 @@ export const deleteBrand = createAsyncThunk("admin/brand/delete-brand", async ({
   }
 });
 
-export const brandSlice = createSlice({
-  name: "brand-admin",
+export const productSlice = createSlice({
+  name: "product-admin",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(createBrand.pending, (state) => {
+      .addCase(createProduct.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(createBrand.fulfilled, (state, action) => {
+      .addCase(createProduct.fulfilled, (state, action) => {
         state.loading = false;
-        state.brands.push(action.payload);
+        state.products.push(action.payload);
       })
-      .addCase(createBrand.rejected, (state, action) => {
+      .addCase(createProduct.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Failed to create brand";
+        state.error = action.payload?.message || "Failed to create product";
       })
 
-      .addCase(updateBrand.pending, (state) => {
+      .addCase(updateProduct.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(updateBrand.fulfilled, (state, action) => {
+      .addCase(updateProduct.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.brands.findIndex(brand => brand.id === action.payload.id);
+        const index = state.products.findIndex(product => product.id === action.payload.id);
         if (index !== -1) {
-          state.brands[index] = action.payload;
+          state.products[index] = action.payload;
         }
       })
-      .addCase(updateBrand.rejected, (state, action) => {
+      .addCase(updateProduct.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Failed to update brand";
+        state.error = action.payload?.message || "Failed to update product";
       })
 
-      .addCase(deleteBrand.pending, (state) => {
+      .addCase(deleteProduct.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(deleteBrand.fulfilled, (state, action) => {
+      .addCase(deleteProduct.fulfilled, (state, action) => {
         state.loading = false;
-        state.brands = state.brands.filter(brand => brand.id !== action.payload.id);
+        state.products = state.products.filter(product => product.id !== action.payload.id);
       })
-      .addCase(deleteBrand.rejected, (state, action) => {
+      .addCase(deleteProduct.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Failed to delete brand";
+        state.error = action.payload?.message || "Failed to delete product";
       })
 
 
-    .addCase(getBrand.pending, (state) => {
+    .addCase(getProduct.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(getBrand.fulfilled, (state, action) => {
+      .addCase(getProduct.fulfilled, (state, action) => {
         state.loading = false;
-        state.brands = state.brands.filter(brand => brand.id !== action.payload.id);
+        state.product = action.payload;
       })
-      .addCase(getBrand.rejected, (state, action) => {
+      .addCase(getProduct.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Failed to fetch brand";
+        state.error = action.payload?.message || "Failed to fetch product";
       })
 
-      .addCase(getAllBrand.pending, (state) => {
+      .addCase(getAllProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(getAllBrand.fulfilled, (state, action) => {
+      .addCase(getAllProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.brands = action.payload;
+        state.products = action.payload;  
       })
-      .addCase(getAllBrand.rejected, (state, action) => {
+      .addCase(getAllProducts.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Failed to fetch brands";
+        state.error = action.payload?.message || "Failed to fetch products";
       });
   },
 });
 
-export default brandSlice.reducer;
+export default productSlice.reducer;
