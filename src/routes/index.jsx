@@ -27,6 +27,10 @@ import EditProduct from "../pages/admin/products/editProduct";
 import Orders from "../pages/admin/orders/orders";
 import OrderDetail from "../pages/admin/orders/orderDetail";
 import DiscountCode from "../pages/admin/discountCode/discountCode";
+import Colors from "../pages/admin/color/color";
+import BlogCategory from "../pages/admin/blogCategory/blogCategory";
+import Enquiries from "../pages/admin/enquiry/users";
+import Blogs from "../pages/admin/blogs/Product";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginForm /> },
@@ -105,12 +109,20 @@ export const router = createBrowserRouter([
         element: <Categories />,
       },
       {
-        path: "discount-code",
+        path: "coupons",
         element: <DiscountCode />,
       },
       {
         path: "brands",
         element: <Brands />,
+      },
+      {
+        path: "colors",
+        element: <Colors />,
+      },
+      {
+        path: "blog-categories",
+        element: <BlogCategory />,
       },
       {
         path: "products",
@@ -131,6 +143,14 @@ export const router = createBrowserRouter([
       {
         path: "order-detail/:id",
         element: <OrderDetail />,
+      },
+      {
+        path: "blogs",
+        element: <Blogs />,
+      },
+      {
+        path: "enquiries",
+        element: <Enquiries />,
       },
       {
         path: "settings",
