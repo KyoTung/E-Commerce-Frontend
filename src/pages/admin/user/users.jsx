@@ -82,50 +82,55 @@ const User = () => {
   };
 
 
+const onBlockUser = async (user) => {
+  if (!window.confirm("Are you sure you want to block this user?")) {
+    return;
+  }
+  try {
+    const resultAction = await dispatch(
+      blockUser({ userId: user._id || user.id, token: currentUser.token })
+    );
 
-  const onBlockUser = async (user) => {
-    if (!window.confirm("Are you sure you want to block this user?")) {
-      return;
-    }
-    try {
-      const resultAction = await dispatch(
-        blockUser({ userId: user._id || user.id, token: currentUser.token })
-      );
+    console.log("Block user result:", resultAction); // Debug
 
-      if (blockUser.fulfilled.match(resultAction)) {
-        setIsBlocking(true);
-        toast.success("User blocked successfully");
-        getUsers();
-      } else {
-        toast.error("Failed to block user");
-        toast.error(resultAction.payload || "Error: Create user failed!");
-      }
-    } catch (error) {
-      toast.error("Failed to block user");
+    if (blockUser.fulfilled.match(resultAction)) {
+      // Kiểm tra xem response có message không
+      const message = resultAction.payload?.message || "User blocked successfully";
+      toast.success(message);
+    } else {
+      const errorMessage = resultAction.payload?.message || "Failed to block user";
+      toast.error(errorMessage);
     }
-  };
+  } catch (error) {
+    toast.error("An unexpected error occurred");
+    console.error("Block user error:", error);
+  }
+};
 
-  const onUnBlockUser = async (user) => {
-    if (!window.confirm("Are you sure you want to unblock this user?")) {
-      return;
-    }
-    try {
-      const resultAction = await dispatch(
-        unBlockUser({ userId: user._id || user.id, token: currentUser.token })
-      );
+const onUnBlockUser = async (user) => {
+  if (!window.confirm("Are you sure you want to unblock this user?")) {
+    return;
+  }
+  try {
+    const resultAction = await dispatch(
+      unBlockUser({ userId: user._id || user.id, token: currentUser.token })
+    );
 
-      if (unBlockUser.fulfilled.match(resultAction)) {
-        setIsBlocking(false);
-        toast.success("User unblocked successfully");
-        getUsers();
-      } else {
-        toast.error("Failed to unblock user");
-        toast.error(resultAction.payload || "Error: Create user failed!");
-      }
-    } catch (error) {
-      toast.error("Failed to unblock user");
+    console.log("Unblock user result:", resultAction); // Debug
+
+    if (unBlockUser.fulfilled.match(resultAction)) {
+      // Kiểm tra xem response có message không
+      const message = resultAction.payload?.message || "User unblocked successfully";
+      toast.success(message);
+    } else {
+      const errorMessage = resultAction.payload?.message || "Failed to unblock user";
+      toast.error(errorMessage);
     }
-  };
+  } catch (error) {
+    toast.error("An unexpected error occurred");
+    console.error("Unblock user error:", error);
+  }
+};
 
   return (
     <div>

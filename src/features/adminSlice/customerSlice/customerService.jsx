@@ -48,7 +48,7 @@ const blockUser = async (userId, token) => {
 };
 
 const unBlockUser = async (userId, token) => {
-  const response = await axios.put(`${baseURL}/user/unblock-user/${userId}`, {}, {
+  const response = await axios.put(`${baseURL}/user/unlock-user/${userId}`, {}, {
     headers: {  Authorization: `Bearer ${token}`      }
   });
   return response.data;

@@ -42,10 +42,10 @@ const deleteProduct = async (productId, token) => {
 };
 
 const productService = {
-  createBrand,
-  updateBrand,
-  deleteBrand,
-  getAllBrands,
-  getBrand,
+  createProduct,
+  updateProduct,
+  getAllProducts,
+  getProduct,
+  deleteProduct,
 };
 export default productService;

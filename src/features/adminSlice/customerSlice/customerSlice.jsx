@@ -169,16 +169,21 @@ export const customerSlice = createSlice({
       state.isError = true;
       state.isSuccess = false;
       state.message = action.payload?.message;
+
+
     });  
     builder.addCase(blockUser.pending, (state) => {
       state.isLoading = true;
     });
-    builder.addCase(blockUser.fulfilled, (state, action) => {
+     builder.addCase(blockUser.fulfilled, (state, action) => {
       state.isLoading = false;
       state.isSuccess = true;
-      const index = state.allUsers.findIndex(user => user._id === action.payload._id);
-      if(index !== -1){
-        state.allUsers[index] = action.payload;
+      const blockedUser = action.payload.data;
+      if (blockedUser && blockedUser._id) {
+        const index = state.allUsers.findIndex(user => user._id === blockedUser._id);
+        if (index !== -1) {
+          state.allUsers[index] = blockedUser; 
+        }
       }
     });
     builder.addCase(blockUser.rejected, (state, action) => {
@@ -190,13 +195,16 @@ export const customerSlice = createSlice({
     builder.addCase(unBlockUser.pending, (state) => {
       state.isLoading = true;
     });   
-    builder.addCase(unBlockUser.fulfilled, (state, action) => {
+   builder.addCase(unBlockUser.fulfilled, (state, action) => {
       state.isLoading = false;
       state.isSuccess = true;
-      const index = state.allUsers.findIndex(user => user._id === action.payload._id);    
-      if(index !== -1){
-        state.allUsers[index] = action.payload;
-      }   
+      const unblockedUser = action.payload.data;
+      if (unblockedUser && unblockedUser._id) {
+        const index = state.allUsers.findIndex(user => user._id === unblockedUser._id);
+        if (index !== -1) {
+          state.allUsers[index] = unblockedUser;
+        }
+      }
     });
     builder.addCase(unBlockUser.rejected, (state, action) => {
       state.isLoading = false;
