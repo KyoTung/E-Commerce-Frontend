@@ -120,7 +120,7 @@ const Products = () => {
                           <div className="flex w-max gap-x-4">
                             <img
                               src={product.image_url}
-                              alt={product.name}
+                              alt={product.title}
                               className="w-35 h-40 rounded-lg object-cover"
                             />
                             <div className="flex flex-col">
@@ -130,7 +130,7 @@ const Products = () => {
                           </div>
                         </td>
                         <td className="table-cell">
-                          {formatPrice(product.price)}
+                          {formatPrice(product.basePrice)}
                         </td>
                         <td className="table-cell">{product.quantity}</td>
                         {/* <td className="table-cell">{product.sku}</td> */}
