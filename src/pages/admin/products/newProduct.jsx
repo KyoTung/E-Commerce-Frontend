@@ -4,6 +4,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import JoditEditor from "jodit-react";
 import { useForm } from "react-hook-form";
+import axiosClient from "../../../Axios";
 
 import { useSelector, useDispatch } from "react-redux";
 import { getAllBrand } from "../../../features/adminSlice/brand/brandSlice";
@@ -179,10 +180,66 @@ const NewProduct = ({ placeholder }) => {
     setVariants(updatedVariants);
   };
 
-  const deleteImage = (image) => {
+  const handlImageUpload = async (files) => {
+    const formData = new FormData();
+    files.forEach((file) => formData.append("images", file));
+    const res = await axiosClient.put("/product/upload-images", formData);
+    setGalleies(res.data); // lưu ảnh đại diện
+  };
+
+  const handleFileChange = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    try {
+      // Tạo mảng promises cho tất cả các file
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const imageForm = new FormData();
+        imageForm.append("images", file);
+        const response = await axiosClient.put(
+          "/product/upload-images",
+          imageForm,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${currentUser?.token}`,
+            },
+          }
+        );
+
+        const image = response.data[0]; // lấy phần tử đầu tiên trong mảng
+
+        return {
+          url: image.url,
+          asset_id: image.asset_id,
+          public_id: image.public_id,
+        };
+      });
+
+      // Chờ tất cả requests hoàn thành
+      const results = await Promise.all(uploadPromises);
+
+      // Cập nhật state theo cách immutable
+      setGallery((prev) => [...prev, ...results]); // lưu toàn bộ object ảnh
+      setGalleryImages((prev) => [...prev, ...results.map((r) => r.url)]); // chỉ lấy URL
+
+      // Reset input
+      e.target.value = null;
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to upload images");
+    }
+  };
+
+  console.log(galleryImages);
+
+  const handleDeleteImage = (image) => {
     const newGallery = galleryImages.filter((gallery) => gallery != image);
     setGalleryImages(newGallery);
   };
+
+  galleryImages.map((image, imgIndex) => (
+    console.log(image)
+  ))
 
   return (
     <div>
@@ -245,28 +302,28 @@ const NewProduct = ({ placeholder }) => {
                   </label>
                   <input
                     type="file"
-                    multiple
                     accept="image/*"
-                    {...register("images")}
+                    onChange={handleFileChange}
                     className="mt-1 block w-full text-sm text-gray-500"
                   />
-                  {/* <div className="flex flex-wrap gap-2 mt-2">
-                      {variant.images.map((image, imgIndex) => (
-                        <div key={imgIndex} className="relative">
-                          <img
-                            src={image}
-                            className="w-20 h-20 rounded object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeVariantImage(index, imgIndex)}
-                            className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div> */}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {galleryImages.map((image, imgIndex) => (
+                      <div key={imgIndex} className="relative">
+                        <img
+                          src={image}
+                          className="w-20 h-20 rounded object-cover"
+                          alt={`Ảnh ${imgIndex + 1}`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeVariantImage(index, imgIndex)}
+                          className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
@@ -461,7 +518,7 @@ const NewProduct = ({ placeholder }) => {
                       type="file"
                       multiple
                       accept="image/*"
-                      onChange={(e) => handleVariantImageChange(e, index)}
+                      onChange={(e) => handlImageUpload(e, index)}
                       className="mt-1 block w-full text-sm text-gray-500"
                     />
                     <div className="flex flex-wrap gap-2 mt-2">
