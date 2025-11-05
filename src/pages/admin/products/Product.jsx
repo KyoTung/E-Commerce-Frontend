@@ -69,6 +69,8 @@ const Products = () => {
       });
   };
 
+   console.log(products)
+
   return (
     <div>
       <ToastContainer />
@@ -114,12 +116,12 @@ const Products = () => {
                 <tbody className="table-body">
                   {filteredProducts.length > 0 ? (
                     filteredProducts.map((product, index) => (
-                      <tr key={product.id} className="table-row">
+                      <tr key={index} className="table-row">
                         <td className="table-cell">{index + 1}</td>
                         <td className="table-cell">
                           <div className="flex w-max gap-x-4">
                             <img
-                              src={product.image_url}
+                              src={product.images?.[0]?.url}
                               alt={product.title}
                               className="w-35 h-40 rounded-lg object-cover"
                             />

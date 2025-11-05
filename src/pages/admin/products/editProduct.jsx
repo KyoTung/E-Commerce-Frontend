@@ -223,10 +223,23 @@ const EditProduct = ({ placeholder }) => {
     setVariants(updatedVariants);
   };
 
-  const deleteImage = (image) => {
-    const newGallery = galleryImages.filter((gallery) => gallery != image);
-    setGalleryImages(newGallery);
-  };
+    const handleDeleteImage = async (image) => {
+      try {
+        const id = image.public_id;
+        console.log("imgae id", id)
+        const response = await axiosClient.put(
+          `"/product/delete-images/${ttt}"`,
+          imageForm,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${currentUser?.token}`,
+            },
+          }
+        );
+      } catch {}
+    };
+  
 
   if (isLoading) {
     return (

@@ -78,6 +78,7 @@ const NewProduct = ({ placeholder }) => {
         description: formData.description,
         brand: formData.brand,
         category: formData.category,
+        images: gallery,
         variants: Array.isArray(variants)
           ? variants.map((variant) => ({
               ...variant,
@@ -230,16 +231,13 @@ const NewProduct = ({ placeholder }) => {
     }
   };
 
-  console.log(galleryImages);
+console.log("image",gallery)
 
-  const handleDeleteImage = (image) => {
+  const handleCanceledImage = (image) => {
+    console.log(image);
     const newGallery = galleryImages.filter((gallery) => gallery != image);
     setGalleryImages(newGallery);
   };
-
-  galleryImages.map((image, imgIndex) => (
-    console.log(image)
-  ))
 
   return (
     <div>
@@ -316,7 +314,7 @@ const NewProduct = ({ placeholder }) => {
                         />
                         <button
                           type="button"
-                          onClick={() => removeVariantImage(index, imgIndex)}
+                          onClick={handleCanceledImage}
                           className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center"
                         >
                           ×

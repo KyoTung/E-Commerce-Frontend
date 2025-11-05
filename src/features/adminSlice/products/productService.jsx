@@ -3,7 +3,10 @@ const baseURL = import.meta.env.VITE_BASE_URL;
 
 const createProduct = async (productData, token) => {
   const response = await axios.post(`${baseURL}/product`, productData, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
   });
   return response.data;
 };
@@ -11,14 +14,13 @@ const createProduct = async (productData, token) => {
 const updateProduct = async (productId, productData, token) => {
   const response = await axios.put(
     `${baseURL}/product/${productId}`,
-    productData ,
+    productData,
     {
       headers: { Authorization: `Bearer ${token}` },
     }
   );
   return response.data;
 };
-
 
 const getAllProducts = async (token) => {
   const response = await axios.get(`${baseURL}/product`, {
@@ -40,9 +42,6 @@ const deleteProduct = async (productId, token) => {
   });
   return response.data;
 };
-
-
-
 
 const productService = {
   createProduct,
