@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import JoditEditor from "jodit-react";
+import axiosClient from "../../../Axios";
 import { useForm } from "react-hook-form";
 import { useSelector, useDispatch } from "react-redux";
 import { getAllBrand } from "../../../features/adminSlice/brand/brandSlice";
@@ -57,6 +58,7 @@ const EditProduct = ({ placeholder }) => {
 
   useEffect(() => {
     if (product) {
+     
       // Điền dữ liệu sản phẩm vào form
       reset({
         title: product.title,
@@ -225,29 +227,22 @@ const EditProduct = ({ placeholder }) => {
 
     const handleDeleteImage = async (image) => {
       try {
-        const id = image.public_id;
-        console.log("imgae id", id)
-        const response = await axiosClient.put(
-          `"/product/delete-images/${ttt}"`,
-          imageForm,
+        const publicIdToDelete = image.public_id;
+        const id = product_id;
+        console.log("image id", id, product_id)
+
+        await axiosClient.delete(
+          `/product/delete-images/${id}/${publicIdToDelete}`,
           {
             headers: {
-              "Content-Type": "multipart/form-data",
+              // "Content-Type": "multipart/form-data",
               Authorization: `Bearer ${currentUser?.token}`,
             },
           }
         );
       } catch {}
     };
-  
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-lg">Loading product...</div>
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -317,15 +312,15 @@ const EditProduct = ({ placeholder }) => {
                   />
                   {/* Hiển thị ảnh hiện tại */}
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {galleryImages.map((image, index) => (
+                    {product?.images?.map((image, index) => (
                       <div key={index} className="relative">
                         <img
-                          src={image}
+                          src={image.url}
                           className="w-20 h-20 rounded object-cover"
                         />
                         <button
                           type="button"
-                          onClick={() => deleteImage(image)}
+                          onClick={() => handleDeleteImage(image)}
                           className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center"
                         >
                           ×

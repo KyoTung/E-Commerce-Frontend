@@ -231,7 +231,6 @@ const NewProduct = ({ placeholder }) => {
     }
   };
 
-console.log("image",gallery)
 
   const handleCanceledImage = (image) => {
     console.log(image);
