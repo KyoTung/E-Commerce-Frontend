@@ -20,8 +20,6 @@ const NewProduct = ({ placeholder }) => {
   const { categories } = useSelector((state) => state.categoryAdmin);
 
   const [gallery, setGallery] = useState([]);
-  const [galleryImages, setGalleryImages] = useState([]);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [variants, setVariants] = useState([
     { color: "", storage: "", price: "", quantity: "", images: [] },
@@ -222,7 +220,6 @@ const NewProduct = ({ placeholder }) => {
 
       // Cập nhật state theo cách immutable
       setGallery((prev) => [...prev, ...results]); // lưu toàn bộ object ảnh
-      setGalleryImages((prev) => [...prev, ...results.map((r) => r.url)]); // chỉ lấy URL
 
       // Reset input
       e.target.value = null;
@@ -234,8 +231,8 @@ const NewProduct = ({ placeholder }) => {
 
   const handleCanceledImage = (image) => {
     console.log(image);
-    const newGallery = galleryImages.filter((gallery) => gallery != image);
-    setGalleryImages(newGallery);
+    const newGallery = gallery.filter((gallery) => gallery != image);
+    setGallery(newGallery);
   };
 
   return (
@@ -304,10 +301,10 @@ const NewProduct = ({ placeholder }) => {
                     className="mt-1 block w-full text-sm text-gray-500"
                   />
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {galleryImages.map((image, imgIndex) => (
+                    {gallery.map((image, imgIndex) => (
                       <div key={imgIndex} className="relative">
                         <img
-                          src={image}
+                          src={image.url}
                           className="w-20 h-20 rounded object-cover"
                           alt={`Ảnh ${imgIndex + 1}`}
                         />

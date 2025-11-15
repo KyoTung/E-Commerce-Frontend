@@ -24,7 +24,7 @@ const EditProduct = ({ placeholder }) => {
   const { categories } = useSelector((state) => state.categoryAdmin);
   const { product, isLoading } = useSelector((state) => state.productAdmin);
 
-  const [galleryImages, setGalleryImages] = useState([]);
+  const [gallery, setGallery] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [variants, setVariants] = useState([
     { color: "", storage: "", price: "", quantity: "", images: [] },
@@ -58,7 +58,6 @@ const EditProduct = ({ placeholder }) => {
 
   useEffect(() => {
     if (product) {
-     
       // Điền dữ liệu sản phẩm vào form
       reset({
         title: product.title,
@@ -87,7 +86,7 @@ const EditProduct = ({ placeholder }) => {
 
       // Điền ảnh sản phẩm (nếu có)
       if (product.images) {
-        setGalleryImages(product.images);
+        setGallery(product.images);
       }
     }
   }, [product, reset]);
@@ -137,6 +136,12 @@ const EditProduct = ({ placeholder }) => {
           sim: formData.sim,
           design: formData.design,
         },
+        // Thêm gallery images vào product data
+        images: gallery.map(img => ({
+          url: img.url,
+          public_id: img.public_id,
+          asset_id: img.asset_id
+        }))
       };
 
       const resultAction = await dispatch(
@@ -191,23 +196,27 @@ const EditProduct = ({ placeholder }) => {
     if (!files || files.length === 0) return;
 
     try {
-      // Giả sử có API upload ảnh, thay thế bằng API của bạn
       const uploadPromises = Array.from(files).map(async (file) => {
         const imageForm = new FormData();
-        imageForm.append("image", file);
-        const response = await Axios.post("/temp-images", imageForm, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        return response.data.data.image_url;
+        imageForm.append("images", file);
+        const response = await axiosClient.put(
+          "/product/upload-images",
+          imageForm,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${currentUser?.token}`,
+            },
+          }
+        );
+        return response.data[0]; // lấy phần tử đầu tiên
       });
 
-      const imageUrls = await Promise.all(uploadPromises);
+      const uploadedImages = await Promise.all(uploadPromises);
       const updatedVariants = [...variants];
       updatedVariants[variantIndex].images = [
         ...updatedVariants[variantIndex].images,
-        ...imageUrls,
+        ...uploadedImages.map(img => img.url), // chỉ lấy URL cho variant images
       ];
       setVariants(updatedVariants);
 
@@ -225,24 +234,69 @@ const EditProduct = ({ placeholder }) => {
     setVariants(updatedVariants);
   };
 
-    const handleDeleteImage = async (image) => {
-      try {
-        const publicIdToDelete = image.public_id;
-        const id = product_id;
-        console.log("image id", id, product_id)
+  const handleFileChange = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-        await axiosClient.delete(
-          `/product/delete-images/${id}/${publicIdToDelete}`,
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const imageForm = new FormData();
+        imageForm.append("images", file);
+        const response = await axiosClient.put(
+          "/product/upload-images",
+          imageForm,
           {
             headers: {
-              // "Content-Type": "multipart/form-data",
+              "Content-Type": "multipart/form-data",
               Authorization: `Bearer ${currentUser?.token}`,
             },
           }
         );
-      } catch {}
-    };
+        return response.data[0]; // lấy phần tử đầu tiên trong mảng
+      });
 
+      const results = await Promise.all(uploadPromises);
+      
+      // Cập nhật gallery với toàn bộ object ảnh
+      setGallery((prev) => [...prev, ...results]);
+
+      // Reset input
+      e.target.value = null;
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to upload images");
+    }
+  };
+
+  const handleDeleteImage = async (image) => {
+    try {
+      const publicIdToDelete = image.public_id;
+      const id = product_id;
+      
+      await axiosClient.delete(
+        `/product/delete-images/${id}/${publicIdToDelete}`,
+        {
+          headers: {
+            Authorization: `Bearer ${currentUser?.token}`,
+          },
+        }
+      );
+
+      // Xóa ảnh khỏi gallery sau khi xóa thành công
+      setGallery(prev => prev.filter(img => img.public_id !== publicIdToDelete));
+      toast.success("Image deleted successfully");
+    } catch (error) {
+      console.error("Delete image error:", error);
+      toast.error("Failed to delete image");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-lg">Loading product...</div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -301,27 +355,32 @@ const EditProduct = ({ placeholder }) => {
                 </div>
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700">
-                    Images
+                    Product Images
                   </label>
                   <input
                     type="file"
                     multiple
                     accept="image/*"
-                    {...register("images")}
+                    onChange={handleFileChange}
                     className="mt-1 block w-full text-sm text-gray-500"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    You can select multiple images
+                  </p>
+                  
                   {/* Hiển thị ảnh hiện tại */}
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {product?.images?.map((image, index) => (
+                    {gallery.map((image, index) => (
                       <div key={index} className="relative">
                         <img
                           src={image.url}
-                          className="w-20 h-20 rounded object-cover"
+                          alt={`Product image ${index + 1}`}
+                          className="w-20 h-20 rounded object-cover border"
                         />
                         <button
                           type="button"
                           onClick={() => handleDeleteImage(image)}
-                          className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                          className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
                         >
                           ×
                         </button>
@@ -352,7 +411,6 @@ const EditProduct = ({ placeholder }) => {
                   <label className="block text-sm font-medium text-gray-700">
                     Screen
                   </label>
-
                   <textarea
                     {...register("screen")}
                     rows={5}
@@ -426,7 +484,6 @@ const EditProduct = ({ placeholder }) => {
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
                     SIM
@@ -529,12 +586,12 @@ const EditProduct = ({ placeholder }) => {
                         <div key={imgIndex} className="relative">
                           <img
                             src={image}
-                            className="w-20 h-20 rounded object-cover"
+                            className="w-20 h-20 rounded object-cover border"
                           />
                           <button
                             type="button"
                             onClick={() => removeVariantImage(index, imgIndex)}
-                            className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                            className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
                           >
                             ×
                           </button>
@@ -562,8 +619,8 @@ const EditProduct = ({ placeholder }) => {
                 Add Variant
               </button>
             </div>
-            {/* Relations */}
 
+            {/* Relations */}
             <div className="border-b pb-6">
               <h2 className="mb-4 text-xl font-semibold">Relations</h2>
               <div className="space-y-4">
