@@ -126,8 +126,7 @@ const Products = () => {
                               className="w-35 h-40 rounded-lg object-cover"
                             />
                             <div className="flex flex-col">
-                              <p>{product.title}</p>
-                              <p className="font-normal text-slate-600 dark:text-slate-400"></p>
+                            <p className="font-normal text-slate-600 dark:text-slate-400" style={{overflowWrap: "anywhere"}}>{product.title}</p>
                             </div>
                           </div>
                         </td>
@@ -135,7 +134,6 @@ const Products = () => {
                           {formatPrice(product.basePrice)}
                         </td>
                         <td className="table-cell">{product.quantity}</td>
-                        {/* <td className="table-cell">{product.sku}</td> */}
                         {/* <td className="table-cell">
                           {product.status === 1 ? (
                             <p className="text-green-500">In Stock</p>

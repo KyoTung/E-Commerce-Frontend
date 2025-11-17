@@ -137,11 +137,11 @@ const EditProduct = ({ placeholder }) => {
           design: formData.design,
         },
         // Thêm gallery images vào product data
-        images: gallery.map(img => ({
+        images: gallery.map((img) => ({
           url: img.url,
           public_id: img.public_id,
-          asset_id: img.asset_id
-        }))
+          asset_id: img.asset_id,
+        })),
       };
 
       const resultAction = await dispatch(
@@ -216,7 +216,7 @@ const EditProduct = ({ placeholder }) => {
       const updatedVariants = [...variants];
       updatedVariants[variantIndex].images = [
         ...updatedVariants[variantIndex].images,
-        ...uploadedImages.map(img => img.url), // chỉ lấy URL cho variant images
+        ...uploadedImages.map((img) => img.url), // chỉ lấy URL cho variant images
       ];
       setVariants(updatedVariants);
 
@@ -256,7 +256,7 @@ const EditProduct = ({ placeholder }) => {
       });
 
       const results = await Promise.all(uploadPromises);
-      
+
       // Cập nhật gallery với toàn bộ object ảnh
       setGallery((prev) => [...prev, ...results]);
 
@@ -271,7 +271,7 @@ const EditProduct = ({ placeholder }) => {
     try {
       const publicIdToDelete = image.public_id;
       const id = product_id;
-      
+
       await axiosClient.delete(
         `/product/delete-images/${id}/${publicIdToDelete}`,
         {
@@ -282,7 +282,9 @@ const EditProduct = ({ placeholder }) => {
       );
 
       // Xóa ảnh khỏi gallery sau khi xóa thành công
-      setGallery(prev => prev.filter(img => img.public_id !== publicIdToDelete));
+      setGallery((prev) =>
+        prev.filter((img) => img.public_id !== publicIdToDelete)
+      );
       toast.success("Image deleted successfully");
     } catch (error) {
       console.error("Delete image error:", error);
@@ -367,7 +369,7 @@ const EditProduct = ({ placeholder }) => {
                   <p className="text-xs text-gray-500 mt-1">
                     You can select multiple images
                   </p>
-                  
+
                   {/* Hiển thị ảnh hiện tại */}
                   <div className="flex flex-wrap gap-2 mt-2">
                     {gallery.map((image, index) => (
@@ -400,115 +402,64 @@ const EditProduct = ({ placeholder }) => {
                 </div>
               </div>
             </div>
-
-            {/* Technical Specifications */}
+            {/* Relations */}
             <div className="border-b pb-6">
-              <h2 className="mb-4 text-xl font-semibold">
-                Technical Specifications
-              </h2>
-              <div className="grid grid-cols-1 gap-4">
+              <h2 className="mb-4 text-xl font-semibold">Relations</h2>
+              <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Screen
+                    Brand *
                   </label>
-                  <textarea
-                    {...register("screen")}
-                    rows={5}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
-                  />
+                  <select
+                    {...register("brand", { required: "Brand is required" })}
+                    className={`mt-1 block w-full rounded-md border ${
+                      errors.brand ? "border-red-500" : "border-gray-300"
+                    } p-2 shadow-sm`}
+                  >
+                    <option value="">Select Brand</option>
+                    {brands.map((brand) => (
+                      <option key={brand._id || brand.id} value={brand.title}>
+                        {brand.title}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.brand && (
+                    <p className="mt-1 text-sm text-red-500">
+                      {errors.brand.message}
+                    </p>
+                  )}
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    OS
+                    Category *
                   </label>
-                  <input
-                    {...register("os")}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Rear Camera
-                  </label>
-                  <textarea
-                    {...register("rearCamera")}
-                    rows={7}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Front Camera
-                  </label>
-                  <textarea
-                    {...register("frontCamera")}
-                    rows={3}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Processor
-                  </label>
-                  <textarea
-                    {...register("processor")}
-                    rows={3}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Storage
-                  </label>
-                  <input
-                    {...register("storage")}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    RAM
-                  </label>
-                  <input
-                    {...register("ram")}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Battery
-                  </label>
-                  <textarea
-                    {...register("battery")}
-                    rows={4}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    SIM
-                  </label>
-                  <input
-                    {...register("sim")}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Design
-                  </label>
-                  <textarea
-                    {...register("design")}
-                    rows={4}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
-                  />
+                  <select
+                    {...register("category", {
+                      required: "Category is required",
+                    })}
+                    className={`mt-1 block w-full rounded-md border ${
+                      errors.category ? "border-red-500" : "border-gray-300"
+                    } p-2 shadow-sm`}
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map((category) => (
+                      <option
+                        key={category._id || category.id}
+                        value={category.title}
+                      >
+                        {category.title}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.category && (
+                    <p className="mt-1 text-sm text-red-500">
+                      {errors.category.message}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-6">
             {/* Variants */}
             <div className="border-b pb-6">
               <h2 className="mb-4 text-xl font-semibold">Variants</h2>
@@ -619,62 +570,111 @@ const EditProduct = ({ placeholder }) => {
                 Add Variant
               </button>
             </div>
+          </div>
 
-            {/* Relations */}
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Technical Specifications */}
             <div className="border-b pb-6">
-              <h2 className="mb-4 text-xl font-semibold">Relations</h2>
-              <div className="space-y-4">
+              <h2 className="mb-4 text-xl font-semibold">
+                Technical Specifications
+              </h2>
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Brand *
+                    Screen
                   </label>
-                  <select
-                    {...register("brand", { required: "Brand is required" })}
-                    className={`mt-1 block w-full rounded-md border ${
-                      errors.brand ? "border-red-500" : "border-gray-300"
-                    } p-2 shadow-sm`}
-                  >
-                    <option value="">Select Brand</option>
-                    {brands.map((brand) => (
-                      <option key={brand._id || brand.id} value={brand.title}>
-                        {brand.title}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.brand && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {errors.brand.message}
-                    </p>
-                  )}
+                  <textarea
+                    {...register("screen")}
+                    rows={5}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
+                  />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Category *
+                    OS
                   </label>
-                  <select
-                    {...register("category", {
-                      required: "Category is required",
-                    })}
-                    className={`mt-1 block w-full rounded-md border ${
-                      errors.category ? "border-red-500" : "border-gray-300"
-                    } p-2 shadow-sm`}
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((category) => (
-                      <option
-                        key={category._id || category.id}
-                        value={category.title}
-                      >
-                        {category.title}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.category && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {errors.category.message}
-                    </p>
-                  )}
+                  <input
+                    {...register("os")}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Rear Camera
+                  </label>
+                  <textarea
+                    {...register("rearCamera")}
+                    rows={7}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Front Camera
+                  </label>
+                  <textarea
+                    {...register("frontCamera")}
+                    rows={3}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Processor
+                  </label>
+                  <textarea
+                    {...register("processor")}
+                    rows={3}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Storage
+                  </label>
+                  <input
+                    {...register("storage")}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    RAM
+                  </label>
+                  <input
+                    {...register("ram")}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Battery
+                  </label>
+                  <textarea
+                    {...register("battery")}
+                    rows={4}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    SIM
+                  </label>
+                  <input
+                    {...register("sim")}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Design
+                  </label>
+                  <textarea
+                    {...register("design")}
+                    rows={4}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
+                  />
                 </div>
               </div>
             </div>
