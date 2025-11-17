@@ -12,6 +12,7 @@ import {
   getProduct,
   updateProduct,
 } from "../../../features/adminSlice/products/productSlice";
+import { getAllColor } from "../../../features/adminSlice/color/colorSlice";
 
 const EditProduct = ({ placeholder }) => {
   const editor = useRef(null);
@@ -23,12 +24,11 @@ const EditProduct = ({ placeholder }) => {
   const { brands } = useSelector((state) => state.brandAdmin);
   const { categories } = useSelector((state) => state.categoryAdmin);
   const { product, isLoading } = useSelector((state) => state.productAdmin);
+  const { colors } = useSelector((state) => state.colorAdmin);
 
   const [gallery, setGallery] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [variants, setVariants] = useState([
-    { color: "", storage: "", price: "", quantity: "", images: [] },
-  ]);
+  const [variants, setVariants] = useState([]);
 
   const {
     register,
@@ -51,6 +51,7 @@ const EditProduct = ({ placeholder }) => {
   useEffect(() => {
     getCategories();
     getBrands();
+    getColors();
     if (product_id) {
       dispatch(getProduct({ productId: product_id, token: currentUser.token }));
     }
@@ -82,6 +83,9 @@ const EditProduct = ({ placeholder }) => {
       // Điền variants
       if (product.variants && product.variants.length > 0) {
         setVariants(product.variants);
+      } else {
+        // Nếu không có variants, tạo một variant mặc định
+        setVariants([{ color: "", storage: "", price: "", quantity: "", images: [] }]);
       }
 
       // Điền ảnh sản phẩm (nếu có)
@@ -99,6 +103,10 @@ const EditProduct = ({ placeholder }) => {
     dispatch(getAllCategory({ token: currentUser.token }));
   };
 
+  const getColors = () => {
+    dispatch(getAllColor({ token: currentUser.token }));
+  };
+
   const handleEditorChange = (newContent) => {
     setValue("description", newContent);
   };
@@ -108,11 +116,22 @@ const EditProduct = ({ placeholder }) => {
     setIsSubmitting(true);
 
     try {
+      // Validate variants
+      const invalidVariants = variants.filter(variant => 
+        !variant.color || !variant.storage || !variant.price || !variant.quantity
+      );
+
+      if (invalidVariants.length > 0) {
+        toast.error("Please complete all variant information before submitting");
+        setIsSubmitting(false);
+        return;
+      }
+
       // Chuẩn bị dữ liệu theo model Product
       const productData = {
         title: formData.title,
-        slug: formData.slug,
-        basePrice: formData.basePrice,
+        slug: formData.slug || formData.title.toLowerCase().replace(/\s+/g, "-"),
+        basePrice: Number(formData.basePrice),
         description: formData.description,
         brand: formData.brand,
         category: formData.category,
@@ -178,9 +197,23 @@ const EditProduct = ({ placeholder }) => {
   };
 
   const addVariant = () => {
+    const lastVariant = variants[variants.length - 1];
+    
+    // Kiểm tra variant hiện tại đã đầy đủ chưa
+    if (!lastVariant.color || !lastVariant.storage || !lastVariant.price || !lastVariant.quantity) {
+      toast.error("Please complete the current variant before adding a new one");
+      return;
+    }
+    
     setVariants([
       ...variants,
-      { color: "", storage: "", price: "", quantity: "", images: [] },
+      { 
+        color: "", 
+        storage: "", 
+        price: lastVariant.price,
+        quantity: lastVariant.quantity,
+        images: [] 
+      },
     ]);
   };
 
@@ -188,6 +221,8 @@ const EditProduct = ({ placeholder }) => {
     if (variants.length > 1) {
       const updatedVariants = variants.filter((_, i) => i !== index);
       setVariants(updatedVariants);
+    } else {
+      toast.error("At least one variant is required");
     }
   };
 
@@ -216,7 +251,7 @@ const EditProduct = ({ placeholder }) => {
       const updatedVariants = [...variants];
       updatedVariants[variantIndex].images = [
         ...updatedVariants[variantIndex].images,
-        ...uploadedImages.map((img) => img.url), // chỉ lấy URL cho variant images
+        ...uploadedImages, // SỬA: trả về toàn bộ object ảnh, không chỉ URL
       ];
       setVariants(updatedVariants);
 
@@ -256,11 +291,7 @@ const EditProduct = ({ placeholder }) => {
       });
 
       const results = await Promise.all(uploadPromises);
-
-      // Cập nhật gallery với toàn bộ object ảnh
       setGallery((prev) => [...prev, ...results]);
-
-      // Reset input
       e.target.value = null;
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to upload images");
@@ -335,9 +366,21 @@ const EditProduct = ({ placeholder }) => {
                     </p>
                   )}
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Base Price
+                    Slug
+                  </label>
+                  <input
+                    {...register("slug")}
+                    placeholder="Auto-generated from title"
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Base Price *
                   </label>
                   <input
                     type="number"
@@ -355,6 +398,7 @@ const EditProduct = ({ placeholder }) => {
                     </p>
                   )}
                 </div>
+
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700">
                     Product Images
@@ -390,6 +434,7 @@ const EditProduct = ({ placeholder }) => {
                     ))}
                   </div>
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
                     Tags
@@ -402,6 +447,7 @@ const EditProduct = ({ placeholder }) => {
                 </div>
               </div>
             </div>
+
             {/* Relations */}
             <div className="border-b pb-6">
               <h2 className="mb-4 text-xl font-semibold">Relations</h2>
@@ -460,37 +506,69 @@ const EditProduct = ({ placeholder }) => {
                 </div>
               </div>
             </div>
+
             {/* Variants */}
             <div className="border-b pb-6">
               <h2 className="mb-4 text-xl font-semibold">Variants</h2>
+              <div className="mb-4">
+                <p className="text-sm text-gray-600">
+                  {variants.length === 1 
+                    ? "Product variants" 
+                    : `${variants.length} variants`}
+                </p>
+              </div>
+              
               {variants.map((variant, index) => (
                 <div key={index} className="variant-item border-b pb-4 mb-4">
-                  <h3 className="text-lg font-medium">Variant {index + 1}</h3>
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-lg font-medium">Variant {index + 1}</h3>
+                    {variants.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeVariant(index)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Color *
                       </label>
-                      <input
+                      <select
                         value={variant.color}
                         onChange={(e) =>
                           handleVariantChange(index, "color", e.target.value)
                         }
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                      />
+                      >
+                        <option value="">Select Color</option>
+                        {colors.map((color, colorIndex) => (
+                          <option key={colorIndex} value={color.title}>
+                            {color.title}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Storage *
                       </label>
-                      <input
+                      <select
                         value={variant.storage}
-                        onChange={(e) =>
-                          handleVariantChange(index, "storage", e.target.value)
-                        }
-                        placeholder="128GB, 256GB, etc."
+                        onChange={(e) => handleVariantChange(index, "storage", e.target.value)}
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                      />
+                      >
+                        <option value="">Select Storage</option>
+                        <option value="64GB">64GB</option>
+                        <option value="128GB">128GB</option>
+                        <option value="256GB">256GB</option>
+                        <option value="512GB">512GB</option>
+                        <option value="1TB">1TB</option>
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
@@ -536,8 +614,9 @@ const EditProduct = ({ placeholder }) => {
                       {variant.images.map((image, imgIndex) => (
                         <div key={imgIndex} className="relative">
                           <img
-                            src={image}
+                            src={image.url || image} // SỬA: hỗ trợ cả object và string
                             className="w-20 h-20 rounded object-cover border"
+                            alt={`Variant ${index + 1} image ${imgIndex + 1}`}
                           />
                           <button
                             type="button"
@@ -550,24 +629,15 @@ const EditProduct = ({ placeholder }) => {
                       ))}
                     </div>
                   </div>
-
-                  {variants.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeVariant(index)}
-                      className="mt-2 rounded bg-red-600 px-4 py-2 text-white hover:bg-red-800"
-                    >
-                      Remove Variant
-                    </button>
-                  )}
                 </div>
               ))}
+              
               <button
                 type="button"
                 onClick={addVariant}
                 className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-800"
               >
-                Add Variant
+                + Add Another Variant
               </button>
             </div>
           </div>
