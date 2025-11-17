@@ -109,7 +109,6 @@ const Products = () => {
                     <th className="table-head">Product</th>
                     <th className="table-head">Price</th>
                     <th className="table-head">Quantity</th>
-                    <th className="table-head">Status</th>
                     <th className="table-head">Actions</th>
                   </tr>
                 </thead>
@@ -133,14 +132,8 @@ const Products = () => {
                         <td className="table-cell">
                           {formatPrice(product.basePrice)}
                         </td>
-                        <td className="table-cell">{product.quantity}</td>
-                        {/* <td className="table-cell">
-                          {product.status === 1 ? (
-                            <p className="text-green-500">In Stock</p>
-                          ) : (
-                            <p className="text-red-500">Out Of Stock</p>
-                          )}
-                        </td> */}
+                        <td className="table-cell">{product.variants?.reduce((total, variant) => total + variant.quantity, 0)}</td>
+                        
                         <td className="table-cell">
                           <div className="flex items-center gap-x-4">
                             <button
