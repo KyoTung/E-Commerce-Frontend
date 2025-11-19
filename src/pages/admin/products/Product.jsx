@@ -45,31 +45,23 @@ const Products = () => {
       )
     : products;
 
-  const onDelete = (id) => {
-    if (!window.confirm("Are you sure you want to delete this product ?")) {
+  const onDelete = async(id) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này không?")) {
       return;
     }
-
-    Axios.delete(`/delete-product/${id}`)
-      .then((response) => {
-        if (response.data.status === 200) {
-          setTimeout(() => {
-            const newProducts = products.filter((product) => product.id !== id);
-            setProducts(newProducts);
-            toast.success(
-              response.data?.message || "Product deleted successfully"
-            );
-            getProducts();
-            // getCate(); // Nếu không có hàm này thì bỏ đi
-          }, 1200);
-        }
-      })
-      .catch(() => {
-        toast.error(response?.data?.error || "Deleted fail ");
-      });
+    try{
+ const resultAction = await dispatch(deleteProduct({productId: id, token: currentUser?.token}));
+      if (deleteProduct.fulfilled.match(resultAction)) {
+        toast.success("Product deleted successfully");
+        getProducts();
+      } else {
+        toast.error("Failed to delete product");
+      }
+    }
+    catch(err){
+     toast.error("Failed to delete product");
+    }
   };
-
-   console.log(products)
 
   return (
     <div>

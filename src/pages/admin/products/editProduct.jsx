@@ -13,6 +13,7 @@ import {
   updateProduct,
 } from "../../../features/adminSlice/products/productSlice";
 import { getAllColor } from "../../../features/adminSlice/color/colorSlice";
+import { IoArrowBackCircleOutline } from "react-icons/io5";
 
 const EditProduct = ({ placeholder }) => {
   const editor = useRef(null);
@@ -334,7 +335,15 @@ const EditProduct = ({ placeholder }) => {
   return (
     <div>
       <ToastContainer />
-      <h1 className="title mb-6">Edit Product</h1>
+      <h1 className="title mb-4">Edit Product</h1>
+      <button
+                type="button"
+                onClick={() => navigate("/admin/products")}
+                className="rounded px-4 py-2 text-gray-600 hover:bg-gray-300 bg-gray-400 mb-2"
+                disabled={isSubmitting}
+              >
+                <IoArrowBackCircleOutline className="inline-block mr-2" />
+              </button>
       <form
         onSubmit={handleSubmit(handleUpdateProduct)}
         className="mx-auto max-w-7xl rounded-lg bg-white p-6 shadow-md"
