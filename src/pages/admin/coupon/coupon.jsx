@@ -10,6 +10,7 @@ import {
   getCoupon,
   getAllCoupon,
   createCoupon,
+  updateCoupon,
 } from "../../../features/adminSlice/coupons/couponSlice";
 
 const Coupon = () => {
@@ -41,78 +42,65 @@ const Coupon = () => {
     e.preventDefault();
     try {
       console.log("newCoupon", newCoupon);
-      const resultAction = await dispatch(createCoupon({ couponData: newCoupon, token: currentUser.token }));
-      if(createCoupon.fulfilled.match(resultAction)){
+      const resultAction = await dispatch(
+        createCoupon({ couponData: newCoupon, token: currentUser.token })
+      );
+      if (createCoupon.fulfilled.match(resultAction)) {
         toast.success("Discount code added successfully");
         setIsNew(false);
         getCoupons();
       }
     } catch (error) {
-      toast.error(
-        "Error adding discount code"
-      );
+      toast.error("Error adding discount code");
     }
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      const response = await Axios.put(
-        `/discount-codes/${editingCode.id}`,
-        editCode
+      console.log("editCoupon", editCoupon);
+      const resultAction = await dispatch(
+        updateCoupon({
+          couponId: editCoupon.id,
+          couponData: editCoupon,
+          token: currentUser.token,
+        })
       );
-      if (response.status === 200) {
+      if (updateCoupon.fulfilled.match(resultAction)) {
         toast.success("Discount code updated successfully");
-        setEditingCode(null);
-        getCodes();
+        setIsEdit(false);
+        getCoupons();
       }
     } catch (error) {
-      if (error.response?.data?.errors) {
-        toast.error(Object.values(error.response.data.errors).join(" | "));
-      } else {
-        toast.error(
-          error.response?.data?.message || "Error updating discount code"
-        );
-      }
+      toast.error("Error updating discount code");
     }
   };
 
-  const handleNewCoupon = (code) => {
-    setNewCoupon(code);
-    setNewCoupon({
-      name: code.name || "",
-      value: code.value || "",
-      start_date: code.start_date || "",
-      end_date: code.end_date || "",
-    });
-  };
-
-  const startEdit = (code) => {
-    setEditingCode(code);
+  const startEdit = (coupon) => {
+    setIsEdit(true);
     setEditCoupon({
-      name: code.name || "",
-      value: code.value || "",
-      start_date: code.start_date || "",
-      end_date: code.end_date || "",
+      name: coupon.name || "",
+      discount: coupon.discount || "",
+      expiry: coupon.expiry || "",
     });
   };
-
-  const onDelete = (code) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa mã giảm giá này?")) {
+  
+  const onDelete = async (couponId) => {
+    if (!window.confirm("Do you want to delete this discount code?")) {
       return;
     }
-    Axios.delete(`/discount-codes/${code.id}`)
-      .then((response) => {
-        if (response.status === 200) {
-          toast.success(response.data?.message || "Xóa mã giảm giá thành công");
-          getCodes();
-        }
-      })
-      .catch((error) => {
-        toast.error(error.response?.data?.message || "Delete failed");
-      });
+    try {
+      const resultAction = await dispatch(
+        deleteCoupon({ couponId: couponId, token: currentUser.token })
+      );
+      if (deleteCoupon.fulfilled.match(resultAction)) {
+        toast.success("Delete successful");
+        getCoupons();
+      }
+    } catch (error) {
+      toast.error("Error deleting discount code");
+    }
   };
-
 
   return (
     <div>
@@ -159,7 +147,7 @@ const Coupon = () => {
                     <tr key={coupon.id} className="table-row">
                       <td className="table-cell">{index + 1}</td>
                       <td className="table-cell">{coupon.name}</td>
-                      <td className="table-cell">{coupon.discount * 100} %</td>
+                      <td className="table-cell">{coupon.discount} %</td>
                       <td className="table-cell">{coupon.expiry}</td>
                       {/* <td className="table-cell">{coupon.end_date}</td> */}
                       <td className="table-cell">
@@ -171,7 +159,7 @@ const Coupon = () => {
                             <PencilLine size={20} />
                           </button>
                           <button
-                            onClick={() => onDelete(code)}
+                            onClick={() => onDelete(coupon?._id || coupon.id)}
                             className="text-red-500 hover:text-red-800"
                           >
                             <Trash size={20} />
@@ -260,9 +248,9 @@ const Coupon = () => {
                 <label className="mb-1 block text-sm font-medium">Name</label>
                 <input
                   type="text"
-                  value={editCode.name}
+                  value={editCoupon.name}
                   onChange={(e) =>
-                    setEditCode({ ...editCode, name: e.target.value })
+                    setEditCoupon({ ...editCoupon, name: e.target.value })
                   }
                   className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Discount code"
@@ -272,9 +260,9 @@ const Coupon = () => {
                 <label className="mb-1 block text-sm font-medium">Value</label>
                 <input
                   type="number"
-                  value={editCode.value}
+                  value={editCoupon.discount}
                   onChange={(e) =>
-                    setEditCode({ ...editCode, value: e.target.value })
+                    setEditCoupon({ ...editCoupon, discount: e.target.value })
                   }
                   className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Discount value"
@@ -286,32 +274,19 @@ const Coupon = () => {
                 </label>
                 <input
                   type="date"
-                  value={editCode.start_date}
+                  value={editCoupon.expiry}
                   onChange={(e) =>
-                    setEditCode({ ...editCode, start_date: e.target.value })
+                    setEditCoupon({ ...editCoupon, expiry: e.target.value })
                   }
                   className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Start date"
                 />
               </div>
-              <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium">
-                  End date
-                </label>
-                <input
-                  type="date"
-                  value={editCode.end_date}
-                  onChange={(e) =>
-                    setEditCode({ ...editCode, end_date: e.target.value })
-                  }
-                  className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="End date"
-                />
-              </div>
+
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setEditingCode(null)}
+                  onClick={() => setIsEdit(false)}
                   className="rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
                 >
                   Cancel
