@@ -26,7 +26,7 @@ import NewProduct from "../pages/admin/products/newProduct";
 import EditProduct from "../pages/admin/products/editProduct";
 import Orders from "../pages/admin/orders/orders";
 import OrderDetail from "../pages/admin/orders/orderDetail";
-import DiscountCode from "../pages/admin/discountCode/discountCode";
+import Coupon from "../pages/admin/coupon/coupon";
 import Colors from "../pages/admin/color/color";
 import BlogCategory from "../pages/admin/blogCategory/blogCategory";
 import Enquiries from "../pages/admin/enquiry/users";
@@ -110,7 +110,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "coupons",
-        element: <DiscountCode />,
+        element: <Coupon />,
       },
       {
         path: "brands",
