@@ -7,54 +7,54 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useSelector, useDispatch } from "react-redux";
 import {
-  createBrand,
-  updateBrand,
-  getBrand,
-  getAllBrand,
-  deleteBrand,
-} from "../../../features/adminSlice/brand/brandSlice";
+  createBlogCategory,
+  updateBlogCategory,
+  getBlogCategory,
+  getAllBlogCategory,
+  deleteBlogCategory,
+} from "../../../features/adminSlice/blogCategory/blogCategorySlice";
 
 const BlogCategory = () => {
-  const [editingBrand, setEditingBrand] = useState(null);
-  const [editBrand, setEditBrand] = useState({ title: "" });
-  const [newBrand, setNewBrand] = useState({ title: "" });
+  const [editingBlogCategory, setEditingBlogCategory] = useState(null);
+  const [editBlogCategory, setEditBlogCategory] = useState({ title: "" });
+  const [newBlogCategory, setNewBlogCategory] = useState({ title: "" });
 
   const currentUser = useSelector((state) => state.auth.user);
-  const { brands, loading, error } = useSelector((state) => state.brandAdmin);
+  const { blogCategories, loading, error } = useSelector((state) => state.blogCategoryAdmin);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
-    getBrands();
+    getBlogCategories();
   }, [dispatch, currentUser.accessToken]);
 
-  // get all brands
-  const getBrands = () => {
-    dispatch(getAllBrand({ token: currentUser.token }));
+  // get all blog categories
+  const getBlogCategories = () => {
+    dispatch(getAllBlogCategory({ token: currentUser.token }));
   };
 
-  // added brand
+  // added blog category
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!newBrand.title.trim()) {
-      toast.error("Brand title is required");
+    if (!newBlogCategory.title.trim()) {
+      toast.error("Blog category title is required");
       return;
     }
     try {
       const resultAction = await dispatch(
-        createBrand({ brandData: newBrand, token: currentUser.token })
+        createBlogCategory({ blogCategoryData: newBlogCategory, token: currentUser.token })
       );
 
-      if (createBrand.fulfilled.match(resultAction)) {
-        toast.success("Brand created successfully");
-        setNewBrand({ title: "" });
-        getBrands();
+      if (createBlogCategory.fulfilled.match(resultAction)) {
+        toast.success("Blog category created successfully");
+        setNewBlogCategory({ title: "" });
+        getBlogCategories();
       } else {
-        toast.error("Failed to create brand");
-        toast.error(resultAction.payload || "Error: Create brand failed!");
+        toast.error("Failed to create blog category");
+        toast.error(resultAction.payload || "Error: Create blog category failed!");
       }
     } catch (error) {
-      toast.error("Error: Create brand failed!");
+      toast.error("Error: Create blog category failed!");
     }
   };
 
@@ -63,58 +63,58 @@ const BlogCategory = () => {
     e.preventDefault();
     try {
       const resultAction = await dispatch(
-        updateBrand({
-          brandId: editingBrand._id || editBrand.id,
-          brandData: editBrand,
+        updateBlogCategory({
+          blogCategoryId: editingBlogCategory._id || editBlogCategory.id,
+          blogCategoryData: editBlogCategory,
           token: currentUser.token,
         })
       );
-      if (updateBrand.fulfilled.match(resultAction)) {
-        toast.success("Brand updated successfully");
-        setEditingBrand(null);
-        getBrands();
+      if (updateBlogCategory.fulfilled.match(resultAction)) {
+        toast.success("Blog category updated successfully");
+        setEditingBlogCategory(null);
+        getBlogCategories();
       } else {
-        toast.error("Failed to update brand");
-        toast.error(resultAction.payload || "Error: Update brand failed!");
+        toast.error("Failed to update blog category");
+        toast.error(resultAction.payload || "Error: Update blog category failed!");
       }
     } catch (error) {
-      toast.error("Error updating brand");
+      toast.error("Error updating blog category");
     }
   };
 
-  const startEdit = (brand) => {
-    setEditingBrand(brand);
-    setEditBrand(brand);
+  const startEdit = (blogCategory) => {
+    setEditingBlogCategory(blogCategory);
+    setEditBlogCategory(blogCategory);
   };
 
-  // delete brand
-  const onDelete = async (brand) => {
-    if (!window.confirm("Are you sure you want to delete this brand ?")) {
+  // delete blog category
+  const onDelete = async (blogCategory) => {
+    if (!window.confirm("Are you sure you want to delete this blog category ?")) {
       return;
     }
     try {
       const resultAction = await dispatch(
-        deleteBrand({
-          brandId: brand._id || brand.id,
+        deleteBlogCategory({
+          blogCategoryId: blogCategory._id || blogCategory.id,
           token: currentUser.token,
         })
       );
-      if (deleteBrand.fulfilled.match(resultAction)) {
-        toast.success("Brand deleted successfully");
-        getBrands();
+      if (deleteBlogCategory.fulfilled.match(resultAction)) {
+        toast.success("Blog category deleted successfully");
+        getBlogCategories();
       } else {
-        toast.error("Failed to delete brand");
-        toast.error(resultAction.payload || "Error: Delete brand failed!");
+        toast.error("Failed to delete blog category");
+        toast.error(resultAction.payload || "Error: Delete blog category failed!");
       }
     } catch {
-      toast.error("Error deleting brand");
+      toast.error("Error deleting blog category");
     }
   };
 
   return (
     <div>
       <ToastContainer />
-      <h1 className="title mb-6">Brands</h1>
+      <h1 className="title mb-6">Blog Categories</h1>
       <div className="card">
         <div className="flex">
           <form className="flex" onSubmit={handleSubmit}>
@@ -122,12 +122,12 @@ const BlogCategory = () => {
               <input
                 type="text"
                 id="name"
-                value={newBrand.title}
+                value={newBlogCategory.title}
                 onChange={(e) =>
-                  setNewBrand({ ...newBrand, title: e.target.value })
+                  setNewBlogCategory({ ...newBlogCategory, title: e.target.value })
                 }
                 className="focus:shadow-outline w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow focus:outline-none"
-                placeholder="Enter new brand title"
+                placeholder="Enter new blog category title"
               />
             </div>
             <button
@@ -138,7 +138,7 @@ const BlogCategory = () => {
             </button>
           </form>
           <button
-            onClick={() => getBrands()}
+            onClick={() => getBlogCategories()}
             class="rounded bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-700"
           >
             Refresh
@@ -161,7 +161,7 @@ const BlogCategory = () => {
                 </thead>
 
                 <tbody className="table-body">
-                  {brands.map((brand, index) => (
+                  {blogCategories.map((blogCategory, index) => (
                     <tr key={index} className="table-row">
                       <td className="table-cell">{(index += 1)}</td>
                       <td className="table-cell">
@@ -175,13 +175,13 @@ const BlogCategory = () => {
                       <td className="table-cell">
                         <div className="flex items-center gap-x-4">
                           <button
-                            onClick={() => startEdit(brand)}
+                            onClick={() => startEdit(blogCategory)}
                             className="text-blue-500 hover:text-blue-800 dark:text-blue-600 dark:hover:text-blue-800"
                           >
                             <PencilLine size={20} />
                           </button>
                           <button
-                            onClick={(e) => onDelete(brand)}
+                            onClick={(e) => onDelete(blogCategory)}
                             className="text-red-500 hover:text-red-800"
                           >
                             <Trash size={20} />
@@ -200,24 +200,24 @@ const BlogCategory = () => {
       {editingBrand && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-96 rounded-lg bg-white p-6">
-            <h2 className="mb-4 text-xl font-bold">Edit Brand</h2>
+            <h2 className="mb-4 text-xl font-bold">Edit Blog Category</h2>
             <form onSubmit={handleUpdate}>
               <div className="mb-4">
                 <label className="mb-1 block text-sm font-medium">Name</label>
                 <input
                   type="text"
-                  value={editBrand.title}
+                  value={editBlogCategory.title}
                   onChange={(e) =>
-                    setEditBrand({ ...editBrand, title: e.target.value })
+                    setEditBlogCategory({ ...editBlogCategory, title: e.target.value })
                   }
                   className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Brand title"
+                  placeholder="Blog category title"
                 />
               </div>
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setEditingCategory(null)}
+                  onClick={() => setEditingBlogCategory(null)}
                   className="rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
                 >
                   Cancel
