@@ -2,7 +2,7 @@ import blogCategoryService from "./blogCategoryService";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 const initialState = {
-  categories: [],
+  blogblogCategories: [],
   loading: false,
   error: null,
 };
@@ -73,7 +73,7 @@ export const blogCategorySlice = createSlice({
       })
       .addCase(createBlogCategory.fulfilled, (state, action) => {
         state.loading = false;
-        state.categories.push(action.payload);
+        state.blogCategories.push(action.payload);
       })
       .addCase(createBlogCategory.rejected, (state, action) => {
         state.loading = false;
@@ -86,9 +86,9 @@ export const blogCategorySlice = createSlice({
       })
       .addCase(updateBlogCategory.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.categories.findIndex(cat => cat.id === action.payload.id);
+        const index = state.blogCategories.findIndex(cat => cat.id === action.payload.id);
         if (index !== -1) {
-          state.categories[index] = action.payload;
+          state.blogCategories[index] = action.payload;
         }
       })
       .addCase(updateBlogCategory.rejected, (state, action) => {
@@ -102,7 +102,7 @@ export const blogCategorySlice = createSlice({
       })
       .addCase(deleteBlogCategory.fulfilled, (state, action) => {
         state.loading = false;
-        state.categories = state.categories.filter(cat => cat.id !== action.payload.id);
+        state.blogCategories = state.blogCategories.filter(cat => cat.id !== action.payload.id);
       })
       .addCase(deleteBlogCategory.rejected, (state, action) => {
         state.loading = false;
@@ -116,9 +116,9 @@ export const blogCategorySlice = createSlice({
       })
       .addCase(getBlogCategory.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.categories.findIndex(cat => cat.id === action.payload.id);
+        const index = state.blogCategories.findIndex(cat => cat.id === action.payload.id);
         if (index !== -1) {
-          state.categories[index] = action.payload;
+          state.blogCategories[index] = action.payload;
         }
       })
       .addCase(getBlogCategory.rejected, (state, action) => {
@@ -132,11 +132,11 @@ export const blogCategorySlice = createSlice({
       })
       .addCase(getAllBlogCategory.fulfilled, (state, action) => {
         state.loading = false;
-        state.categories = action.payload;
+        state.blogCategories = action.payload;
       })
       .addCase(getAllBlogCategory.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Failed to fetch blog categories";
+        state.error = action.payload?.message || "Failed to fetch blog blogCategories";
       });
   },
 });

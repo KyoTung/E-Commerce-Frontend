@@ -86,15 +86,15 @@ export const navbarLinks = [
         ],
     },
    
-    {
-        links: [
-            {
-                label: "Enquiries",
-                icon: RiQuestionAnswerLine,
-                path: `${_path}/enquiries`,
-            },
-        ],
-    },
+    // {
+    //     links: [
+    //         {
+    //             label: "Enquiries",
+    //             icon: RiQuestionAnswerLine,
+    //             path: `${_path}/enquiries`,
+    //         },
+    //     ],
+    // },
      {
         links: [
             {

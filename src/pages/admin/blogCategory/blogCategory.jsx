@@ -20,7 +20,7 @@ const BlogCategory = () => {
   const [newBlogCategory, setNewBlogCategory] = useState({ title: "" });
 
   const currentUser = useSelector((state) => state.auth.user);
-  const { blogCategories, loading, error } = useSelector((state) => state.blogCategoryAdmin);
+  const { blogCategories, loading, error } = useSelector((state) => state.blogCategoryAdmin || []);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -111,6 +111,8 @@ const BlogCategory = () => {
     }
   };
 
+  console.log("blogCategories:", blogCategories);
+
   return (
     <div>
       <ToastContainer />
@@ -132,7 +134,7 @@ const BlogCategory = () => {
             </div>
             <button
               type="submit"
-              class="mr-4 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
+              className="mr-4 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
             >
               Add new
             </button>
@@ -155,19 +157,19 @@ const BlogCategory = () => {
                 <thead className="table-header">
                   <tr className="table-row">
                     <th className="table-head">#</th>
-                    <th className="table-head">Name</th>
+                    <th className="table-head">Title</th>
                     <th className="table-head">Action</th>
                   </tr>
                 </thead>
 
                 <tbody className="table-body">
-                  {blogCategories.map((blogCategory, index) => (
+                  {blogCategories?.map((blogCategory, index) => (
                     <tr key={index} className="table-row">
                       <td className="table-cell">{(index += 1)}</td>
                       <td className="table-cell">
                         <div className="flex w-max gap-x-4">
                           <div className="flex flex-col">
-                            <p>{brand.title}</p>
+                            <p>{blogCategory.title}</p>
                             {/* <p className="font-normal text-slate-600 dark:text-slate-400">{product.description}</p> */}
                           </div>
                         </div>
@@ -196,14 +198,14 @@ const BlogCategory = () => {
           </div>
         )}
       </div>
-      {/* Edit brand popup menu */}
-      {editingBrand && (
+      {/* Edit blog category popup menu */}
+      {editingBlogCategory && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-96 rounded-lg bg-white p-6">
             <h2 className="mb-4 text-xl font-bold">Edit Blog Category</h2>
             <form onSubmit={handleUpdate}>
               <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium">Name</label>
+                <label className="mb-1 block text-sm font-medium">Title</label>
                 <input
                   type="text"
                   value={editBlogCategory.title}
