@@ -30,7 +30,9 @@ import Coupon from "../pages/admin/coupon/coupon";
 import Colors from "../pages/admin/color/color";
 import BlogCategory from "../pages/admin/blogCategory/blogCategory";
 import Enquiries from "../pages/admin/enquiry/users";
-import Blogs from "../pages/admin/blogs/Product";
+import Blog from "../pages/admin/blogs/Blog";
+import EditBlog from "../pages/admin/blogs/editBlog";
+import NewBlog from "../pages/admin/blogs/newBlog";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginForm /> },
@@ -146,7 +148,15 @@ export const router = createBrowserRouter([
       },
       {
         path: "blogs",
-        element: <Blogs />,
+        element: <Blog />,
+      },
+      {
+        path:"new-blog",
+        element:<NewBlog/>,
+      },
+       {
+        path:"edit-blog/:blog_id",
+        element:<EditBlog/>,
       },
       {
         path: "enquiries",

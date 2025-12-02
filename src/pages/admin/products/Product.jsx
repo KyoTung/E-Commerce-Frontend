@@ -46,7 +46,7 @@ const Products = () => {
     : products;
 
   const onDelete = async(id) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này không?")) {
+    if (!window.confirm("Are you sure you want to delete this product?")) {
       return;
     }
     try{

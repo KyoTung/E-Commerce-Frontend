@@ -3,6 +3,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 const initialState = {
   blogs: [],
+  blog: null,
   loading: false,
   error: null,
 };
@@ -116,10 +117,7 @@ export const blogSlice = createSlice({
       })
       .addCase(getBlog.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.blogs.findIndex(cat => cat.id === action.payload.id);
-        if (index !== -1) {
-          state.blogs[index] = action.payload;
-        }
+        state.blog = action.payload;  
       })
       .addCase(getBlog.rejected, (state, action) => {
         state.loading = false;
