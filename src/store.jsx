@@ -9,6 +9,7 @@ import productReducer from "./features/adminSlice/products/productSlice";
 import couponReducer from "./features/adminSlice/coupons/couponSlice";
 import blogCategoryReducer from "./features/adminSlice/blogCategory/blogCategorySlice";
 import blogReducer from "./features/adminSlice/blog/blogSlice";
+import orderReducer from "./features/adminSlice/orders/orderSlice";
 
 export const store = configureStore({
   reducer: {
@@ -23,5 +24,6 @@ export const store = configureStore({
     couponAdmin: couponReducer,
     blogCategoryAdmin: blogCategoryReducer,
     blogAdmin: blogReducer,
+    orderAdmin: orderReducer,
   },
 });
