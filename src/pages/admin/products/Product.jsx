@@ -35,6 +35,7 @@ const Products = () => {
   const getProducts = () => {
    dispatch(getAllProducts({ token: currentUser?.token }));
   };
+  
   // Lọc sản phẩm theo tên hoặc sku
   const filteredProducts = search.trim()
     ? products.filter(
