@@ -5,17 +5,18 @@ import { useNavigate } from "react-router-dom";
 import profileImg from "@/assets/profile-image.jpg";
 import { useSelector, useDispatch } from "react-redux";
 import PropTypes from "prop-types";
+import { logout as logoutThunk } from "@/features/authSlice/authSlice";
 
 
 
 export const Header = ({ collapsed, setCollapsed }) => {
     const user = useSelector((state) => state.auth);
-    const getUserFromUserSlice = useSelector((state) => state.user.user);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef(null);
     const buttonRef = useRef(null);
     const { theme, setTheme } = useTheme();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     // Đóng menu khi click bên ngoài
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -40,13 +41,8 @@ export const Header = ({ collapsed, setCollapsed }) => {
     }, []);
 
     const handleLogout = async () => {
-        const response = await Axios.post("/logout");
-        console.log(response);
-        if (response.status === 200) {
-            setUser(null);
-            setToken(null);
-            navigate("/");
-        }
+        await dispatch(logoutThunk());
+        navigate("/login");
     };
 
     
@@ -122,8 +118,8 @@ export const Header = ({ collapsed, setCollapsed }) => {
                     {isMenuOpen && (
                         <div className="absolute right-0 z-50 mt-2 w-48 rounded-lg bg-white py-2 shadow-lg">
                             <div className="border-b px-4 py-2 text-sm text-gray-700">
-                                <p className="font-medium">{getUserFromUserSlice.fullName}</p>
-                                <p className="truncate text-gray-500">{getUserFromUserSlice.email}</p>
+                                <p className="font-medium">{user.fullName}</p>
+                                <p className="truncate text-gray-500">{user.email}</p>
                             </div>
 
                             <ul className="text-sm text-gray-700">

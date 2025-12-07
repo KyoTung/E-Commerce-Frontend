@@ -1,115 +1,94 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import authService from "./authService";
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import authService from './authService';
 
-
-
-const userState = {
-  _id: null,
-  fullName: null,
-  email: null,
-  address: null,
-  phone: null,
-  token: null,
-};
-
-
-const getUserFromLocalstorage = (() => {
-  const storedUser = localStorage.getItem("user");
-  if (!storedUser) return null;
-
-  const user = JSON.parse(storedUser);
-  const now = Date.now();
-
-  if (user.expiresAt && now > user.expiresAt) {
-    localStorage.removeItem("user");
+// Lấy user từ localStorage (chỉ thông tin profile, ko có token)
+const getUserFromLocalStorage = () => {
+  try {
+    const customer = localStorage.getItem('customer');
+    return customer ? JSON.parse(customer) : null;
+  } catch (error) {
     return null;
   }
-
-  return user;
-})();
+};
 
 const initialState = {
-  user: getUserFromLocalstorage,
+  user: getUserFromLocalStorage(),
   isError: false,
   isSuccess: false,
   isLoading: false,
-  message: "",
+  message: '',
 };
 
-export const login = createAsyncThunk("auth/login", async (user, thunkAPI) => {
-  try {
-    const response = await authService.login(user);
-    return response;
-  } catch (error) {
-    const message =
-      error.response?.data?.message || error.message || "Đăng nhập thất bại";
-    return thunkAPI.rejectWithValue({ message });
+// Thunk: Login
+export const login = createAsyncThunk(
+  'auth/login',
+  async (user, thunkAPI) => {
+    try {
+      return await authService.login(user);
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
   }
-});
+);
 
-export const logout = createAsyncThunk("auth/logout", async ({token}, thunkAPI) => {
-  try {
-    const response = await authService.logout(token);
-    return response;
-  } catch (error) {
-    const message =
-      error.response?.data?.message || error.message || "Đăng xuất thất bại";
-    return thunkAPI.rejectWithValue({ message });
+// Thunk: Logout (Chủ động bấm nút đăng xuất)
+export const logout = createAsyncThunk(
+  'auth/logout',
+  async (_, thunkAPI) => {
+    try {
+      return await authService.logout();
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue(message);
+    }
   }
-});
-
-const tokenExpiryTime = Date.now() + 60*60*1000;
+);
 
 export const authSlice = createSlice({
-  name: "auth",
+  name: 'auth',
   initialState,
-  reducers: {},
-  extraReducers: (builder) => {
-    builder.addCase(login.pending, (state) => {
-      state.isLoading = true;
-    });
-    builder.addCase(login.fulfilled, (state, action) => {
-      state.isLoading = false;
-      state.isSuccess = true;
-      state.user = action.payload;
-      localStorage.setItem(
-      "user",
-      JSON.stringify({
-        ...action.payload,
-        expiresAt: tokenExpiryTime,
-      })
-    );
-    });
-
-    builder.addCase(login.rejected, (state, action) => {
-      state.isLoading = false;
-      state.isError = true;
-      state.isSuccess = false;
-      state.message =
-        action.payload?.message || "Đăng nhập thất bại. Vui lòng thử lại.";
+  reducers: {
+    // Action này được gọi từ axiosClient khi refresh token thất bại
+    clearAuth: (state) => {
       state.user = null;
-    });
-      builder.addCase(logout.fulfilled, (state) => {
-    state.isLoading = false;
-    state.isError = false;
-    state.isSuccess = false;
-    state.user = null;
-    state.message = "";
-    localStorage.removeItem("user", "user_info");
-  });
-  builder.addCase(logout.rejected, (state, action) => {
-    state.isLoading = false;
-    state.isError = true;
-    state.message =
-      action.payload?.message || "Đăng xuất thất bại. Vui lòng thử lại.";
-  });
-  builder.addCase(logout.pending, (state) => {
-    state.isLoading = true;
-    state.isError = false;
-    state.isSuccess = false;
-    state.message = "";
-  });
+      state.isError = false;
+      state.isSuccess = false;
+      state.isLoading = false;
+      state.message = '';
+      localStorage.removeItem('customer');
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      // --- XỬ LÝ LOGIN ---
+      .addCase(login.pending, (state) => {
+        state.isLoading = true;
+        state.isError = false;
+        state.message = '';
+      })
+      .addCase(login.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.user = action.payload; // Payload này KHÔNG chứa token
+        localStorage.setItem('customer', JSON.stringify(action.payload));
+      })
+      .addCase(login.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.isSuccess = false;
+        state.message = action.payload;
+        state.user = null;
+      })
+      
+      // --- XỬ LÝ LOGOUT ---
+      .addCase(logout.fulfilled, (state) => {
+        state.user = null;
+        state.isSuccess = false; // Reset trạng thái để tránh trigger linh tinh
+        localStorage.removeItem('customer');
+      });
   },
 });
 
+export const { clearAuth } = authSlice.actions;
 export default authSlice.reducer;

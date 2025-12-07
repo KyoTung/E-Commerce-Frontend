@@ -1,24 +1,29 @@
-const baseURL = import.meta.env.VITE_BASE_URL;
-import axios from "axios";
-import { stringify } from "postcss";
+import axiosClient, { setAccessToken, clearAccessToken } from '../../api';
 
-//const tokenExpiryTime = Date.now() + 30*60*1000;
-
-
+// Login User
 const login = async (userData) => {
-  const response = await axios.post(`${baseURL}/user/login`, userData);
+  const response = await axiosClient.post('/user/login', userData);
+  
+  // Giả sử server trả về: { _id, name, email, ..., token: "xyz..." }
+  const { token, ...userInfo } = response.data;
 
-  return response.data;
+  if (token) {
+    // 1. Lưu Access Token vào RAM (axiosClient)
+    setAccessToken(token);
+  }
+
+  // 2. Chỉ trả về thông tin user (KHÔNG CÓ TOKEN) cho Slice
+  return userInfo;
 };
 
-const logout = async(token) =>{
-  const response = await axios.get(`${baseURL}/user/logout`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
-  return response.data;
-}
+// Logout User
+const logout = async () => {
+  // Gọi API để server xóa Cookie Refresh Token
+  await axiosClient.get('/user/logout'); // hoặc post tùy backend
+  
+  // Xóa token trong RAM
+  clearAccessToken();
+};
 
 const authService = {
   login,

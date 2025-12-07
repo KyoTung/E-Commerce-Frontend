@@ -16,13 +16,13 @@ import { FaAngleDown } from "react-icons/fa6";
 import { TiThMenu } from "react-icons/ti";
 import { useSelector, useDispatch } from "react-redux";
 import { FaRegUserCircle } from "react-icons/fa";
-import { logout } from "../../features/authSlice/authSlice"
+import { logout } from "../../features/authSlice/authSlice";
 
 const Header = () => {
   const dispatch = useDispatch();
-  const { user, isError,isLoading, isSuccess, message } = useSelector(state => state.auth);
-  const getUserFromUserSlice = useSelector((state) => state.user.user);
-  const isLoggedIn = useSelector((state) => !!state.auth.user?.token);
+  const { user, isError, isLoading, isSuccess, message } = useSelector(
+    (state) => state.auth
+  );
   const [userInfo, setUserInfor] = useState({
     fullName: "",
     email: "",
@@ -51,7 +51,7 @@ const Header = () => {
   };
 
   const handleLogout = async () => {
-    dispatch(logout({token: user.token}));
+    dispatch(logout({ token: user.token }));
 
     if (isSuccess) {
       toast.success("Đăng xuất thành công");
@@ -89,6 +89,8 @@ const Header = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  console.log("User in header:", user);
 
   return (
     <>
@@ -128,7 +130,7 @@ const Header = () => {
 
             {/* Right-aligned user section */}
             <div className="flex items-center">
-              {isLoggedIn && getUserFromUserSlice ? (
+              {user ? (
                 <div className="relative" ref={menuRef}>
                   <button
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -136,7 +138,7 @@ const Header = () => {
                   >
                     <FaRegUserCircle className="h-7 w-7" />
                     <span className="ml-1 max-w-32 truncate">
-                      {getUserFromUserSlice?.fullName || "Tài khoản"}
+                      {user?.fullName || "Tài khoản"}
                     </span>
                     <FaAngleDown
                       className={`transition-transform ${
@@ -152,10 +154,10 @@ const Header = () => {
                     >
                       <div className="px-4 py-3 border-b border-gray-100">
                         <p className="text-sm font-medium text-gray-900 truncate">
-                          {getUserFromUserSlice?.fullName}
+                          {user?.fullName}
                         </p>
                         <p className="text-xs text-gray-500 truncate">
-                          {getUserFromUserSlice?.email}
+                          {user?.email}
                         </p>
                       </div>
 
@@ -181,7 +183,7 @@ const Header = () => {
                         Đơn hàng của tôi
                       </Link>
 
-                      {getUserFromUserSlice?.role === "admin" && (
+                      {user?.role === "admin" && (
                         <Link
                           to="/admin"
                           className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100 mt-2"
@@ -337,17 +339,15 @@ const Header = () => {
           </div>
 
           <div className="p-6">
-            {isLoggedIn && getUserFromUserSlice ? (
+            {user ? (
               <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center mb-3">
                   <FaRegUserCircle className="h-8 w-8 text-[#d0011b] mr-3" />
                   <div>
                     <p className="font-semibold text-gray-900">
-                      {getUserFromUserSlice?.fullName}
+                      {user?.fullName}
                     </p>
-                    <p className="text-sm text-gray-500">
-                      {getUserFromUserSlice?.email}
-                    </p>
+                    <p className="text-sm text-gray-500">{user?.email}</p>
                   </div>
                 </div>
                 <button
@@ -399,6 +399,17 @@ const Header = () => {
                 </li>
               ))}
             </ul>
+            {user?.role === "admin" && (
+              <li className="list-none">
+                <Link
+                  to={"/admin"}
+                  className="block py-3 px-4 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  onClick={() => setIsOpenMenu(false)}
+                >
+                  {"Trang quản trị"}
+                </Link>
+              </li>
+            )}
           </div>
         </div>
 
