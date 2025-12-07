@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import authService from './authService';
 
-// Lấy user từ localStorage (chỉ thông tin profile, ko có token)
+// Lấy user từ localStorage
 const getUserFromLocalStorage = () => {
   try {
     const customer = localStorage.getItem('customer');
@@ -32,7 +32,7 @@ export const login = createAsyncThunk(
   }
 );
 
-// Thunk: Logout (Chủ động bấm nút đăng xuất)
+// Thunk: Logout 
 export const logout = createAsyncThunk(
   'auth/logout',
   async (_, thunkAPI) => {
@@ -49,7 +49,7 @@ export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    // Action này được gọi từ axiosClient khi refresh token thất bại
+    // gọi axiosClient khi refresh token thất bại
     clearAuth: (state) => {
       state.user = null;
       state.isError = false;
@@ -61,7 +61,7 @@ export const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // --- XỬ LÝ LOGIN ---
+      
       .addCase(login.pending, (state) => {
         state.isLoading = true;
         state.isError = false;
@@ -70,7 +70,7 @@ export const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.user = action.payload; // Payload này KHÔNG chứa token
+        state.user = action.payload; 
         localStorage.setItem('customer', JSON.stringify(action.payload));
       })
       .addCase(login.rejected, (state, action) => {
@@ -81,10 +81,9 @@ export const authSlice = createSlice({
         state.user = null;
       })
       
-      // --- XỬ LÝ LOGOUT ---
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
-        state.isSuccess = false; // Reset trạng thái để tránh trigger linh tinh
+        state.isSuccess = false; 
         localStorage.removeItem('customer');
       });
   },

@@ -4,7 +4,7 @@ import "./index.css";
 import App from "./App.jsx";
 import {Provider} from "react-redux"
 import {store} from "./store.jsx"
-import { injectStore } from './api'; 
+import { injectStore } from './api/axiosClient.js'; 
 
 
 injectStore(store);

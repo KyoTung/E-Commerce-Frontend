@@ -1,16 +1,14 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
-import { useNavigate, Link, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import JoditEditor from "jodit-react";
 import { useForm } from "react-hook-form";
-import {
-  updateBlog,
-  getBlog,
-} from "../../../features/adminSlice/blog/blogSlice";
-import { getAllBlogCategory } from "../../../features/adminSlice/blogCategory/blogCategorySlice";
-import axiosClient from "../../../Axios";
 import { useSelector, useDispatch } from "react-redux";
+
+import { updateBlog, getBlog } from "../../../features/adminSlice/blog/blogSlice";
+import { getAllBlogCategory } from "../../../features/adminSlice/blogCategory/blogCategorySlice";
+import axiosClient from "../../../api/axiosClient"; // 
 
 const EditBlog = ({ placeholder }) => {
   const editor = useRef(null);
@@ -18,24 +16,23 @@ const EditBlog = ({ placeholder }) => {
   const { blog_id } = useParams();
   const dispatch = useDispatch();
 
-  const [gallery, setGallery] = useState([]);
 
-  const currentUser = useSelector((state) => state.auth.user);
-  const { blogCategories } = useSelector((state) => state.blogCategoryAdmin);
+  const [gallery, setGallery] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false); 
+
+ 
+  const { blogCategories } = useSelector((state) => state.blogCategoryAdmin);
   const { blog } = useSelector((state) => state.blogAdmin);
 
+  
   useEffect(() => {
-    getCategories();
-    if (blog_id) {
-      dispatch(getBlog({ blogId: blog_id, token: currentUser?.token }));
-    }
-  }, [blog_id, dispatch, currentUser?.token]);
-
-
-  const getCategories = () => {
     dispatch(getAllBlogCategory());
-  };
+    if (blog_id) {
+     
+      dispatch(getBlog(blog_id));
+    }
+  }, [blog_id, dispatch]);
 
   const {
     register,
@@ -47,10 +44,12 @@ const EditBlog = ({ placeholder }) => {
   } = useForm();
 
   const description = watch("description");
+  
   const config = useMemo(
     () => ({
       readonly: false,
-      placeholder: placeholder || "Start typings...",
+      placeholder: placeholder || "Start typing...",
+      height: 400,
     }),
     [placeholder]
   );
@@ -59,8 +58,9 @@ const EditBlog = ({ placeholder }) => {
     setValue("description", newContent);
   };
 
+  
   useEffect(() => {
-    if (blog) {
+    if (blog && (blog._id === blog_id || blog.id === blog_id)) {
       reset({
         title: blog.title || "",
         description: blog.description || "",
@@ -71,8 +71,9 @@ const EditBlog = ({ placeholder }) => {
         setGallery(blog.images);
       }
     }
-  }, [blog, reset]);
+  }, [blog, blog_id, reset]);
 
+ 
   const handleUpdateBlog = async (formData) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -82,77 +83,78 @@ const EditBlog = ({ placeholder }) => {
         title: formData.title,
         author: formData.author,
         category: formData.category,
-        images: gallery.map((img) => ({
-          url: img.url,
-          public_id: img.public_id,
-          asset_id: img.asset_id,
-        })),
+        images: gallery, 
         description: formData.description,
       };
+
+      
       const resultAction = await dispatch(
         updateBlog({
           blogId: blog_id,
           blogData: blogData,
-          token: currentUser.token,
         })
       );
+
       if (updateBlog.fulfilled.match(resultAction)) {
         toast.success("Blog updated successfully");
-        navigate("/admin/blogs");
+        setTimeout(() => {
+            navigate("/admin/blogs");
+        }, 1000);
       } else {
-        toast.error("Failed to update blog");
+        const errorMsg = resultAction.payload?.message || "Failed to update blog";
+        toast.error(errorMsg);
       }
     } catch (error) {
-      toast.error("Failed to update blog");
+      toast.error("An error occurred");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+ 
   const handleFileChange = async (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    setIsUploading(true);
     try {
       const uploadPromises = Array.from(files).map(async (file) => {
         const imageForm = new FormData();
         imageForm.append("images", file);
+        
+    
         const response = await axiosClient.put("/blog/upload", imageForm, {
           headers: {
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${currentUser?.token}`,
           },
         });
-        return response.data[0]; // lấy phần tử đầu tiên trong mảng
+        return response.data[0]; 
       });
 
       const results = await Promise.all(uploadPromises);
       setGallery((prev) => [...prev, ...results]);
-      e.target.value = null;
+      e.target.value = null; // Reset input file
     } catch (err) {
+      console.error(err);
       toast.error(err.response?.data?.message || "Failed to upload images");
+    } finally {
+      setIsUploading(false);
     }
   };
+
 
   const handleDeleteImage = async (image) => {
     try {
       const publicIdToDelete = image.public_id;
-      const id = blog_id;
-
+  
       await axiosClient.delete(
-        `/blog/delete-images/${id}/${publicIdToDelete}`,
-        {
-          headers: {
-            Authorization: `Bearer ${currentUser?.token}`,
-          },
-        }
+        `/blog/delete-images/${blog_id}/${publicIdToDelete}`
       );
 
-      // Xóa ảnh khỏi gallery sau khi xóa thành công
       setGallery((prev) =>
         prev.filter((img) => img.public_id !== publicIdToDelete)
       );
-      toast.success("Image deleted successfully");
+      toast.success("Image deleted");
     } catch (error) {
       console.error("Delete image error:", error);
       toast.error("Failed to delete image");
@@ -172,36 +174,28 @@ const EditBlog = ({ placeholder }) => {
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Blog title *
+                Blog Title *
               </label>
-              <textarea
-                {...register("title", {
-                  required: "Blog title is required",
-                })}
-                rows={2}
-                className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
+              <input
+                type="text"
+                {...register("title", { required: "Blog title is required" })}
+                className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
               {errors.title && (
-                <p className="mt-1 text-sm text-red-500">
-                  {errors.title.message}
-                </p>
+                <p className="mt-1 text-sm text-red-500">{errors.title.message}</p>
               )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Author *
               </label>
-              <textarea
-                {...register("author", {
-                  required: "author title is required",
-                })}
-                rows={1}
-                className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
+              <input
+                type="text"
+                {...register("author", { required: "Author is required" })}
+                className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
               {errors.author && (
-                <p className="mt-1 text-sm text-red-500">
-                  {errors.author.message}
-                </p>
+                <p className="mt-1 text-sm text-red-500">{errors.author.message}</p>
               )}
             </div>
           </div>
@@ -210,32 +204,32 @@ const EditBlog = ({ placeholder }) => {
           <div className="space-y-6">
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700">
-                Product Images
+                Blog Images
               </label>
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleFileChange}
-                className="mt-1 block w-full text-sm text-gray-500"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                You can select multiple images
-              </p>
-
-              {/* Hiển thị ảnh hiện tại */}
+              <div className="flex items-center gap-2">
+                 <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    disabled={isUploading}
+                    className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  {isUploading && <span className="text-sm text-blue-500">Uploading...</span>}
+              </div>
+             
               <div className="flex flex-wrap gap-2 mt-2">
                 {gallery.map((image, index) => (
-                  <div key={index} className="relative">
+                  <div key={index} className="relative group">
                     <img
                       src={image.url}
-                      alt={`Product image ${index + 1}`}
-                      className="w-20 h-20 rounded object-cover border"
+                      alt={`Blog img ${index}`}
+                      className="w-24 h-24 rounded object-cover border"
                     />
                     <button
                       type="button"
                       onClick={() => handleDeleteImage(image)}
-                      className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                      className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-sm"
                     >
                       ×
                     </button>
@@ -249,12 +243,10 @@ const EditBlog = ({ placeholder }) => {
                 Category *
               </label>
               <select
-                {...register("category", {
-                  required: "Category is required",
-                })}
+                {...register("category", { required: "Category is required" })}
                 className={`mt-1 block w-full rounded-md border ${
                   errors.category ? "border-red-500" : "border-gray-300"
-                } p-2 shadow-sm`}
+                } p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500`}
               >
                 <option value="">Select Category</option>
                 {blogCategories?.map((category) => (
@@ -274,41 +266,38 @@ const EditBlog = ({ placeholder }) => {
             </div>
           </div>
         </div>
+
         {/* Description */}
-        <div className="pb-6">
-          <h2 className="mb-4 mt-2 text-xl font-semibold">Description</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Product Description
-              </label>
-              <JoditEditor
-                ref={editor}
-                value={description}
-                config={config}
-                tabIndex={1}
-                onChange={handleEditorChange}
-                onBlur={(newContent) => handleEditorChange(newContent)}
-              />
-            </div>
-          </div>
+        <div className="pb-6 mt-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Description
+          </label>
+          <JoditEditor
+            ref={editor}
+            value={description}
+            config={config}
+            tabIndex={1}
+            onBlur={(newContent) => handleEditorChange(newContent)}
+          />
         </div>
 
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 pt-4 border-t">
           <button
             type="button"
             onClick={() => navigate("/admin/blogs")}
-            className="rounded px-4 py-2 text-gray-600 hover:bg-gray-300"
-            disabled={isSubmitting}
+            className="rounded px-4 py-2 text-gray-600 hover:bg-gray-100 border border-gray-300 transition"
+            disabled={isSubmitting || isUploading}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-800 disabled:opacity-50"
-            disabled={isSubmitting}
+            className={`rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 transition ${
+                 (isSubmitting || isUploading) ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            disabled={isSubmitting || isUploading}
           >
-            {isSubmitting ? "Saving..." : "Save Blog"}
+            {isSubmitting ? "Updating..." : "Update Blog"}
           </button>
         </div>
       </form>

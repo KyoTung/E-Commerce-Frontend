@@ -1,5 +1,5 @@
-import blogService from "./blogService";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import blogService from "./blogService";
 
 const initialState = {
   blogs: [],
@@ -8,32 +8,12 @@ const initialState = {
   error: null,
 };
 
-export const createBlog = createAsyncThunk("admin/blog/create-blog",
-  async ({ blogData, token }, thunkAPI) => {
-    try {
-      const response = await blogService.createBlog(blogData, token);
-      return response;
-    } catch (error) {
-      const message = error.response?.data?.message || error.message;
-      return thunkAPI.rejectWithValue({ message });
-    }
-  });
 
-export const updateBlog = createAsyncThunk("admin/blog/update", async ({ blogId, blogData, token }, thunkAPI) => {
-  try {
-    const response = await blogService.updateBlog(blogId, blogData, token);
-    return response;
-  } catch (error) {
-    const message = error.response?.data?.message || error.message;
-    return thunkAPI.rejectWithValue({ message });
-  }
-});
-
- export const getAllBlog = createAsyncThunk(
-  "admin/blog/get-all-blog",
-  async (token, thunkAPI) => {
+export const createBlog = createAsyncThunk(
+  "admin/blog/create-blog",
+  async (blogData, thunkAPI) => {
     try {
-      const response = await blogService.getAllBlog(token);
+      const response = await blogService.createBlog(blogData);
       return response;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -42,88 +22,147 @@ export const updateBlog = createAsyncThunk("admin/blog/update", async ({ blogId,
   }
 );
 
-export const getBlog = createAsyncThunk("admin/blog/get-blog", async ({ blogId, token }, thunkAPI) => {
-  try {
-    const response = await blogService.getBlog(blogId, token);  
-    return response;
-  } catch (error) {
-    const message = error.response?.data?.message || error.message;
-    return thunkAPI.rejectWithValue({ message });
-  }
-});
 
-export const deleteBlog = createAsyncThunk("admin/blog/delete-blog", async ({ blogId, token }, thunkAPI) => {
-  try {
-    const response = await blogService.deleteBlog(blogId, token);
-    return response;
-  } catch (error) {
-    const message = error.response?.data?.message || error.message;
-    return thunkAPI.rejectWithValue({ message });
+export const updateBlog = createAsyncThunk(
+  "admin/blog/update",
+  async ({ blogId, blogData }, thunkAPI) => {
+    try {
+      const response = await blogService.updateBlog(blogId, blogData);
+      return response;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue({ message });
+    }
   }
-});
+);
+
+export const getAllBlog = createAsyncThunk(
+  "admin/blog/get-all-blog",
+  async (_, thunkAPI) => {
+    try {
+      const response = await blogService.getAllBlog();
+      return response;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue({ message });
+    }
+  }
+);
+
+
+export const getBlog = createAsyncThunk(
+  "admin/blog/get-blog",
+  async (blogId, thunkAPI) => {
+    try {
+      const response = await blogService.getBlog(blogId);
+      return response;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue({ message });
+    }
+  }
+);
+
+
+export const deleteBlog = createAsyncThunk(
+  "admin/blog/delete-blog",
+  async (blogId, thunkAPI) => {
+    try {
+      const response = await blogService.deleteBlog(blogId);
+      return response; 
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue({ message });
+    }
+  }
+);
 
 export const blogSlice = createSlice({
   name: "blog-admin",
   initialState,
-  reducers: {},
+  reducers: {
+    
+    resetBlogState: (state) => {
+      state.error = null;
+      state.loading = false;
+      state.message = "";
+    }
+  },
   extraReducers: (builder) => {
     builder
+      // --- CREATE ---
       .addCase(createBlog.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(createBlog.fulfilled, (state, action) => {
         state.loading = false;
-        state.blogs.push(action.payload);
+        
+        state.blogs.unshift(action.payload); 
       })
       .addCase(createBlog.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Failed to create blog ";
+        state.error = action.payload?.message || "Failed to create blog";
       })
 
+      // --- UPDATE ---
       .addCase(updateBlog.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(updateBlog.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.blogs.findIndex(cat => cat.id === action.payload.id);
+       
+        const updatedBlog = action.payload;
+        const index = state.blogs.findIndex((blog) => blog._id === updatedBlog._id || blog.id === updatedBlog.id);
+        
         if (index !== -1) {
-          state.blogs[index] = action.payload;
+          state.blogs[index] = updatedBlog;
+        }
+       
+        if (state.blog && (state.blog._id === updatedBlog._id)) {
+            state.blog = updatedBlog;
         }
       })
       .addCase(updateBlog.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Failed to update blog ";
+        state.error = action.payload?.message || "Failed to update blog";
       })
- 
+
+      // --- DELETE ---
       .addCase(deleteBlog.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(deleteBlog.fulfilled, (state, action) => {
         state.loading = false;
-        state.blogs = state.blogs.filter(cat => cat.id !== action.payload.id);
+        
+        const idToDelete = action.payload.deletedId; 
+        
+        state.blogs = state.blogs.filter(
+          (blog) => blog._id !== idToDelete && blog.id !== idToDelete
+        );
       })
       .addCase(deleteBlog.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Failed to delete blog ";
+        state.error = action.payload?.message || "Failed to delete blog";
       })
 
-
-    .addCase(getBlog.pending, (state) => {
+      // --- GET SINGLE ---
+      .addCase(getBlog.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(getBlog.fulfilled, (state, action) => {
         state.loading = false;
-        state.blog = action.payload;  
+        state.blog = action.payload;
       })
       .addCase(getBlog.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Failed to fetch blog ";
+        state.error = action.payload?.message || "Failed to fetch blog";
       })
 
+      // --- GET ALL ---
       .addCase(getAllBlog.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -134,9 +173,10 @@ export const blogSlice = createSlice({
       })
       .addCase(getAllBlog.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Failed to fetch blog blogs";
+        state.error = action.payload?.message || "Failed to fetch blogs";
       });
   },
 });
 
+export const { resetBlogState } = blogSlice.actions;
 export default blogSlice.reducer;

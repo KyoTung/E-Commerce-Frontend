@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// Lấy URL từ biến môi trường
 const baseURL = import.meta.env.VITE_BASE_URL || 'http://localhost:5000/api';
 
 // --- QUẢN LÝ TOKEN (IN-MEMORY) ---
@@ -25,7 +24,7 @@ export const injectStore = (_store) => {
 // --- AXIOS INSTANCE ---
 const axiosClient = axios.create({
   baseURL,
-  withCredentials: true, // Quan trọng: Để gửi/nhận Cookie Refresh Token
+  withCredentials: true, 
   headers: {
     'Content-Type': 'application/json',
   },
@@ -43,11 +42,11 @@ axiosClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// --- RESPONSE INTERCEPTOR (Logic Refresh Token) ---
+// (Refresh Token) ---
 let isRefreshing = false;
 let failedQueue = [];
 
-// Hàm xử lý hàng đợi các request bị lỗi
+//  xử lý hàng đợi các request bị lỗi
 const processQueue = (error, token = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
@@ -64,10 +63,9 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Nếu lỗi 401 và chưa từng retry
     if (error.response?.status === 401 && !originalRequest._retry) {
       
-      // Nếu đang trong quá trình refresh, xếp request này vào hàng đợi
+     
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({
@@ -87,7 +85,7 @@ axiosClient.interceptors.response.use(
 
       try {
         // Gọi API refresh token
-        // Lưu ý: Không cần truyền token cũ, cookie HttpOnly sẽ tự gửi đi
+        // Không cần truyền token cũ, cookie HttpOnly sẽ tự gửi đi
         const { data } = await axiosClient.post('/user/refresh');
         
         // Server trả về { accessToken: "..." }

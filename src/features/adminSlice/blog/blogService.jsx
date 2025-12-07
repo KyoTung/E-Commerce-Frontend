@@ -1,43 +1,27 @@
-import axios from "axios";
-const baseURL = import.meta.env.VITE_BASE_URL;
+import axiosClient from '../../../api/axiosClient'; 
 
-const createBlog = async (blogData, token) => {
-  const response = await axios.post(`${baseURL}/blog`, blogData, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const createBlog = async (blogData) => {
+  const response = await axiosClient.post('/blog', blogData);
   return response.data;
 };
 
-const updateBlog = async (blogId, blogData, token) => {
-  const response = await axios.put(
-    `${baseURL}/blog/${blogId}`,
-    blogData,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
+const updateBlog = async (blogId, blogData) => {
+  const response = await axiosClient.put(`/blog/${blogId}`, blogData);
   return response.data;
 };
 
-
-const getAllBlog = async (token) => {
-  const response = await axios.get(`${baseURL}/blog`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const getAllBlog = async () => {
+  const response = await axiosClient.get('/blog');
   return response.data;
 };
 
-const getBlog = async (blogId, token) => {
-  const response = await axios.get(`${baseURL}/blog/${blogId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const getBlog = async (blogId) => {
+  const response = await axiosClient.get(`/blog/${blogId}`);
   return response.data;
 };
 
-const deleteBlog = async (blogId, token) => {
-  const response = await axios.delete(`${baseURL}/blog/${blogId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const deleteBlog = async (blogId) => {
+  const response = await axiosClient.delete(`/blog/${blogId}`);
   return response.data;
 };
 
@@ -48,4 +32,5 @@ const blogService = {
   getAllBlog,
   getBlog,
 };
+
 export default blogService;
