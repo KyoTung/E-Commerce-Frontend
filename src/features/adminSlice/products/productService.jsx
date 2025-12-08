@@ -1,45 +1,28 @@
-import axios from "axios";
-const baseURL = import.meta.env.VITE_BASE_URL;
+import axiosClient from "../../../api/axiosClient";
 
-const createProduct = async (productData, token) => {
-  const response = await axios.post(`${baseURL}/product`, productData, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
+const createProduct = async (productData) => {
+  // axiosClient tự động xử lý Content-Type và Token
+  const response = await axiosClient.post('/product', productData);
   return response.data;
 };
 
-const updateProduct = async (productId, productData, token) => {
-  const response = await axios.put(
-    `${baseURL}/product/${productId}`,
-    productData,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
+const updateProduct = async (productId, productData) => {
+  const response = await axiosClient.put(`/product/${productId}`, productData);
   return response.data;
 };
 
-const getAllProducts = async (token) => {
-  const response = await axios.get(`${baseURL}/product`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const getAllProducts = async () => {
+  const response = await axiosClient.get('/product');
   return response.data;
 };
 
-const getProduct = async (productId, token) => {
-  const response = await axios.get(`${baseURL}/product/${productId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const getProduct = async (productId) => {
+  const response = await axiosClient.get(`/product/${productId}`);
   return response.data;
 };
 
-const deleteProduct = async (productId, token) => {
-  const response = await axios.delete(`${baseURL}/product/${productId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const deleteProduct = async (productId) => {
+  const response = await axiosClient.delete(`/product/${productId}`);
   return response.data;
 };
 
@@ -50,4 +33,5 @@ const productService = {
   getProduct,
   deleteProduct,
 };
+
 export default productService;

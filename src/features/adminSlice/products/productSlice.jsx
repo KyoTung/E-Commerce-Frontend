@@ -9,9 +9,9 @@ const initialState = {
 };
 
 export const createProduct = createAsyncThunk("admin/product/create-product",
-  async ({ productData, token }, thunkAPI) => {
+  async (productData, thunkAPI) => {
     try {
-      const response = await productService.createProduct(productData, token);
+      const response = await productService.createProduct(productData);
       return response;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -19,9 +19,9 @@ export const createProduct = createAsyncThunk("admin/product/create-product",
     }
   });
 
-export const updateProduct = createAsyncThunk("admin/product/update", async ({ productId, productData, token }, thunkAPI) => {
+export const updateProduct = createAsyncThunk("admin/product/update", async ({ productId, productData  }, thunkAPI) => {
   try {
-    const response = await productService.updateProduct(productId, productData, token);
+    const response = await productService.updateProduct(productId, productData, );
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;
@@ -31,9 +31,9 @@ export const updateProduct = createAsyncThunk("admin/product/update", async ({ p
 
  export const getAllProducts = createAsyncThunk(
   "admin/product/get-all-products",
-  async (token, thunkAPI) => {
+  async (_, thunkAPI) => {
     try {
-      const response = await productService.getAllProducts(token);
+      const response = await productService.getAllProducts();
       return response;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -42,9 +42,9 @@ export const updateProduct = createAsyncThunk("admin/product/update", async ({ p
   }
 );
 
-export const getProduct = createAsyncThunk("admin/product/get-product", async ({ productId, token }, thunkAPI) => {
+export const getProduct = createAsyncThunk("admin/product/get-product", async (productId, thunkAPI) => {
   try {
-    const response = await productService.getProduct(productId, token);
+    const response = await productService.getProduct(productId);
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;
@@ -52,9 +52,9 @@ export const getProduct = createAsyncThunk("admin/product/get-product", async ({
   }
 });
 
-export const deleteProduct = createAsyncThunk("admin/product/delete-product", async ({ productId, token }, thunkAPI) => {
+export const deleteProduct = createAsyncThunk("admin/product/delete-product", async (productId, thunkAPI) => {
   try {
-    const response = await productService.deleteProduct(productId, token);
+    const response = await productService.deleteProduct(productId);
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;

@@ -4,8 +4,9 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import JoditEditor from "jodit-react";
 import { useForm } from "react-hook-form";
-import axiosClient from "../../../Axios";
 import { useSelector, useDispatch } from "react-redux";
+
+import axiosClient from "../../../api/axiosClient";
 import { getAllBrand } from "../../../features/adminSlice/brand/brandSlice";
 import { getAllCategory } from "../../../features/adminSlice/category/categorySlice";
 import { createProduct } from "../../../features/adminSlice/products/productSlice";
@@ -15,13 +16,14 @@ const NewProduct = ({ placeholder }) => {
   const editor = useRef(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const currentUser = useSelector((state) => state.auth.user);
+
   const { brands } = useSelector((state) => state.brandAdmin);
   const { categories } = useSelector((state) => state.categoryAdmin);
   const { colors } = useSelector((state) => state.colorAdmin);
 
   const [gallery, setGallery] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [variants, setVariants] = useState([
     { color: "", storage: "", price: "", quantity: "", images: [] },
   ]);
@@ -39,58 +41,161 @@ const NewProduct = ({ placeholder }) => {
   });
 
   const description = watch("description");
+
   const config = useMemo(
     () => ({
       readonly: false,
-      placeholder: placeholder || "Start typings...",
+      placeholder: placeholder || "Start typing...",
+      height: 400,
     }),
     [placeholder]
   );
 
   useEffect(() => {
-    getCategories();
-    getBrands();
-    getColors();
-  }, []);
-
-  const getBrands = async () => {
-    dispatch(getAllBrand({ token: currentUser.token }));
-  };
-
-  const getCategories = async () => {
-    dispatch(getAllCategory({ token: currentUser.token }));
-  };
-
-  const getColors = () => {
-    dispatch(getAllColor({ token: currentUser.token }));
-  };
+    dispatch(getAllBrand());
+    dispatch(getAllCategory());
+    dispatch(getAllColor());
+  }, [dispatch]);
 
   const handleEditorChange = (newContent) => {
     setValue("description", newContent);
   };
 
+  const uploadImagesHelper = async (files) => {
+    const uploadPromises = Array.from(files).map(async (file) => {
+      const imageForm = new FormData();
+      imageForm.append("images", file);
+
+      const response = await axiosClient.put(
+        "/product/upload-images",
+        imageForm,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+
+      const image = response.data[0];
+      return {
+        url: image.url,
+        asset_id: image.asset_id,
+        public_id: image.public_id,
+      };
+    });
+
+    return await Promise.all(uploadPromises);
+  };
+
+  const handleFileChange = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      const results = await uploadImagesHelper(files);
+      setGallery((prev) => [...prev, ...results]);
+      e.target.value = null;
+    } catch (err) {
+      toast.error("Failed to upload images");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleCanceledImage = (imageToRemove) => {
+    const newGallery = gallery.filter(
+      (img) => img.public_id !== imageToRemove.public_id
+    );
+    setGallery(newGallery);
+  };
+
+  const handleVariantChange = (index, field, value) => {
+    const updatedVariants = [...variants];
+    updatedVariants[index][field] = value;
+    setVariants(updatedVariants);
+  };
+
+  const addVariant = () => {
+    const lastVariant = variants[variants.length - 1];
+
+    if (
+      !lastVariant.color ||
+      !lastVariant.storage ||
+      !lastVariant.price ||
+      !lastVariant.quantity
+    ) {
+      toast.warning("Please complete the current variant first");
+      return;
+    }
+
+    setVariants([
+      ...variants,
+      {
+        color: "",
+        storage: "",
+        price: lastVariant.price,
+        quantity: lastVariant.quantity,
+        images: [],
+      },
+    ]);
+  };
+
+  const removeVariant = (index) => {
+    if (variants.length > 1) {
+      const updatedVariants = variants.filter((_, i) => i !== index);
+      setVariants(updatedVariants);
+    } else {
+      toast.error("At least one variant is required");
+    }
+  };
+
+  // Handle Variant Images
+  const handleVariantImageChange = async (e, variantIndex) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      const uploadedImages = await uploadImagesHelper(files);
+
+      const updatedVariants = [...variants];
+      updatedVariants[variantIndex].images = [
+        ...updatedVariants[variantIndex].images,
+        ...uploadedImages,
+      ];
+      setVariants(updatedVariants);
+      e.target.value = null;
+    } catch (err) {
+      toast.error("Failed to upload variant images");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeVariantImage = (variantIndex, imageIndex) => {
+    const updatedVariants = [...variants];
+    updatedVariants[variantIndex].images = updatedVariants[
+      variantIndex
+    ].images.filter((_, i) => i !== imageIndex);
+    setVariants(updatedVariants);
+  };
+
+  // 4. SUBMIT FORM
   const handleAddProduct = async (formData) => {
     if (isSubmitting) return;
+
+    // Validate Variants
+    const invalidVariants = variants.filter(
+      (v) => !v.color || !v.storage || !v.price || !v.quantity
+    );
+
+    if (invalidVariants.length > 0) {
+      toast.error("Please complete all variant information");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Validate variants
-      const invalidVariants = variants.filter(
-        (variant) =>
-          !variant.color ||
-          !variant.storage ||
-          !variant.price ||
-          !variant.quantity
-      );
-
-      if (invalidVariants.length > 0) {
-        toast.error(
-          "Please complete all variant information before submitting"
-        );
-        setIsSubmitting(false);
-        return;
-      }
-      // Chuẩn bị dữ liệu theo model Product
       const productData = {
         title: formData.title,
         slug:
@@ -104,7 +209,6 @@ const NewProduct = ({ placeholder }) => {
           ...variant,
           price: Number(variant.price),
           quantity: Number(variant.quantity),
-          // images đã là mảng object, không cần chuyển đổi
         })),
         tags: formData.tags
           ? formData.tags.split(",").map((tag) => tag.trim())
@@ -123,166 +227,27 @@ const NewProduct = ({ placeholder }) => {
         },
       };
 
-      console.log("Product data to create:", productData);
+      console.log("Submitting:", productData);
 
-      const resultAction = await dispatch(
-        createProduct({ productData: productData, token: currentUser.token })
-      );
+      // SỬA: Gọi thunk createProduct chỉ với data (không token)
+      const resultAction = await dispatch(createProduct(productData));
 
       if (createProduct.fulfilled.match(resultAction)) {
         toast.success("Product created successfully");
-        navigate("/admin/products");
+        setTimeout(() => navigate("/admin/products"), 1000);
       } else {
         const errorMessage =
-          resultAction.payload?.message ||
-          resultAction.error?.message ||
-          "Failed to create product";
+          resultAction.payload?.message || "Failed to create product";
         toast.error(errorMessage);
       }
     } catch (error) {
-      console.error("Create product error:", error);
-      toast.error("Failed to add product");
+      console.error(error);
+      toast.error("An unexpected error occurred");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Xử lý variants
-  const handleVariantChange = (index, field, value) => {
-    const updatedVariants = [...variants];
-    updatedVariants[index][field] = value;
-    setVariants(updatedVariants);
-  };
-
-  const addVariant = () => {
-    const lastVariant = variants[variants.length - 1];
-
-    // Kiểm tra variant hiện tại đã đầy đủ chưa
-    if (
-      !lastVariant.color ||
-      !lastVariant.storage ||
-      !lastVariant.price ||
-      !lastVariant.quantity
-    ) {
-      toast.error(
-        "Please complete the current variant before adding a new one"
-      );
-      return;
-    }
-
-    setVariants([
-      ...variants,
-      {
-        color: "",
-        storage: "",
-        price: lastVariant.price, // Sao chép giá từ variant trước
-        quantity: lastVariant.quantity, // Sao chép số lượng từ variant trước
-        images: [],
-      },
-    ]);
-  };
-
-  const removeVariant = (index) => {
-    if (variants.length > 1) {
-      const updatedVariants = variants.filter((_, i) => i !== index);
-      setVariants(updatedVariants);
-    } else {
-      toast.error("At least one variant is required");
-    }
-  };
-  const handleVariantImageChange = async (e, variantIndex) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    try {
-      const uploadPromises = Array.from(files).map(async (file) => {
-        const imageForm = new FormData();
-        imageForm.append("images", file);
-        const response = await axiosClient.put(
-          "/product/upload-images",
-          imageForm,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${currentUser?.token}`,
-            },
-          }
-        );
-
-        const image = response.data[0];
-        // TRẢ VỀ TOÀN BỘ OBJECT ẢNH (gồm url, asset_id, public_id)
-        return {
-          url: image.url,
-          asset_id: image.asset_id,
-          public_id: image.public_id,
-        };
-      });
-
-      const uploadedImages = await Promise.all(uploadPromises);
-      const updatedVariants = [...variants];
-      updatedVariants[variantIndex].images = [
-        ...updatedVariants[variantIndex].images,
-        ...uploadedImages,
-      ];
-      setVariants(updatedVariants);
-
-      e.target.value = null;
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to upload images");
-    }
-  };
-
-  const removeVariantImage = (variantIndex, imageIndex) => {
-    const updatedVariants = [...variants];
-    updatedVariants[variantIndex].images = updatedVariants[
-      variantIndex
-    ].images.filter((_, i) => i !== imageIndex);
-    setVariants(updatedVariants);
-  };
-
-  const handleFileChange = async (e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    try {
-      const uploadPromises = Array.from(files).map(async (file) => {
-        const imageForm = new FormData();
-        imageForm.append("images", file);
-        const response = await axiosClient.put(
-          "/product/upload-images",
-          imageForm,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${currentUser?.token}`,
-            },
-          }
-        );
-
-        const image = response.data[0];
-        return {
-          url: image.url,
-          asset_id: image.asset_id,
-          public_id: image.public_id,
-        };
-      });
-
-      const results = await Promise.all(uploadPromises);
-      setGallery((prev) => [...prev, ...results]);
-      e.target.value = null;
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to upload images");
-    }
-  };
-
-  const handleCanceledImage = (imageToRemove) => {
-    const newGallery = gallery.filter(
-      (img) => img.public_id !== imageToRemove.public_id
-    );
-    setGallery(newGallery);
-  };
-
-  console.log("variants", variants);
   return (
     <div>
       <ToastContainer />
@@ -302,14 +267,14 @@ const NewProduct = ({ placeholder }) => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Product title *
+                    Product Title *
                   </label>
-                  <textarea
+                  <input
+                    type="text"
                     {...register("title", {
                       required: "Product title is required",
                     })}
-                    rows={2}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   />
                   {errors.title && (
                     <p className="mt-1 text-sm text-red-500">
@@ -335,13 +300,10 @@ const NewProduct = ({ placeholder }) => {
                   </label>
                   <input
                     type="number"
-                    step="1"
                     {...register("basePrice", {
-                      required: "Product base price is required",
+                      required: "Base price is required",
                     })}
-                    className={`mt-1 block w-full rounded-md border ${
-                      errors.basePrice ? "border-red-500" : "border-gray-300"
-                    } p-2 shadow-sm`}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   />
                   {errors.basePrice && (
                     <p className="mt-1 text-sm text-red-500">
@@ -350,24 +312,34 @@ const NewProduct = ({ placeholder }) => {
                   )}
                 </div>
 
+                {/* Main Images Upload */}
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700">
                     Product Images
                   </label>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="mt-1 block w-full text-sm text-gray-500"
-                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="mt-1 block w-full text-sm text-gray-500"
+                      disabled={isUploading}
+                    />
+                    {isUploading && (
+                      <span className="text-sm text-blue-500">
+                        Uploading...
+                      </span>
+                    )}
+                  </div>
+
                   <div className="flex flex-wrap gap-2 mt-2">
                     {gallery.map((image, imgIndex) => (
                       <div key={imgIndex} className="relative">
                         <img
                           src={image.url}
                           className="w-20 h-20 rounded object-cover border"
-                          alt={`Product image ${imgIndex + 1}`}
+                          alt={`Product ${imgIndex}`}
                         />
                         <button
                           type="button"
@@ -393,6 +365,7 @@ const NewProduct = ({ placeholder }) => {
                 </div>
               </div>
             </div>
+
             {/* Relations */}
             <div className="border-b pb-6">
               <h2 className="mb-4 text-xl font-semibold">Relations</h2>
@@ -403,9 +376,7 @@ const NewProduct = ({ placeholder }) => {
                   </label>
                   <select
                     {...register("brand", { required: "Brand is required" })}
-                    className={`mt-1 block w-full rounded-md border ${
-                      errors.brand ? "border-red-500" : "border-gray-300"
-                    } p-2 shadow-sm`}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   >
                     <option value="">Select Brand</option>
                     {brands.map((brand) => (
@@ -429,9 +400,7 @@ const NewProduct = ({ placeholder }) => {
                     {...register("category", {
                       required: "Category is required",
                     })}
-                    className={`mt-1 block w-full rounded-md border ${
-                      errors.category ? "border-red-500" : "border-gray-300"
-                    } p-2 shadow-sm`}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   >
                     <option value="">Select Category</option>
                     {categories.map((category) => (
@@ -452,26 +421,23 @@ const NewProduct = ({ placeholder }) => {
               </div>
             </div>
 
-            {/* Variants */}
+            {/* Variants Section */}
             <div className="border-b pb-6">
               <h2 className="mb-4 text-xl font-semibold">Variants</h2>
-              <div className="mb-4">
-                <p className="text-sm text-gray-600">
-                  {variants.length === 1
-                    ? "Add at least one variant with color and storage options"
-                    : `${variants.length} variants added`}
-                </p>
-              </div>
-
               {variants.map((variant, index) => (
-                <div key={index} className="variant-item border-b pb-4 mb-4">
+                <div
+                  key={index}
+                  className="variant-item border-b pb-4 mb-4 border-gray-200"
+                >
                   <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-lg font-medium">Variant {index + 1}</h3>
+                    <h3 className="text-md font-medium text-gray-800">
+                      Variant {index + 1}
+                    </h3>
                     {variants.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeVariant(index)}
-                        className="text-red-600 hover:text-red-800 text-sm"
+                        className="text-red-600 hover:text-red-800 text-sm font-medium"
                       >
                         Remove
                       </button>
@@ -479,8 +445,9 @@ const NewProduct = ({ placeholder }) => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
+                    {/* Variant Color */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-xs font-medium text-gray-600">
                         Color *
                       </label>
                       <select
@@ -488,19 +455,19 @@ const NewProduct = ({ placeholder }) => {
                         onChange={(e) =>
                           handleVariantChange(index, "color", e.target.value)
                         }
-                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                        required
+                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       >
                         <option value="">Select Color</option>
-                        {colors.map((color, colorIndex) => (
-                          <option key={colorIndex} value={color.title}>
+                        {colors.map((color, i) => (
+                          <option key={i} value={color.title}>
                             {color.title}
                           </option>
                         ))}
                       </select>
                     </div>
+                    {/* Variant Storage */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-xs font-medium text-gray-600">
                         Storage *
                       </label>
                       <select
@@ -508,34 +475,33 @@ const NewProduct = ({ placeholder }) => {
                         onChange={(e) =>
                           handleVariantChange(index, "storage", e.target.value)
                         }
-                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                        required
+                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       >
                         <option value="">Select Storage</option>
-                        <option value="64GB">64GB</option>
-                        <option value="128GB">128GB</option>
-                        <option value="256GB">256GB</option>
-                        <option value="512GB">512GB</option>
-                        <option value="1TB">1TB</option>
+                        {["64GB", "128GB", "256GB", "512GB", "1TB"].map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
                       </select>
                     </div>
+                    {/* Variant Price */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-xs font-medium text-gray-600">
                         Price *
                       </label>
                       <input
                         type="number"
-                        step="0.01"
                         value={variant.price}
                         onChange={(e) =>
                           handleVariantChange(index, "price", e.target.value)
                         }
-                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                        required
+                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       />
                     </div>
+                    {/* Variant Quantity */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-xs font-medium text-gray-600">
                         Quantity *
                       </label>
                       <input
@@ -544,14 +510,14 @@ const NewProduct = ({ placeholder }) => {
                         onChange={(e) =>
                           handleVariantChange(index, "quantity", e.target.value)
                         }
-                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                        required
+                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       />
                     </div>
                   </div>
 
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700">
+                  {/* Variant Images */}
+                  <div className="mt-3">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
                       Variant Images
                     </label>
                     <input
@@ -559,20 +525,21 @@ const NewProduct = ({ placeholder }) => {
                       multiple
                       accept="image/*"
                       onChange={(e) => handleVariantImageChange(e, index)}
-                      className="mt-1 block w-full text-sm text-gray-500"
+                      className="block w-full text-xs text-gray-500"
+                      disabled={isUploading}
                     />
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {variant.images.map((image, imgIndex) => (
-                        <div key={imgIndex} className="relative">
+                      {variant.images.map((img, imgIdx) => (
+                        <div key={imgIdx} className="relative">
                           <img
-                            src={image.url}
-                            className="w-20 h-20 rounded object-cover border"
-                            alt={`Variant ${index + 1} image ${imgIndex + 1}`}
+                            src={img.url}
+                            className="w-12 h-12 rounded object-cover border"
+                            alt=""
                           />
                           <button
                             type="button"
-                            onClick={() => removeVariantImage(index, imgIndex)}
-                            className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                            onClick={() => removeVariantImage(index, imgIdx)}
+                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]"
                           >
                             ×
                           </button>
@@ -582,156 +549,76 @@ const NewProduct = ({ placeholder }) => {
                   </div>
                 </div>
               ))}
-
               <button
                 type="button"
                 onClick={addVariant}
-                className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-800"
+                className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
               >
                 + Add Another Variant
               </button>
             </div>
           </div>
 
-          {/* Right Column */}
+          {/* Right Column: Specs & Desc */}
           <div className="space-y-6">
-            {/* Technical Specifications */}
             <div className="border-b pb-6">
-              <h2 className="mb-4 text-xl font-semibold">
-                Technical Specifications
-              </h2>
+              <h2 className="mb-4 text-xl font-semibold">Specifications</h2>
               <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Screen
-                  </label>
-                  <textarea
-                    {...register("screen")}
-                    rows={5}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    OS
-                  </label>
-                  <input
-                    {...register("os")}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Rear Camera
-                  </label>
-                  <textarea
-                    {...register("rearCamera")}
-                    rows={7}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Front Camera
-                  </label>
-                  <textarea
-                    {...register("frontCamera")}
-                    rows={3}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Processor
-                  </label>
-                  <textarea
-                    {...register("processor")}
-                    rows={3}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Storage
-                  </label>
-                  <input
-                    {...register("storage")}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    RAM
-                  </label>
-                  <input
-                    {...register("ram")}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Battery
-                  </label>
-                  <textarea
-                    {...register("battery")}
-                    rows={4}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    SIM
-                  </label>
-                  <input
-                    {...register("sim")}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Design
-                  </label>
-                  <textarea
-                    {...register("design")}
-                    rows={4}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm resize-y"
-                  />
-                </div>
-              </div>
-            </div>
-            {/* Description */}
-            <div className="pb-6">
-              <h2 className="mb-4 text-xl font-semibold">Description</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Product Description
-                  </label>
-                  <JoditEditor
-                    ref={editor}
-                    value={description}
-                    config={config}
-                    tabIndex={1}
-                    onChange={handleEditorChange}
-                    onBlur={(newContent) => handleEditorChange(newContent)}
-                  />
-                </div>
+                {/* Helper function to render spec inputs */}
+                {[
+                  "screen",
+                  "os",
+                  "processor",
+                  "ram",
+                  "storage",
+                  "battery",
+                  "frontCamera",
+                  "rearCamera",
+                  "sim",
+                  "design",
+                ].map((field) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-gray-700 capitalize">
+                      {field.replace(/([A-Z])/g, " $1").trim()}{" "}
+                      {/* Convert camelCase to Space */}
+                    </label>
+                    <input
+                      {...register(field)}
+                      className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="pb-6">
+              <h2 className="mb-4 text-xl font-semibold">Description</h2>
+              <JoditEditor
+                ref={editor}
+                value={description}
+                config={config}
+                tabIndex={1}
+                onBlur={(newContent) => handleEditorChange(newContent)}
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t">
               <button
                 type="button"
                 onClick={() => navigate("/admin/products")}
-                className="rounded px-4 py-2 text-gray-600 hover:bg-gray-300"
+                className="rounded-lg px-4 py-2 text-gray-700 border border-gray-300 hover:bg-gray-50"
                 disabled={isSubmitting}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-800 disabled:opacity-50"
-                disabled={isSubmitting}
+                className={`rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 font-medium ${
+                  isSubmitting || isUploading
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+                disabled={isSubmitting || isUploading}
               >
                 {isSubmitting ? "Saving..." : "Save Product"}
               </button>
