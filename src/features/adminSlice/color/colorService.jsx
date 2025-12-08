@@ -1,43 +1,27 @@
-import axios from "axios";
-const baseURL = import.meta.env.VITE_BASE_URL;
-  
-const createColor = async (colorData, token) => {
-  const response = await axios.post(`${baseURL}/color`, colorData, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+import axiosClient from "../../../api/axiosClient";
+
+const createColor = async (colorData) => {
+  const response = await axiosClient.post('/color', colorData);
   return response.data;
 };
 
-const updateColor= async (colorId, colorData, token) => {
-  const response = await axios.put(
-    `${baseURL}/color/${colorId}`,
-    colorData,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
+const updateColor = async (colorId, colorData) => {
+  const response = await axiosClient.put(`/color/${colorId}`, colorData);
   return response.data;
 };
 
-
-const getAllColor= async (token) => {
-  const response = await axios.get(`${baseURL}/color`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const getAllColor = async () => {
+  const response = await axiosClient.get('/color');
   return response.data;
 };
 
-const getColor= async (colorId, token) => {
-  const response = await axios.get(`${baseURL}/color/${colorId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const getColor = async (colorId) => {
+  const response = await axiosClient.get(`/color/${colorId}`);
   return response.data;
 };
 
-const deleteColor= async (colorId, token) => {
-  const response = await axios.delete(`${baseURL}/color/${colorId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const deleteColor = async (colorId) => {
+  const response = await axiosClient.delete(`/color/${colorId}`);
   return response.data;
 };
 
@@ -48,4 +32,5 @@ const colorService = {
   getAllColor,
   getColor,
 };
+
 export default colorService;

@@ -8,9 +8,9 @@ const initialState = {
 };
 
 export const createColor = createAsyncThunk("admin/color/create-color",
-  async ({ colorData, token }, thunkAPI) => {
+  async (colorData, thunkAPI) => {
     try {
-      const response = await colorService.createColor(colorData, token);
+      const response = await colorService.createColor(colorData, );
       return response;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -18,9 +18,9 @@ export const createColor = createAsyncThunk("admin/color/create-color",
     }
   });
 
-export const updateColor = createAsyncThunk("admin/color/update", async ({ colorId, colorData, token }, thunkAPI) => {
+export const updateColor = createAsyncThunk("admin/color/update", async ({ colorId, colorData}, thunkAPI) => {
   try {
-    const response = await colorService.updateColor(colorId, colorData, token);
+    const response = await colorService.updateColor(colorId, colorData, );
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;
@@ -30,9 +30,9 @@ export const updateColor = createAsyncThunk("admin/color/update", async ({ color
 
  export const getAllColor = createAsyncThunk(
   "admin/color/get-all-color",
-  async (token, thunkAPI) => {
+  async (_, thunkAPI) => {
     try {
-      const response = await colorService.getAllColor(token);
+      const response = await colorService.getAllColor();
       return response;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -41,9 +41,9 @@ export const updateColor = createAsyncThunk("admin/color/update", async ({ color
   }
 );
 
-export const getColor = createAsyncThunk("admin/color/get-color", async ({ colorId, token }, thunkAPI) => {
+export const getColor = createAsyncThunk("admin/color/get-color", async (colorId, thunkAPI) => {
   try {
-    const response = await colorService.getColor(colorId, token);
+    const response = await colorService.getColor(colorId, );
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;
@@ -51,9 +51,9 @@ export const getColor = createAsyncThunk("admin/color/get-color", async ({ color
   }
 });
 
-export const deleteColor = createAsyncThunk("admin/color/delete-color", async ({ colorId, token }, thunkAPI) => {
+export const deleteColor = createAsyncThunk("admin/color/delete-color", async (colorId, thunkAPI) => {
   try {
-    const response = await colorService.deleteColor(colorId, token);
+    const response = await colorService.deleteColor(colorId, );
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;
