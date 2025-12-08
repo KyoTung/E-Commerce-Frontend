@@ -1,67 +1,49 @@
-const baseURL = import.meta.env.VITE_BASE_URL;
-import axios from "axios";
 
+import axiosClient from "../../../api/axiosClient"; 
 
 const createUser = async (userData) => {
-  const response = await axios.post(`${baseURL}/user/register`, userData)
-  return response.data;
-}
-
-
-const updateUser = async (userId, userData, token) => {
-  const response = await axios.put(`${baseURL}/user/update-user/${userId}`, userData, {
-    headers: {  Authorization: `Bearer ${token}`      }
-  })
-  return response.data;
-}
-
-const getUserDetail = async (userId, token) => {
-  const response = await axios.get(`${baseURL}/user/${userId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return response.data;
-}
-
-const getAllUser = async (token) =>{
-  const response = await axios.get(`${baseURL}/user/all-users`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await axiosClient.post('/user/register', userData);
   return response.data;
 };
 
-const deleteUser = async (userId, token) => {
-  const response = await axios.delete(`${baseURL}/user/${userId}`, {
-    headers: {  Authorization: `Bearer ${token}`      }
-  });
+const updateUser = async (userId, userData) => {
+  const response = await axiosClient.put(`/user/update-user/${userId}`, userData);
   return response.data;
 };
 
-const blockUser = async (userId, token) => {
-  const response = await axios.put(`${baseURL}/user/block-user/${userId}`, {}, {
-    headers: {  Authorization: `Bearer ${token}`      }
-  });
+const getUserDetail = async (userId) => {
+  const response = await axiosClient.get(`/user/${userId}`);
   return response.data;
 };
 
-const unBlockUser = async (userId, token) => {
-  const response = await axios.put(`${baseURL}/user/unlock-user/${userId}`, {}, {
-    headers: {  Authorization: `Bearer ${token}`      }
-  });
+const getAllUser = async () => {
+  const response = await axiosClient.get('/user/all-users');
   return response.data;
-}
+};
+
+const deleteUser = async (userId) => {
+  const response = await axiosClient.delete(`/user/${userId}`);
+  return response.data;
+};
+
+const blockUser = async (userId) => {
+  const response = await axiosClient.put(`/user/block-user/${userId}`, {});
+  return response.data;
+};
+
+const unBlockUser = async (userId) => {
+  const response = await axiosClient.put(`/user/unlock-user/${userId}`, {});
+  return response.data;
+};
 
 const customerService = {
-    getUserDetail,
-    getAllUser,
-    createUser,
-    updateUser,
-    deleteUser,
-    blockUser,
-    unBlockUser,
-}
+  getUserDetail,
+  getAllUser,
+  createUser,
+  updateUser,
+  deleteUser,
+  blockUser,
+  unBlockUser,
+};
 
 export default customerService;

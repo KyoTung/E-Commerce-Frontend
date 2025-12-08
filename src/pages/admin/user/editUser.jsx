@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Axios from "../../../Axios";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getUserInfo,
@@ -10,10 +9,12 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const EditUser = () => {
-  const currentUser = useSelector((state) => state.auth.user);
-  const userInfo = useSelector((state) => state.customer.userSelector);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  const userInfo = useSelector((state) => state.customer.userSelector);
+
   const [userEdit, setUserEdit] = useState({
     id: null,
     fullName: "",
@@ -22,24 +23,22 @@ const EditUser = () => {
     address: "",
     phone: "",
   });
-  const [errors, setErrors] = useState({});
 
-  const { id } = useParams();
+  useEffect(() => {
+    if (id) {
+      dispatch(getUserInfo(id));
+    }
+  }, [id, dispatch]);
 
-  if (id) {
-    useEffect(() => {
-      dispatch(getUserInfo({ userId: id, token: currentUser.token }));
-    }, []);
-  }
   useEffect(() => {
     if (userInfo) {
       setUserEdit({
         id: userInfo._id || userInfo.id,
-        fullName: userInfo.fullName || "",
+        fullName: userInfo.name || userInfo.fullName || "",
         email: userInfo.email || "",
-        role: userInfo.role || "",
+        role: userInfo.role || "user",
         address: userInfo.address || "",
-        phone: userInfo.phone || "",
+        phone: userInfo.mobile || userInfo.phone || "",
       });
     }
   }, [userInfo]);
@@ -50,28 +49,33 @@ const EditUser = () => {
       const resultAction = await dispatch(
         updateUser({
           userId: userEdit.id,
-          userData: userEdit,
-          token: currentUser.token,
+          userData: {
+            fullName: userEdit.fullName,
+            email: userEdit.email,
+            role: userEdit.role,
+            address: userEdit.address,
+            phone: userEdit.phone,
+          },
         })
       );
 
       if (updateUser.fulfilled.match(resultAction)) {
         toast.success("Updated user successfully!");
-
         setTimeout(() => {
-          navigate("/admin/users", { replace: true });
+          navigate("/admin/users");
         }, 1000);
       } else {
-        toast.error("Error: Update user failed!");
+        const errorMsg = resultAction.payload?.message || "Update failed!";
+        toast.error(errorMsg);
       }
     } catch (error) {
-      console.log(error);
       toast.error("Unexpected error occurred!");
     }
   };
 
-  const onClose = () => {
-    navigate("/admin/users");
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setUserEdit((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -79,116 +83,90 @@ const EditUser = () => {
       <ToastContainer />
       <h1 className="title mb-6">Edit User</h1>
       <div className="card">
-        <div className="card-header">
-          <p className="card-title"></p>
-        </div>
-        <div className="card-body p-0">
-          <div className="relative h-[500px] w-full flex-shrink-0 overflow-auto rounded-none [scrollbar-width:_thin]">
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium">Name</label>
-                <input
-                  type="text"
-                  className={`w-full rounded border p-2 ${
-                    errors.name ? "border-red-500" : ""
-                  }`}
-                  value={userEdit?.fullName}
-                  onChange={(e) =>
-                    setUserEdit({ ...userEdit, fullName: e.target.value })
-                  }
-                />
-                {errors.name && (
-                  <p className="text-sm text-red-500">{errors.name[0]}</p>
-                )}
-              </div>
+        <div className="card-body p-6">
+          <form onSubmit={handleSubmit} className="max-w-4xl">
+            {/* Name */}
+            <div className="mb-4">
+              <label className="mb-1 block text-sm font-medium">Name</label>
+              <input
+                type="text"
+                name="fullName"
+                className="w-full rounded border border-gray-300 p-2 focus:border-blue-500 focus:outline-none"
+                value={userEdit.fullName}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-              <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium">Email</label>
-                <input
-                  type="email"
-                  readOnly
-                  className={`w-full rounded border p-2 ${
-                    errors.email ? "border-red-500" : ""
-                  }`}
-                  value={userEdit?.email}
-                  onChange={(e) =>
-                    setUserEdit({ ...userEdit, email: e.target.value })
-                  }
-                />
-                {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email[0]}</p>
-                )}
-              </div>
+            {/* Email (Read only) */}
+            <div className="mb-4">
+              <label className="mb-1 block text-sm font-medium">Email</label>
+              <input
+                type="email"
+                name="email"
+                readOnly
+                className="w-full rounded border border-gray-300 bg-gray-100 p-2 text-gray-500 cursor-not-allowed"
+                value={userEdit.email}
+              />
+            </div>
 
-              <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium">Role</label>
-                <select
-                  className="w-full rounded border p-2"
-                  value={userEdit?.role}
-                  onChange={(e) =>
-                    setUserEdit({ ...userEdit, role: e.target.value })
-                  }
-                >
-                  <option value={userEdit.role}>{userEdit.role}</option>
-                  {userEdit?.role == "user" && (
-                    <option value="admin">Admin</option>
-                  )}
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium">
-                  Address
-                </label>
-                <input
-                  type="text"
-                  className={`w-full rounded border p-2 ${
-                    errors.password ? "border-red-500" : ""
-                  }`}
-                  value={userEdit?.address}
-                  onChange={(e) =>
-                    setUserEdit({ ...userEdit, address: e.target.value })
-                  }
-                />
-                {errors.password && (
-                  <p className="text-sm text-red-500">{errors.password[0]}</p>
-                )}
-              </div>
-              <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium">
-                  Phone Number
-                </label>
-                <input
-                  type="number"
-                  className={`w-full rounded border p-2 ${
-                    errors.password ? "border-red-500" : ""
-                  }`}
-                  value={userEdit?.phone}
-                  onChange={(e) =>
-                    setUserEdit({ ...userEdit, phone: e.target.value })
-                  }
-                />
-                {errors.password && (
-                  <p className="text-sm text-red-500">{errors.password[0]}</p>
-                )}
-              </div>
+            {/* Role */}
+            <div className="mb-4">
+              <label className="mb-1 block text-sm font-medium">Role</label>
+              <select
+                name="role"
+                className="w-full rounded border border-gray-300 p-2 focus:border-blue-500 focus:outline-none"
+                value={userEdit.role}
+                onChange={handleChange}
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
 
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="rounded px-4 py-2 text-gray-600 hover:bg-gray-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
+            {/* Address */}
+            <div className="mb-4">
+              <label className="mb-1 block text-sm font-medium">Address</label>
+              <input
+                type="text"
+                name="address"
+                className="w-full rounded border border-gray-300 p-2 focus:border-blue-500 focus:outline-none"
+                value={userEdit.address}
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* Phone */}
+            <div className="mb-4">
+              <label className="mb-1 block text-sm font-medium">
+                Phone Number
+              </label>
+              <input
+                type="text"
+                name="phone"
+                className="w-full rounded border border-gray-300 p-2 focus:border-blue-500 focus:outline-none"
+                value={userEdit.phone}
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                type="button"
+                onClick={() => navigate("/admin/users")}
+                className="rounded px-4 py-2 text-gray-600 hover:bg-gray-100 border border-gray-300 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 transition"
+              >
+                Save Changes
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

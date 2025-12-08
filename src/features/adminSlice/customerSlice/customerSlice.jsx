@@ -22,9 +22,9 @@ export const createUser = createAsyncThunk("user/create-user", async ( userData 
   }
 }); 
 
-export const updateUser = createAsyncThunk("admin/user/update-user", async ({userId, userData, token }, thunkAPI) => {
+export const updateUser = createAsyncThunk("admin/user/update-user", async ({userId, userData }, thunkAPI) => {
   try {
-    const response = await customerService.updateUser(userId, userData, token); 
+    const response = await customerService.updateUser(userId, userData); 
     return response;
   } catch (error) {
     const message =
@@ -33,9 +33,9 @@ export const updateUser = createAsyncThunk("admin/user/update-user", async ({use
   }
 });
 
-export const getUserInfo = createAsyncThunk("/admin/user/get-user", async ({userId, token}, thunkAPI) => {
+export const getUserInfo = createAsyncThunk("/admin/user/get-user", async (userId, thunkAPI) => {
   try {
-    const response = await customerService.getUserDetail(userId, token);
+    const response = await customerService.getUserDetail(userId);
     return response;
   } catch (error) {
     const message =
@@ -44,9 +44,9 @@ export const getUserInfo = createAsyncThunk("/admin/user/get-user", async ({user
   }
 });
 
-export const getAllUser = createAsyncThunk("user/get-all-user", async (token, thunkAPI) => {
+export const getAllUser = createAsyncThunk("user/get-all-user", async (_, thunkAPI) => {
   try {
-    const response = await customerService.getAllUser(token);
+    const response = await customerService.getAllUser();
     return response;
   } catch (error) {
     const message =
@@ -56,9 +56,9 @@ export const getAllUser = createAsyncThunk("user/get-all-user", async (token, th
    
 });
 
-export const deleteUser = createAsyncThunk("user/delete-user", async ({userId, token}, thunkAPI) => {
+export const deleteUser = createAsyncThunk("user/delete-user", async (userId, thunkAPI) => {
   try {
-    const response = await customerService.deleteUser(userId, token);   
+    const response = await customerService.deleteUser(userId);   
     return response;
   } catch (error) {
     const message =
@@ -67,9 +67,9 @@ export const deleteUser = createAsyncThunk("user/delete-user", async ({userId, t
   }
 });
 
-export const blockUser = createAsyncThunk("user/block-user", async({userId, token}, thunkAPI) =>{
+export const blockUser = createAsyncThunk("user/block-user", async(userId, thunkAPI) =>{
   try {
-    const response = await customerService.blockUser(userId, token);
+    const response = await customerService.blockUser(userId);
     return response;
   } catch (error) {
     const message =
@@ -78,9 +78,9 @@ export const blockUser = createAsyncThunk("user/block-user", async({userId, toke
   }
 })
 
-export const unBlockUser = createAsyncThunk("user/unblock-user", async({userId, token}, thunkAPI) =>{
+export const unBlockUser = createAsyncThunk("user/unblock-user", async(userId, thunkAPI) =>{
   try {
-    const response = await customerService.unBlockUser(userId, token);
+    const response = await customerService.unBlockUser(userId);
     return response;
   } catch (error) {
     const message =
