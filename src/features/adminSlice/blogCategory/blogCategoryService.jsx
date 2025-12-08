@@ -1,43 +1,27 @@
-import axios from "axios";
-const baseURL = import.meta.env.VITE_BASE_URL;
+import axiosClient from '../../../api/axiosClient';
 
-const createBlogCategory = async (blogCategoryData, token) => {
-  const response = await axios.post(`${baseURL}/blogcategory`, blogCategoryData, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const createBlogCategory = async (blogCategoryData) => {
+  const response = await axiosClient.post('/blogcategory', blogCategoryData);
   return response.data;
 };
 
-const updateBlogCategory = async (blogCategoryId, blogCategoryData, token) => {
-  const response = await axios.put(
-    `${baseURL}/blogcategory/${blogCategoryId}`,
-    blogCategoryData,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
+const updateBlogCategory = async (id, blogCategoryData) => {
+  const response = await axiosClient.put(`/blogcategory/${id}`, blogCategoryData);
   return response.data;
 };
 
-
-const getAllBlogCategory = async (token) => {
-  const response = await axios.get(`${baseURL}/blogcategory`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const deleteBlogCategory = async (id) => {
+  const response = await axiosClient.delete(`/blogcategory/${id}`);
   return response.data;
 };
 
-const getBlogCategory = async (blogCategoryId, token) => {
-  const response = await axios.get(`${baseURL}/blogcategory/${blogCategoryId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const getBlogCategory = async (id) => {
+  const response = await axiosClient.get(`/blogcategory/${id}`);
   return response.data;
 };
 
-const deleteBlogCategory = async (blogCategoryId, token) => {
-  const response = await axios.delete(`${baseURL}/blogcategory/${blogCategoryId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const getAllBlogCategory = async () => {
+  const response = await axiosClient.get('/blogcategory');
   return response.data;
 };
 
@@ -45,7 +29,8 @@ const blogCategoryService = {
   createBlogCategory,
   updateBlogCategory,
   deleteBlogCategory,
-  getAllBlogCategory,
   getBlogCategory,
+  getAllBlogCategory,
 };
+
 export default blogCategoryService;

@@ -1,6 +1,6 @@
-import axios from 'axios';
+import axios from "axios";
 
-const baseURL = import.meta.env.VITE_BASE_URL || 'http://localhost:5000/api';
+const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:5000/api";
 
 // --- QUẢN LÝ TOKEN (IN-MEMORY) ---
 let accessToken = null;
@@ -24,9 +24,9 @@ export const injectStore = (_store) => {
 // --- AXIOS INSTANCE ---
 const axiosClient = axios.create({
   baseURL,
-  withCredentials: true, 
+  withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -63,9 +63,10 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    if (originalRequest.url.includes("/user/refresh")) {
+      return Promise.reject(error);
+    }
     if (error.response?.status === 401 && !originalRequest._retry) {
-      
-     
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({
@@ -84,33 +85,20 @@ axiosClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Gọi API refresh token
-        // Không cần truyền token cũ, cookie HttpOnly sẽ tự gửi đi
-        const { data } = await axiosClient.post('/user/refresh');
-        
-        // Server trả về { accessToken: "..." }
+        const { data } = await axiosClient.post("/user/refresh");
         const newAccessToken = data.accessToken;
-        
-        // Lưu token mới vào RAM
         setAccessToken(newAccessToken);
-
-        // Xử lý hàng đợi
         processQueue(null, newAccessToken);
 
-        // Gọi lại request ban đầu với token mới
+        // Cập nhật token cho request ban đầu
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return axiosClient(originalRequest);
-
       } catch (err) {
-        // Refresh thất bại (Token hết hạn hoặc không hợp lệ) -> LOGOUT
         processQueue(err, null);
         clearAccessToken();
-
-        // Gọi Action Logout trong Redux để xóa state User và redirect về Login
         if (store) {
-          store.dispatch({ type: 'auth/clearAuth' }); 
+          store.dispatch({ type: "auth/clearAuth" });
         }
-        
         return Promise.reject(err);
       } finally {
         isRefreshing = false;

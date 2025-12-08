@@ -1,16 +1,16 @@
-import blogCategoryService from "./blogCategoryService";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import blogCategoryService from "./blogCategoryService";
 
 const initialState = {
-  blogblogCategories: [],
+  brands: [],
   loading: false,
   error: null,
 };
 
 export const createBlogCategory = createAsyncThunk("admin/blogCategory/create-blogCategory",
-  async ({ blogCategoryData, token }, thunkAPI) => {
+  async ({ blogCategoryData }, thunkAPI) => {
     try {
-      const response = await blogCategoryService.createBlogCategory(blogCategoryData, token);
+      const response = await blogCategoryService.createBlogCategory(blogCategoryData);
       return response;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -18,9 +18,9 @@ export const createBlogCategory = createAsyncThunk("admin/blogCategory/create-bl
     }
   });
 
-export const updateBlogCategory = createAsyncThunk("admin/blogCategory/update", async ({ blogCategoryId, blogCategoryData, token }, thunkAPI) => {
+export const updateBlogCategory = createAsyncThunk("admin/blogCategory/update", async ({ blogCategoryId, blogCategoryData }, thunkAPI) => {
   try {
-    const response = await blogCategoryService.updateBlogCategory(blogCategoryId, blogCategoryData, token);
+    const response = await blogCategoryService.updateBlogCategory(blogCategoryId, blogCategoryData);
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;
@@ -30,9 +30,9 @@ export const updateBlogCategory = createAsyncThunk("admin/blogCategory/update", 
 
  export const getAllBlogCategory = createAsyncThunk(
   "admin/blogCategory/get-all-blogCategory",
-  async (token, thunkAPI) => {
+  async (thunkAPI) => {
     try {
-      const response = await blogCategoryService.getAllBlogCategory(token);
+      const response = await blogCategoryService.getAllBlogCategory();
       return response;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -41,9 +41,9 @@ export const updateBlogCategory = createAsyncThunk("admin/blogCategory/update", 
   }
 );
 
-export const getBlogCategory = createAsyncThunk("admin/blogCategory/get-blogCategory", async ({ blogCategoryId, token }, thunkAPI) => {
+export const getBlogCategory = createAsyncThunk("admin/blogCategory/get-blogCategory", async ({ blogCategoryId }, thunkAPI) => {
   try {
-    const response = await blogCategoryService.getBlogCategory(blogCategoryId, token);  
+    const response = await blogCategoryService.getBlogCategory(blogCategoryId);
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;
@@ -51,9 +51,9 @@ export const getBlogCategory = createAsyncThunk("admin/blogCategory/get-blogCate
   }
 });
 
-export const deleteBlogCategory = createAsyncThunk("admin/blogCategory/delete-blogCategory", async ({ blogCategoryId, token }, thunkAPI) => {
+export const deleteBlogCategory = createAsyncThunk("admin/blogCategory/delete-blogCategory", async (blogCategoryId, thunkAPI) => {
   try {
-    const response = await blogCategoryService.deleteBlogCategory(blogCategoryId, token);
+    const response = await blogCategoryService.deleteBlogCategory(blogCategoryId);
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;
@@ -86,7 +86,7 @@ export const blogCategorySlice = createSlice({
       })
       .addCase(updateBlogCategory.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.blogCategories.findIndex(cat => cat.id === action.payload.id);
+        const index = state.blogCategories.findIndex(blogCategory => blogCategory.id === action.payload.id);
         if (index !== -1) {
           state.blogCategories[index] = action.payload;
         }
@@ -95,14 +95,14 @@ export const blogCategorySlice = createSlice({
         state.loading = false;
         state.error = action.payload?.message || "Failed to update blog category";
       })
- 
+
       .addCase(deleteBlogCategory.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(deleteBlogCategory.fulfilled, (state, action) => {
         state.loading = false;
-        state.blogCategories = state.blogCategories.filter(cat => cat.id !== action.payload.id);
+        state.blogCategories = state.blogCategories.filter(blogCategory => blogCategory.id !== action.payload.id);
       })
       .addCase(deleteBlogCategory.rejected, (state, action) => {
         state.loading = false;
@@ -116,10 +116,7 @@ export const blogCategorySlice = createSlice({
       })
       .addCase(getBlogCategory.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.blogCategories.findIndex(cat => cat.id === action.payload.id);
-        if (index !== -1) {
-          state.blogCategories[index] = action.payload;
-        }
+        state.blogCategories = state.blogCategories.filter(blogCategory => blogCategory.id !== action.payload.id);
       })
       .addCase(getBlogCategory.rejected, (state, action) => {
         state.loading = false;
@@ -136,9 +133,12 @@ export const blogCategorySlice = createSlice({
       })
       .addCase(getAllBlogCategory.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Failed to fetch blog blogCategories";
+        state.error = action.payload?.message || "Failed to fetch blog categories";
       });
   },
 });
 
+
+
+export const { resetState } = blogCategorySlice.actions;
 export default blogCategorySlice.reducer;

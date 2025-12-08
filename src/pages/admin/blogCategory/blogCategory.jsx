@@ -1,84 +1,73 @@
 import React, { useEffect, useState } from "react";
 import { PencilLine, Trash } from "lucide-react";
-import Axios from "../../../Axios";
-import { useNavigate, Link } from "react-router-dom";
-import Loading from "../../../components/Loading";
+// import Axios from "../../../Axios"; // Đã xóa import thừa
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useSelector, useDispatch } from "react-redux";
 import {
   createBlogCategory,
   updateBlogCategory,
-  getBlogCategory,
   getAllBlogCategory,
   deleteBlogCategory,
 } from "../../../features/adminSlice/blogCategory/blogCategorySlice";
+import Loading from "../../../components/Loading";
 
 const BlogCategory = () => {
   const [editingBlogCategory, setEditingBlogCategory] = useState(null);
   const [editBlogCategory, setEditBlogCategory] = useState({ title: "" });
   const [newBlogCategory, setNewBlogCategory] = useState({ title: "" });
 
-  const currentUser = useSelector((state) => state.auth.user);
-  const { blogCategories, loading, error } = useSelector((state) => state.blogCategoryAdmin || []);
+  const { blogCategories, loading } = useSelector(
+    (state) => state.blogCategoryAdmin
+  );
+
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   useEffect(() => {
-    getBlogCategories();
-  }, [dispatch, currentUser.accessToken]);
+    dispatch(getAllBlogCategory());
+  }, [dispatch]);
 
-  // get all blog categories
-  const getBlogCategories = () => {
-    dispatch(getAllBlogCategory({ token: currentUser.token }));
-  };
-
-  // added blog category
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newBlogCategory.title.trim()) {
-      toast.error("Blog category title is required");
+      toast.error("Title is required");
       return;
     }
     try {
-      const resultAction = await dispatch(
-        createBlogCategory({ blogCategoryData: newBlogCategory, token: currentUser.token })
-      );
+      const resultAction = await dispatch(createBlogCategory(newBlogCategory));
 
       if (createBlogCategory.fulfilled.match(resultAction)) {
-        toast.success("Blog category created successfully");
+        toast.success("Created successfully");
         setNewBlogCategory({ title: "" });
-        getBlogCategories();
       } else {
-        toast.error("Failed to create blog category");
-        toast.error(resultAction.payload || "Error: Create blog category failed!");
+        const errorMsg = resultAction.payload?.message || "Creation failed";
+        toast.error(errorMsg);
       }
     } catch (error) {
-      toast.error("Error: Create blog category failed!");
+      toast.error("An error occurred");
     }
   };
 
-  // edit category
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
       const resultAction = await dispatch(
         updateBlogCategory({
-          blogCategoryId: editingBlogCategory._id || editBlogCategory.id,
+          id: editingBlogCategory._id || editingBlogCategory.id,
           blogCategoryData: editBlogCategory,
-          token: currentUser.token,
         })
       );
+
       if (updateBlogCategory.fulfilled.match(resultAction)) {
-        toast.success("Blog category updated successfully");
+        toast.success("Updated successfully");
+        dispatch(getAllBlogCategory());
         setEditingBlogCategory(null);
-        getBlogCategories();
       } else {
-        toast.error("Failed to update blog category");
-        toast.error(resultAction.payload || "Error: Update blog category failed!");
+        const errorMsg = resultAction.payload?.message || "Update failed";
+        toast.error(errorMsg);
       }
     } catch (error) {
-      toast.error("Error updating blog category");
+      toast.error("An error occurred");
     }
   };
 
@@ -87,148 +76,158 @@ const BlogCategory = () => {
     setEditBlogCategory(blogCategory);
   };
 
-  // delete blog category
   const onDelete = async (blogCategory) => {
-    if (!window.confirm("Are you sure you want to delete this blog category ?")) {
+    if (!window.confirm("Are you sure you want to delete this category?")) {
       return;
     }
     try {
-      const resultAction = await dispatch(
-        deleteBlogCategory({
-          blogCategoryId: blogCategory._id || blogCategory.id,
-          token: currentUser.token,
-        })
-      );
+      const id = blogCategory._id || blogCategory.id;
+      const resultAction = await dispatch(deleteBlogCategory(id));
+
       if (deleteBlogCategory.fulfilled.match(resultAction)) {
-        toast.success("Blog category deleted successfully");
-        getBlogCategories();
+        toast.success("Deleted successfully");
+        dispatch(getAllBlogCategory());
       } else {
-        toast.error("Failed to delete blog category");
-        toast.error(resultAction.payload || "Error: Delete blog category failed!");
+        const errorMsg = resultAction.payload?.message || "Delete failed";
+        toast.error(errorMsg);
       }
     } catch {
-      toast.error("Error deleting blog category");
+      toast.error("An error occurred");
     }
   };
-
-  console.log("blogCategories:", blogCategories);
 
   return (
     <div>
       <ToastContainer />
       <h1 className="title mb-6">Blog Categories</h1>
       <div className="card">
-        <div className="flex">
-          <form className="flex" onSubmit={handleSubmit}>
-            <div className="mr-2">
+        <div className="flex flex-col md:flex-row gap-4 mb-4 items-end md:items-center">
+          <form className="flex w-full md:w-auto gap-2" onSubmit={handleSubmit}>
+            <div className="flex-1 md:w-80">
               <input
                 type="text"
-                id="name"
                 value={newBlogCategory.title}
                 onChange={(e) =>
-                  setNewBlogCategory({ ...newBlogCategory, title: e.target.value })
+                  setNewBlogCategory({
+                    ...newBlogCategory,
+                    title: e.target.value,
+                  })
                 }
-                className="focus:shadow-outline w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow focus:outline-none"
-                placeholder="Enter new blog category title"
+                className="w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter new category title..."
               />
             </div>
             <button
               type="submit"
-              className="mr-4 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
+              className="rounded bg-blue-600 px-4 py-2 font-bold text-white hover:bg-blue-700 transition"
+              disabled={loading}
             >
-              Add new
+              Add
             </button>
           </form>
+
           <button
-            onClick={() => getBlogCategories()}
-            class="rounded bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-700"
+            onClick={() => dispatch(getAllBlogCategory())}
+            className="rounded bg-gray-500 px-4 py-2 font-bold text-white hover:bg-gray-600 transition ml-auto md:ml-0"
           >
             Refresh
           </button>
         </div>
 
-        <div className="card-header"></div>
         {loading ? (
-          <Loading className="flex items-center justify-center text-center" />
+          <div className="p-8">
+            <Loading className="flex items-center justify-center" />
+          </div>
         ) : (
           <div className="card-body p-0">
-            <div className="relative h-[500px] w-full flex-shrink-0 overflow-auto rounded-none [scrollbar-width:_thin]">
-              <table className="table">
-                <thead className="table-header">
-                  <tr className="table-row">
-                    <th className="table-head">#</th>
-                    <th className="table-head">Title</th>
-                    <th className="table-head">Action</th>
-                  </tr>
-                </thead>
-
-                <tbody className="table-body">
-                  {blogCategories?.map((blogCategory, index) => (
-                    <tr key={index} className="table-row">
-                      <td className="table-cell">{(index += 1)}</td>
-                      <td className="table-cell">
-                        <div className="flex w-max gap-x-4">
-                          <div className="flex flex-col">
-                            <p>{blogCategory.title}</p>
-                            {/* <p className="font-normal text-slate-600 dark:text-slate-400">{product.description}</p> */}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="table-cell">
-                        <div className="flex items-center gap-x-4">
-                          <button
-                            onClick={() => startEdit(blogCategory)}
-                            className="text-blue-500 hover:text-blue-800 dark:text-blue-600 dark:hover:text-blue-800"
-                          >
-                            <PencilLine size={20} />
-                          </button>
-                          <button
-                            onClick={(e) => onDelete(blogCategory)}
-                            className="text-red-500 hover:text-red-800"
-                          >
-                            <Trash size={20} />
-                          </button>
-                        </div>
-                      </td>
+            <div className="relative w-full overflow-x-auto">
+              {!blogCategories || blogCategories.length === 0 ? (
+                <div className="p-4 text-center text-gray-500">
+                  No categories found.
+                </div>
+              ) : (
+                <table className="w-full text-left text-sm text-gray-500">
+                  <thead className="bg-gray-100 text-xs uppercase text-gray-700">
+                    <tr>
+                      <th className="px-6 py-3 w-16">#</th>
+                      <th className="px-6 py-3">Title</th>
+                      <th className="px-6 py-3 w-32 text-center">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    {blogCategories.map((blogCategory, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">{index + 1}</td>
+                        <td className="px-6 py-4 font-medium text-gray-900">
+                          {blogCategory.title}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-center gap-4">
+                            <button
+                              onClick={() => startEdit(blogCategory)}
+                              className="text-blue-600 hover:text-blue-900 transition"
+                              title="Edit"
+                            >
+                              <PencilLine size={18} />
+                            </button>
+                            <button
+                              onClick={() => onDelete(blogCategory)}
+                              className="text-red-600 hover:text-red-900 transition"
+                              title="Delete"
+                            >
+                              <Trash size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         )}
       </div>
-      {/* Edit blog category popup menu */}
+
       {editingBlogCategory && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-96 rounded-lg bg-white p-6">
-            <h2 className="mb-4 text-xl font-bold">Edit Blog Category</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h2 className="mb-4 text-xl font-bold text-gray-800">
+              Edit Category
+            </h2>
             <form onSubmit={handleUpdate}>
               <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium">Title</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Title
+                </label>
                 <input
                   type="text"
                   value={editBlogCategory.title}
                   onChange={(e) =>
-                    setEditBlogCategory({ ...editBlogCategory, title: e.target.value })
+                    setEditBlogCategory({
+                      ...editBlogCategory,
+                      title: e.target.value,
+                    })
                   }
                   className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Blog category title"
+                  placeholder="Category title"
+                  autoFocus
                 />
               </div>
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setEditingBlogCategory(null)}
-                  className="rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
+                  className="rounded bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+                  className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 transition"
                 >
-                  Save Changes
+                  Save
                 </button>
               </div>
             </form>
