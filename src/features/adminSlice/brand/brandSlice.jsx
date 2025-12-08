@@ -7,32 +7,11 @@ const initialState = {
   error: null,
 };
 
-export const createBrand = createAsyncThunk("admin/brand/create-brand",
-  async ({ brandData, token }, thunkAPI) => {
+export const createBrand = createAsyncThunk(
+  "admin/brand/create-brand",
+  async (brandData, thunkAPI) => {
     try {
-      const response = await brandService.createBrand(brandData, token);
-      return response;
-    } catch (error) {
-      const message = error.response?.data?.message || error.message;
-      return thunkAPI.rejectWithValue({ message });
-    }
-  });
-
-export const updateBrand = createAsyncThunk("admin/brand/update", async ({ brandId, brandData, token }, thunkAPI) => {
-  try {
-    const response = await brandService.updateBrand(brandId, brandData, token);
-    return response;
-  } catch (error) {
-    const message = error.response?.data?.message || error.message;
-    return thunkAPI.rejectWithValue({ message });
-  }
-});
-
- export const getAllBrand = createAsyncThunk(
-  "admin/brand/get-all-brand",
-  async (token, thunkAPI) => {
-    try {
-      const response = await brandService.getAllBrand(token);
+      const response = await brandService.createBrand(brandData);
       return response;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -41,25 +20,57 @@ export const updateBrand = createAsyncThunk("admin/brand/update", async ({ brand
   }
 );
 
-export const getBrand = createAsyncThunk("admin/brand/get-brand", async ({ brandId, token }, thunkAPI) => {
-  try {
-    const response = await brandService.getBrand(brandId, token);
-    return response;
-  } catch (error) {
-    const message = error.response?.data?.message || error.message;
-    return thunkAPI.rejectWithValue({ message });
+export const updateBrand = createAsyncThunk(
+  "admin/brand/update",
+  async ({ brandId, brandData }, thunkAPI) => {
+    try {
+      const response = await brandService.updateBrand(brandId, brandData);
+      return response;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue({ message });
+    }
   }
-});
+);
 
-export const deleteBrand = createAsyncThunk("admin/brand/delete-brand", async ({ brandId, token }, thunkAPI) => {
-  try {
-    const response = await brandService.deleteBrand(brandId, token);
-    return response;
-  } catch (error) {
-    const message = error.response?.data?.message || error.message;
-    return thunkAPI.rejectWithValue({ message });
+export const getAllBrand = createAsyncThunk(
+  "admin/brand/get-all-brand",
+  async (_, thunkAPI) => {
+    try {
+      const response = await brandService.getAllBrand();
+      return response;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue({ message });
+    }
   }
-});
+);
+
+export const getBrand = createAsyncThunk(
+  "admin/brand/get-brand",
+  async (brandId, thunkAPI) => {
+    try {
+      const response = await brandService.getBrand(brandId);
+      return response;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue({ message });
+    }
+  }
+);
+
+export const deleteBrand = createAsyncThunk(
+  "admin/brand/delete-brand",
+  async (brandId, thunkAPI) => {
+    try {
+      const response = await brandService.deleteBrand(brandId);
+      return response;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue({ message });
+    }
+  }
+);
 
 export const brandSlice = createSlice({
   name: "brand-admin",
@@ -86,7 +97,9 @@ export const brandSlice = createSlice({
       })
       .addCase(updateBrand.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.brands.findIndex(brand => brand.id === action.payload.id);
+        const index = state.brands.findIndex(
+          (brand) => brand.id === action.payload.id
+        );
         if (index !== -1) {
           state.brands[index] = action.payload;
         }
@@ -102,21 +115,24 @@ export const brandSlice = createSlice({
       })
       .addCase(deleteBrand.fulfilled, (state, action) => {
         state.loading = false;
-        state.brands = state.brands.filter(brand => brand.id !== action.payload.id);
+        state.brands = state.brands.filter(
+          (brand) => brand.id !== action.payload.id
+        );
       })
       .addCase(deleteBrand.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Failed to delete brand";
       })
 
-
-    .addCase(getBrand.pending, (state) => {
+      .addCase(getBrand.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(getBrand.fulfilled, (state, action) => {
         state.loading = false;
-        state.brands = state.brands.filter(brand => brand.id !== action.payload.id);
+        state.brands = state.brands.filter(
+          (brand) => brand.id !== action.payload.id
+        );
       })
       .addCase(getBrand.rejected, (state, action) => {
         state.loading = false;

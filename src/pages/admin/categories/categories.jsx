@@ -1,110 +1,105 @@
 import React, { useEffect, useState } from "react";
-import { topProducts } from "@/constants";
-import { PencilLine, Trash } from "lucide-react";
-import Axios from "../../../Axios";
-import { useNavigate, Link } from "react-router-dom";
-import Loading from "../../../components/Loading";
+import { PencilLine, Trash, Plus, RefreshCw, X } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useSelector, useDispatch } from "react-redux";
+import Loading from "../../../components/Loading";
+
 import {
   createCategory,
   updateCategory,
-  getCategory,
   getAllCategory,
   deleteCategory,
 } from "../../../features/adminSlice/category/categorySlice";
 
 const Categories = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const currentUser = useSelector((state) => state.auth.user);
-  const { categories, loading, error } = useSelector(
-    (state) => state.categoryAdmin
-  );
-  const [editingCategory, setEditingCategory] = useState(null);
+  
+  const { categories, loading } = useSelector((state) => state.categoryAdmin);
+  const [search, setSearch] = useState("");
 
-  const [editCate, setEditCate] = useState({ title: "" });
-  const [newCate, setNewCate] = useState({ title: "" });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("add"); 
+  const [currentCate, setCurrentCate] = useState({ id: null, title: "" });
 
   useEffect(() => {
-    getCate();
-  }, []);
+    dispatch(getAllCategory());
+  }, [dispatch]);
 
-  // get all categories
-  const getCate = () => {
-    dispatch(getAllCategory({ token: currentUser.token }));
+
+  const filteredCategories = categories.filter((cate) =>
+    cate.title?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const openModal = (mode, category = null) => {
+    setModalMode(mode);
+    if (mode === "edit" && category) {
+      setCurrentCate({ id: category._id || category.id, title: category.title });
+    } else {
+      setCurrentCate({ id: null, title: "" }); 
+    }
+    setIsModalOpen(true);
   };
 
-  // added category
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setCurrentCate({ id: null, title: "" });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!newCate.title.trim()) {
-      toast.error("Category title is required");
+    if (!currentCate.title.trim()) {
+      toast.warning("Please enter category title");
       return;
     }
-    try {
-      const resultAction = await dispatch(
-        createCategory({ categoryData: newCate, token: currentUser.token })
-      );
 
-      if (createCategory.fulfilled.match(resultAction)) {
-        toast.success("Category created successfully");
-        setNewCate({ title: "" });
-        getCate();
+    try {
+      let resultAction;
+      
+      if (modalMode === "add") {
+        // --- ADD ---
+        resultAction = await dispatch(createCategory({ title: currentCate.title }));
       } else {
-        toast.error("Failed to create category");
-        toast.error(resultAction.payload || "Error: Create category failed!");
+        // --- EDIT ---
+        resultAction = await dispatch(
+          updateCategory({
+            categoryId: currentCate.id,
+            categoryData: { title: currentCate.title },
+          })
+        );
+      }
+
+      if (
+        createCategory.fulfilled.match(resultAction) ||
+        updateCategory.fulfilled.match(resultAction)
+      ) {
+        toast.success(
+          modalMode === "add"
+            ? "Category created successfully"
+            : "Category updated successfully"
+        );
+        closeModal();
+        dispatch(getAllCategory());
+      } else {
+        toast.error(resultAction.payload?.message || "Action failed");
       }
     } catch (error) {
-      toast.error("Error: Create category failed!");
+      toast.error("An unexpected error occurred");
     }
   };
 
-  // edit category
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-    try {
-      const resultAction = await dispatch(
-        updateCategory({
-          categoryId: editingCategory._id,
-          categoryData: editCate,
-          token: currentUser.token,
-        })
-      );
-      if (updateCategory.fulfilled.match(resultAction)) {
-        toast.success("Category updated successfully");
-        setEditingCategory(null);
-        getCate();
-      } else {
-        toast.error("Failed to update category");
-        toast.error(resultAction.payload || "Error: Update category failed!");
-      }
-    } catch {
-      toast.error("Error updating category");
-    }
-  };
-
-  const startEdit = (category) => {
-    setEditingCategory(category);
-    setEditCate(category);
-  };
-
-  // delete category
-  const onDelete = async (categoryId) => {
-    if (!window.confirm("Are you sure you want to delete this category ?")) {
+  // 5. Xử lý Delete
+  const onDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this category?")) {
       return;
     }
     try {
-      const resultAction = await dispatch(
-        deleteCategory({ categoryId: categoryId, token: currentUser.token })
-      );
+      const resultAction = await dispatch(deleteCategory(id));
       if (deleteCategory.fulfilled.match(resultAction)) {
         toast.success("Category deleted successfully");
-        getCate();
+        dispatch(getAllCategory());
       } else {
-        toast.error("Failed to delete category");
-        toast.error(resultAction.payload || "Error: Delete category failed!");
+        toast.error(resultAction.payload?.message || "Failed to delete category");
       }
     } catch {
       toast.error("Error deleting category");
@@ -114,119 +109,146 @@ const Categories = () => {
   return (
     <div>
       <ToastContainer />
-      <h1 className="title mb-6">Categories</h1>
+      <h1 className="title mb-6">Product Categories</h1>
+      
       <div className="card">
-        <div className="flex">
-          <form className="flex" onSubmit={handleSubmit}>
-            <div className="mr-2">
-              <input
-                type="text"
-                id="title"
-                value={newCate.title}
-                onChange={(e) =>
-                  setNewCate({ ...newCate, title: e.target.value })
-                }
-                className="focus:shadow-outline w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow focus:outline-none"
-                placeholder="Enter new category title"
-              />
-            </div>
+        {/* --- TOOLBAR (Add, Refresh, Search) --- */}
+        <div className="card-header flex flex-col md:flex-row items-center gap-4 py-4 px-6 border-b border-gray-100">
+          <div className="flex gap-2 w-full md:w-auto">
             <button
-              type="submit"
-              class="mr-4 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
+              onClick={() => openModal("add")}
+              className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition w-full md:w-auto"
             >
-              Add new
+              <Plus size={18} />
+              Add New
             </button>
-          </form>
-          <button
-            onClick={() => getCate()}
-            class="rounded bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-700"
-          >
-            Refresh
-          </button>
+            <button
+              onClick={() => dispatch(getAllCategory())}
+              className="flex items-center justify-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition"
+            >
+              <RefreshCw size={18} />
+              Refresh
+            </button>
+          </div>
+
+          <div className="w-full md:ml-auto md:w-80">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search categories..."
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
         </div>
 
-        <div className="card-header"></div>
+        {/* --- TABLE CONTENT --- */}
         {loading ? (
-          <Loading className="flex items-center justify-center text-center" />
+          <div className="p-12">
+            <Loading className="flex items-center justify-center" />
+          </div>
         ) : (
           <div className="card-body p-0">
-            <div className="relative h-[500px] w-full flex-shrink-0 overflow-auto rounded-none [scrollbar-width:_thin]">
-              <table className="table">
-                <thead className="table-header">
-                  <tr className="table-row">
-                    <th className="table-head">#</th>
-                    <th className="table-head">Name</th>
-                    <th className="table-head">Action</th>
-                  </tr>
-                </thead>
-
-                <tbody className="table-body">
-                  {categories.map((cate, index) => (
-                    <tr key={index} className="table-row">
-                      <td className="table-cell">{(index += 1)}</td>
-                      <td className="table-cell">
-                        <div className="flex w-max gap-x-4">
-                          <div className="flex flex-col">
-                            <p>{cate.title}</p>
-                            {/* <p className="font-normal text-slate-600 dark:text-slate-400">{product.description}</p> */}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="table-cell">
-                        <div className="flex items-center gap-x-4">
-                          <button
-                            onClick={() => startEdit(cate)}
-                            className="text-blue-500 hover:text-blue-800 dark:text-blue-600 dark:hover:text-blue-800"
-                          >
-                            <PencilLine size={20} />
-                          </button>
-                          <button
-                            onClick={(e) => onDelete(cate._id)}
-                            className="text-red-500 hover:text-red-800"
-                          >
-                            <Trash size={20} />
-                          </button>
-                        </div>
-                      </td>
+            <div className="relative w-full overflow-x-auto">
+              {filteredCategories.length === 0 ? (
+                <div className="p-8 text-center text-gray-500 italic">
+                  No categories found.
+                </div>
+              ) : (
+                <table className="w-full text-left text-sm text-gray-500">
+                  <thead className="bg-gray-50 text-xs uppercase text-gray-700">
+                    <tr>
+                      <th className="px-6 py-3 w-16 text-center">#</th>
+                      <th className="px-6 py-3">Category Name</th>
+                      <th className="px-6 py-3 w-40 text-center">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    {filteredCategories.map((cate, index) => (
+                      <tr key={cate._id || cate.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 text-center text-gray-400">
+                          {index + 1}
+                        </td>
+                        <td className="px-6 py-4 font-medium text-gray-900">
+                          {cate.title}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-center gap-3">
+                            <button
+                              onClick={() => openModal("edit", cate)}
+                              className="rounded p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition"
+                              title="Edit"
+                            >
+                              <PencilLine size={18} />
+                            </button>
+                            <button
+                              onClick={() => onDelete(cate._id || cate.id)}
+                              className="rounded p-1 text-red-600 hover:bg-red-50 hover:text-red-800 transition"
+                              title="Delete"
+                            >
+                              <Trash size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         )}
       </div>
-      {/* Edit category popup menu */}
-      {editingCategory && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-96 rounded-lg bg-white p-6">
-            <h2 className="mb-4 text-xl font-bold">Edit Category</h2>
-            <form onSubmit={handleUpdate}>
+
+      {/* --- REUSABLE MODAL (Dùng chung cho Add và Edit) --- */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl bg-white shadow-2xl transform transition-all scale-100">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b p-4">
+              <h3 className="text-lg font-bold text-gray-800">
+                {modalMode === "add" ? "Add New Category" : "Edit Category"}
+              </h3>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleSubmit} className="p-6">
               <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium">Name</label>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Title <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
-                  value={editCate.title}
+                  value={currentCate.title}
                   onChange={(e) =>
-                    setEditCate({ ...editCate, title: e.target.value })
+                    setCurrentCate({ ...currentCate, title: e.target.value })
                   }
-                  className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Category title"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="Enter category title"
+                  autoFocus
                 />
               </div>
-              <div className="flex justify-end gap-2">
+
+              {/* Modal Footer */}
+              <div className="flex justify-end gap-3 mt-6">
                 <button
                   type="button"
-                  onClick={() => setEditingCategory(null)}
-                  className="rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
+                  onClick={closeModal}
+                  className="rounded-lg px-4 py-2 text-gray-600 hover:bg-gray-100 transition border border-gray-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+                  className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white hover:bg-blue-700 transition shadow-sm"
                 >
-                  Save Changes
+                  {modalMode === "add" ? "Create" : "Save Changes"}
                 </button>
               </div>
             </form>

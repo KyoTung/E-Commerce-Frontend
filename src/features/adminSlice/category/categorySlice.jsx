@@ -8,9 +8,9 @@ const initialState = {
 };
 
 export const createCategory = createAsyncThunk("admin/category/create-category",
-  async ({ categoryData, token }, thunkAPI) => {
+  async (categoryData , thunkAPI) => {
     try {
-      const response = await categoryService.createCategory(categoryData, token);
+      const response = await categoryService.createCategory(categoryData);
       return response;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -18,9 +18,9 @@ export const createCategory = createAsyncThunk("admin/category/create-category",
     }
   });
 
-export const updateCategory = createAsyncThunk("admin/category/update", async ({ categoryId, categoryData, token }, thunkAPI) => {
+export const updateCategory = createAsyncThunk("admin/category/update", async ({ categoryId, categoryData }, thunkAPI) => {
   try {
-    const response = await categoryService.updateCategory(categoryId, categoryData, token);
+    const response = await categoryService.updateCategory(categoryId, categoryData);
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;
@@ -30,9 +30,9 @@ export const updateCategory = createAsyncThunk("admin/category/update", async ({
 
  export const getAllCategory = createAsyncThunk(
   "admin/category/get-all-category",
-  async (token, thunkAPI) => {
+  async (_, thunkAPI) => {
     try {
-      const response = await categoryService.getAllCategory(token);
+      const response = await categoryService.getAllCategory();
       return response;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -41,9 +41,9 @@ export const updateCategory = createAsyncThunk("admin/category/update", async ({
   }
 );
 
-export const getCategory = createAsyncThunk("admin/category/get-category", async ({ categoryId, token }, thunkAPI) => {
+export const getCategory = createAsyncThunk("admin/category/get-category", async ( categoryId, thunkAPI) => {
   try {
-    const response = await categoryService.getCategory(categoryId, token);  
+    const response = await categoryService.getCategory(categoryId);  
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;
@@ -51,9 +51,9 @@ export const getCategory = createAsyncThunk("admin/category/get-category", async
   }
 });
 
-export const deleteCategory = createAsyncThunk("admin/category/delete-category", async ({ categoryId, token }, thunkAPI) => {
+export const deleteCategory = createAsyncThunk("admin/category/delete-category", async (categoryId, thunkAPI) => {
   try {
-    const response = await categoryService.deleteCategory(categoryId, token);
+    const response = await categoryService.deleteCategory(categoryId);
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;

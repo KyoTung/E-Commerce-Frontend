@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { PencilLine, Trash } from "lucide-react";
+import { PencilLine, Trash, Plus, RefreshCw } from "lucide-react"; // Thêm icon
 import { useDispatch, useSelector } from "react-redux";
 import {
   getAllUser,
@@ -63,7 +63,7 @@ const User = () => {
 
       if (deleteUser.fulfilled.match(resultAction)) {
         toast.success("User deleted successfully");
-        dispatch(getAllUser());
+        // dispatch(getAllUser()); // KHÔNG CẦN GỌI LẠI
       } else {
         const errorMsg =
           resultAction.payload?.message || "Failed to delete user";
@@ -83,10 +83,8 @@ const User = () => {
       const resultAction = await dispatch(blockUser(id));
 
       if (blockUser.fulfilled.match(resultAction)) {
-        toast.success(
-          resultAction.payload?.message || "User blocked successfully"
-        );
-        dispatch(getAllUser());
+        toast.success(resultAction.payload?.message || "User blocked successfully");
+        // dispatch(getAllUser()); // KHÔNG CẦN GỌI LẠI
       } else {
         toast.error(resultAction.payload?.message || "Failed to block user");
       }
@@ -104,10 +102,8 @@ const User = () => {
       const resultAction = await dispatch(unBlockUser(id));
 
       if (unBlockUser.fulfilled.match(resultAction)) {
-        toast.success(
-          resultAction.payload?.message || "User unblocked successfully"
-        );
-        dispatch(getAllUser());
+        toast.success(resultAction.payload?.message || "User unblocked successfully");
+        // dispatch(getAllUser()); // KHÔNG CẦN GỌI LẠI
       } else {
         toast.error(resultAction.payload?.message || "Failed to unblock user");
       }
@@ -116,55 +112,59 @@ const User = () => {
     }
   };
 
-  console.log("allUsers:", allUsers);
-
   return (
     <div>
       <ToastContainer />
       <h1 className="title mb-6">Users Management</h1>
+      
       <div className="card">
-        <div className="card-header flex flex-col md:flex-row items-center gap-4">
-          <div className="flex gap-2">
+        {/* --- TOOLBAR --- */}
+        <div className="card-header flex flex-col md:flex-row items-center gap-4 py-4 px-6 border-b border-gray-100">
+          <div className="flex gap-2 w-full md:w-auto">
             <Link
               to="/admin/new-user"
-              className="rounded bg-blue-600 px-4 py-2 font-bold text-white hover:bg-blue-700 transition"
+              className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition w-full md:w-auto"
             >
+              <Plus size={18} />
               Add New
             </Link>
             <button
               onClick={() => dispatch(getAllUser())}
-              className="rounded bg-green-600 px-4 py-2 font-bold text-white hover:bg-green-700 transition"
+              className="flex items-center justify-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition"
             >
+              <RefreshCw size={18} />
               Refresh
             </button>
           </div>
 
-          <input
-            type="text"
-            value={search}
-            onChange={handleSearchChange}
-            placeholder="Search name, email, phone..."
-            className="w-full md:ml-auto md:w-auto rounded border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="w-full md:ml-auto md:w-80">
+            <input
+              type="text"
+              value={search}
+              onChange={handleSearchChange}
+              placeholder="Search user..."
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
         </div>
 
+        {/* --- TABLE --- */}
         {isLoading ? (
-          <div className="p-8">
+          <div className="p-12">
             <Loading className="flex items-center justify-center" />
           </div>
         ) : (
           <div className="card-body p-0">
             <div className="relative w-full overflow-x-auto">
               <table className="w-full text-left text-sm text-gray-500">
-                <thead className="bg-gray-100 text-xs uppercase text-gray-700">
+                <thead className="bg-gray-50 text-xs uppercase text-gray-700">
                   <tr>
-                    <th className="px-6 py-3">#</th>
+                    <th className="px-6 py-3 w-16 text-center">#</th>
                     <th className="px-6 py-3">Name</th>
                     <th className="px-6 py-3">Email</th>
                     <th className="px-6 py-3">Phone</th>
-                    {/* <th className="px-6 py-3">Address</th> */}
                     <th className="px-6 py-3">Created At</th>
-                    <th className="px-6 py-3">Role</th>
+                    <th className="px-6 py-3 text-center">Role</th>
                     <th className="px-6 py-3 text-center">Actions</th>
                   </tr>
                 </thead>
@@ -174,29 +174,27 @@ const User = () => {
                     filteredUsers.map((user, index) => (
                       <tr
                         key={user._id || user.id}
-                        className="hover:bg-gray-50 transition"
+                        className="hover:bg-gray-50 transition-colors"
                       >
-                        <td className="px-6 py-4">{index + 1}</td>
+                        <td className="px-6 py-4 text-center text-gray-400">
+                          {index + 1}
+                        </td>
                         <td className="px-6 py-4 font-medium text-gray-900">
-                          {user.fullName ||
-                            user.firstname + " " + user.lastname}
+                          {user.name || user.fullName || user.firstname + " " + user.lastname}
                         </td>
                         <td className="px-6 py-4">{user.email}</td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-gray-500">
                           {user.mobile || user.phone || "---"}
                         </td>
-                        {/* <td className="px-6 py-4 truncate max-w-[150px]" title={user.address}>
-                          {user.address || "---"}
-                        </td> */}
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-gray-500">
                           {formatDate(user.createdAt || user.created_at)}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-center">
                           <span
-                            className={`px-2 py-1 rounded text-xs font-semibold ${
+                            className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               user.role === "admin"
-                                ? "bg-purple-100 text-purple-700"
-                                : "bg-gray-100 text-gray-700"
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-blue-100 text-blue-800"
                             }`}
                           >
                             {user.role}
@@ -204,40 +202,41 @@ const User = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-center gap-3">
+                            {/* Edit */}
                             <button
-                              title="Edit"
                               onClick={() =>
-                                navigate(
-                                  `/admin/edit-user/${user._id || user.id}`
-                                )
+                                navigate(`/admin/edit-user/${user._id || user.id}`)
                               }
-                              className="text-blue-600 hover:text-blue-900"
+                              className="rounded p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition"
+                              title="Edit"
                             >
                               <PencilLine size={18} />
                             </button>
 
+                            {/* Block / Unblock */}
                             {user.isBlock ? (
                               <button
-                                title="Unblock"
                                 onClick={() => onUnBlockUser(user)}
-                                className="text-amber-600 hover:text-amber-900"
+                                className="rounded p-1 text-amber-600 hover:bg-amber-50 hover:text-amber-800 transition"
+                                title="Unblock (Click to activate)"
                               >
                                 <MdLockOutline size={20} />
                               </button>
                             ) : (
                               <button
-                                title="Block"
                                 onClick={() => onBlockUser(user)}
-                                className=" text-green-600 hover:text-green-900"
+                                className="rounded p-1 text-green-600 hover:bg-green-50 hover:text-green-800 transition"
+                                title="Block (Click to deactivate)"
                               >
                                 <MdLockOpen size={20} />
                               </button>
                             )}
 
+                            {/* Delete */}
                             <button
-                              title="Delete"
                               onClick={() => onDelete(user)}
-                              className="text-red-600 hover:text-red-900"
+                              className="rounded p-1 text-red-600 hover:bg-red-50 hover:text-red-800 transition"
+                              title="Delete"
                             >
                               <Trash size={18} />
                             </button>
@@ -247,10 +246,7 @@ const User = () => {
                     ))
                   ) : (
                     <tr>
-                      <td
-                        colSpan={8}
-                        className="py-8 text-center text-gray-500 italic"
-                      >
+                      <td colSpan={7} className="py-12 text-center text-gray-500 italic">
                         No users found.
                       </td>
                     </tr>

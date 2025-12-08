@@ -1,43 +1,28 @@
-import axios from "axios";
-const baseURL = import.meta.env.VITE_BASE_URL;
 
-const createCategory = async (categoryData, token) => {
-  const response = await axios.post(`${baseURL}/category`, categoryData, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+import axiosClient from "../../../api/axiosClient";
+
+const createCategory = async (categoryData) => {
+  const response = await axiosClient.post('/category', categoryData);
   return response.data;
 };
 
-const updateCategory = async (categoryId, categoryData, token) => {
-  const response = await axios.put(
-    `${baseURL}/category/${categoryId}`,
-    categoryData,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
+const updateCategory = async (categoryId, categoryData) => {
+  const response = await axiosClient.put(`/category/${categoryId}`, categoryData);
   return response.data;
 };
 
-
-const getAllCategory = async (token) => {
-  const response = await axios.get(`${baseURL}/category`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const getAllCategory = async () => {
+  const response = await axiosClient.get('/category');
   return response.data;
 };
 
-const getCategory = async (categoryId, token) => {
-  const response = await axios.get(`${baseURL}/category/${categoryId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const getCategory = async (categoryId) => {
+  const response = await axiosClient.get(`/category/${categoryId}`);
   return response.data;
 };
 
-const deleteCategory = async (categoryId, token) => {
-  const response = await axios.delete(`${baseURL}/category/${categoryId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const deleteCategory = async (categoryId) => {
+  const response = await axiosClient.delete(`/category/${categoryId}`);
   return response.data;
 };
 
@@ -48,4 +33,5 @@ const categoryService = {
   getAllCategory,
   getCategory,
 };
+
 export default categoryService;
