@@ -9,9 +9,9 @@ const initialState = {
 };
 
 
-export const updateOrder = createAsyncThunk("admin/order/update", async ({ orderId, orderData, token }, thunkAPI) => {
+export const updateOrder = createAsyncThunk("admin/order/update", async ({ orderId, orderData}, thunkAPI) => {
   try {
-    const response = await OrderService.updateOrder(orderId, orderData, token);
+    const response = await OrderService.updateOrder(orderId, orderData);
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;
@@ -21,9 +21,9 @@ export const updateOrder = createAsyncThunk("admin/order/update", async ({ order
 
  export const getAllOrder = createAsyncThunk(
   "admin/order/get-all-order",
-  async (token, thunkAPI) => {
+  async (_, thunkAPI) => {
     try {
-      const response = await OrderService.getAllOrder(token);
+      const response = await OrderService.getAllOrder();
       return response;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -32,9 +32,9 @@ export const updateOrder = createAsyncThunk("admin/order/update", async ({ order
   }
 );
 
-export const getOrder = createAsyncThunk("admin/order/get-order", async ({ orderId, token }, thunkAPI) => {
+export const getOrder = createAsyncThunk("admin/order/get-order", async ( orderId, thunkAPI) => {
   try {
-    const response = await OrderService.getOrder(orderId, token);
+    const response = await OrderService.getOrder(orderId);
     return response;
   } catch (error) {
     const message = error.response?.data?.message || error.message;

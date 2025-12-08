@@ -1,30 +1,17 @@
-import axios from "axios";
-const baseURL = import.meta.env.VITE_BASE_URL;
-  
+import axiosClient from "../../../api/axiosClient";
 
-const updateOrder= async (id, orderData, token) => {
-  const response = await axios.put(
-    `${baseURL}/order/${id}`,
-    orderData,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
+const updateOrder = async (id, orderData) => {
+  const response = await axiosClient.put(`/order/${id}`, orderData);
   return response.data;
 };
 
-
-const getAllOrder= async (token) => {
-  const response = await axios.get(`${baseURL}/order`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const getAllOrder = async () => {
+  const response = await axiosClient.get('/order');
   return response.data;
 };
 
-const getOrder= async (id, token) => {
-  const response = await axios.get(`${baseURL}/order/order-detail/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const getOrder = async (id) => {
+  const response = await axiosClient.get(`/order/order-detail/${id}`);
   return response.data;
 };
 
@@ -33,4 +20,5 @@ const OrderService = {
   getAllOrder,
   getOrder,
 };
+
 export default OrderService;
