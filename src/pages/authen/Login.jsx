@@ -1,11 +1,10 @@
 
 import React, { useState, useEffect } from "react";
 import { EyeOff, Eye, Mail, Lock } from "lucide-react";
-import Axios from "../../Axios"; // Axios instance của bạn (đã cấu hình baseURL)
+import Axios from "../../Axios"; 
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { login as loginThunk } from "../../features/authSlice/authSlice";
-import { getUser } from "../../features/guestSlice/userSlice";
 import "../../App.css";
 
 const LoginForm = () => {
@@ -57,20 +56,18 @@ const LoginForm = () => {
     dispatch(loginThunk(payload));
   };
 
-  // Đăng nhập thành công → gắn Authorization + (tuỳ chọn) getUser + chuyển trang
+ 
   useEffect(() => {
     if (isSuccess && user) {
-      // Gắn Access Token vào Axios mặc định
+    
       Axios.defaults.headers.common["Authorization"] = `Bearer ${user.token}`;
 
-      // Nếu bạn vẫn muốn lấy lại user từ API (tuỳ backend)
-      // dispatch(getUser({ userId: user._id, token: user.token }));
 
       navigate("/");
     }
   }, [isSuccess, user, navigate]);
 
-  // Hiển thị lỗi khi login thất bại
+  
   useEffect(() => {
     if (isError) {
       setErrors((prev) => ({ ...prev, submit: message }));

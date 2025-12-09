@@ -28,12 +28,6 @@ function App() {
     initApp();
   }, [dispatch]);
 
-  if (!isReady)
-    return (
-      <div className="flex h-screen items-center justify-center">
-        Loading...
-      </div>
-    );
 
   return (
     <ThemeProvider storageKey="theme">

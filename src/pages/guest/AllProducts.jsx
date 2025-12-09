@@ -1,166 +1,207 @@
-import React from "react";
-import { FaStar, FaShoppingCart, FaEye } from "react-icons/fa";
+import React, { useEffect, useState } from "react";
+import { FaStar, FaHeart, FaSortAmountDown } from "react-icons/fa";
 import { FaChevronDown } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 
-
-const products = [
-  {
-    id: 1,
-    name: "iPhone 15 128GB | Chính hãng VN/A",
-    img_url:
-      "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-15-plus_1__1.png",
-    price: 20000000,
-    rating: 4.7,
-    discount: 10,
-    screen_size: "6.5 inches",
-    ram: "8GB",
-    rom: "256GB",
-  },
-  {
-    id: 2,
-    name: "Samsung Galaxy S23 Ultra 256GB",
-    img_url:
-      "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/2/s23-ultra-tim-1.png",
-    price: 21500000,
-    rating: 4.8,
-    discount: 15,
-    screen_size: "6.5 inches",
-    ram: "8GB",
-    rom: "256GB",
-  },
-  {
-    id: 3,
-    name: "iPhone 15 128GB | Chính hãng VN/A",
-    img_url:
-      "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-15-plus_1__1.png",
-    price: 20000000,
-    rating: 4.7,
-    discount: 10,
-    screen_size: "6.5 inches",
-    ram: "8GB",
-    rom: "256GB",
-  },
-  {
-    id: 4,
-    name: "Samsung Galaxy S23 Ultra 256GB",
-    img_url:
-      "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/2/s23-ultra-tim-1.png",
-    price: 21500000,
-    rating: 4.8,
-    discount: 15,
-    screen_size: "6.5 inches",
-    ram: "8GB",
-    rom: "256GB",
-  },
-];
-
+import { getAllProducts } from "../../features/guestSlice/product/productSlice";
+import Loading from "../../components/Loading";
 
 const AllProducts = () => {
+  const dispatch = useDispatch();
+
+  const { products, isLoading, isError } = useSelector(
+    (state) => state.productClient
+  );
+
+  const [sort, setSort] = useState("popular");
+
+  useEffect(() => {
+    dispatch(getAllProducts());
+  }, [dispatch]);
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(price);
+  };
+
+  const getSpecs = (specs) => {
+    if (!specs) return [];
+    const list = [];
+    if (specs.screen) list.push(specs.screen);
+    if (specs.ram) list.push(specs.ram);
+    if (specs.storage) list.push(specs.storage);
+    return list.slice(0, 3);
+  };
+
+  console.log("Products:", products);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loading />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex h-screen items-center justify-center text-red-500">
+        Đã có lỗi xảy ra khi tải sản phẩm.
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <div className="px-1 sm:px-4 py-12">
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-xl font-bold">Sắp xếp theo:</span>
-            <select className="rounded border p-2 ">
-              <option value="popular" >Phổ biến</option>
-              <option value="newest">Mới nhất</option>
-              <option value="price_asc">Giá thấp đến cao</option>
-              <option value="price_desc">Giá cao đến thấp</option>
-            </select>
+    <div className="bg-[#f4f6f8] min-h-screen pb-10">
+      <div className="mx-auto max-w-[1200px] px-2 sm:px-4 py-4">
+        {/* --- Header & Filter Bar --- */}
+        <div className="mb-4">
+          <h1 className="text-xl font-bold text-gray-800 uppercase mb-4">
+            Tất cả điện thoại
+          </h1>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+            {/* Quick Filters */}
+            <div className="flex flex-wrap gap-2">
+              {[
+                "Apple",
+                "Samsung",
+                "Xiaomi",
+                "OPPO",
+                "Từ 2-4 triệu",
+                "Pin khủng",
+              ].map((filter) => (
+                <button
+                  key={filter}
+                  className="px-3 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md hover:border-[#d70018] hover:text-[#d70018] bg-gray-50 transition-colors"
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+
+            {/* Sort Dropdown */}
+            <div className="flex items-center gap-2 ml-auto">
+              <FaSortAmountDown className="text-gray-500" />
+              <span className="text-sm font-medium text-gray-700 hidden sm:inline">
+                Sắp xếp:
+              </span>
+              <select
+                className="text-sm border-none bg-transparent font-medium text-gray-800 focus:ring-0 cursor-pointer"
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+              >
+                <option value="popular">Nổi bật</option>
+                <option value="price_asc">Giá thấp đến cao</option>
+                <option value="price_desc">Giá cao đến thấp</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {products.map((product) => (
-            <div
-              key={product.id}
-              className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 group border border-gray-100"
-            >
-              <div className="relative overflow-hidden">
-                <div className="h-50 flex items-center justify-center p-4 bg-white">
-                  <img
-                    src={product.img_url}
-                    alt={product.name}
-                    className="sm:max-h-44 max-h-32 object-contain transform group-hover:scale-110 transition-transform duration-300"
-                  />
-                </div>
+        {/* --- Product Grid --- */}
+        {products && products.length > 0 ? (
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-5">
+            {products.map((product) => {
+              const specsList = getSpecs(product.specifications);
+              const discount = 0;
 
-                {product.discount > 0 && (
-                  <div className="absolute top-2 left-2 bg-[#d0011b] text-white text-xs font-bold px-2 py-1 rounded-md">
-                    GIẢM {product.discount}%
+              return (
+                <Link
+                  to={`/product/${product._id || product.id}`}
+                  key={product._id || product.id}
+                  className="group relative flex flex-col h-full overflow-hidden rounded-xl bg-white p-2 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-3"
+                >
+                  {/* Image Section */}
+                  <div className="relative mb-2 flex h-40 w-full items-center justify-center overflow-hidden rounded-lg sm:h-48">
+                    <img
+                      src={
+                        product.images?.[0]?.url ||
+                        "https://via.placeholder.com/300"
+                      }
+                      alt={product.title}
+                      className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
+                    />
+
+                    {discount > 0 && (
+                      <div className="absolute left-0 top-0 rounded-br-lg bg-[#d70018] px-2 py-0.5 text-[10px] font-bold text-white shadow-sm sm:text-xs">
+                        Giảm {discount}%
+                      </div>
+                    )}
+
+                    {product.basePrice > 3000000 && (
+                      <div className="absolute right-0 top-0 rounded-bl-lg bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600 sm:text-xs border border-gray-200">
+                        Trả góp 0%
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-800 mb-2 -ml-2 line-clamp-2 h-14">
-                  {product.name}
-                </h3>
-                <div className="mb-2 flex flex-wrap gap-1 -ml-2">
-                  <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
-                    {product.screen_size}
-                  </span>
-                  <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
-                    {product.ram}
-                  </span>
-                  <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
-                    {product.rom}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between mt-4 -ml-2">
-                  <span className="text-sm sm:text-lg font-bold text-[#d0011b]">
-                    {product.price.toLocaleString("vi-VN")}₫
-                  </span>
-                  {product.discount > 0 && (
-                    <span className="text-xs sm:text-sm text-gray-500 line-through -mr-2">
-                      {Math.round(
-                        product.price / (1 - product.discount / 100)
-                      ).toLocaleString("vi-VN")}
-                      ₫
-                    </span>
-                  )}
-                </div>
+                  {/* Content Section */}
+                  <div className="flex flex-1 flex-col">
+                    <h3
+                      className="mb-1 text-xs font-semibold leading-relaxed text-gray-700 line-clamp-3 hover:text-[#d70018] sm:mb-2 sm:text-sm min-h-[2.5em]"
+                      title={product.title}
+                    >
+                      {product.title}
+                    </h3>
 
-                <div className="flex items-center my-2 -ml-2">
-                  <div className="flex text-yellow-400">
-                    {[...Array(5)].map((_, i) => (
-                      <FaStar
-                        key={i}
-                        className={
-                          i < Math.floor(product.rating)
-                            ? "w-4 h-4 fill-current"
-                            : "w-4 h-4 text-gray-300"
-                        }
-                      />
-                    ))}
+                    {/* Specs Chips */}
+                    <div className="mb-2 flex flex-wrap gap-1">
+                      {specsList.map((spec, idx) => (
+                        <span
+                          key={idx}
+                          className="bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded border border-gray-200 truncate max-w-[80px]"
+                          title={spec}
+                        >
+                          {spec}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Price */}
+                    <div className="mb-1 flex flex-wrap items-baseline gap-x-2 mt-auto">
+                      <span className="text-sm font-bold text-[#d70018] sm:text-base">
+                        {formatPrice(product.basePrice)}
+                      </span>
+                    </div>
+
+                    {/* Footer: Rating & Wishlist */}
+                    <div className="mt-auto flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <FaStar className="text-yellow-400" size={10} />
+                        <span className="text-[10px] text-gray-500 sm:text-xs font-medium">
+                          {product.totalRating || 0} (
+                          {product.rating?.length || 0})
+                        </span>
+                      </div>
+                      <button className="text-gray-400 hover:text-[#d70018] transition-colors flex items-center gap-1 text-xs group/heart">
+                        Yêu thích
+                        <FaHeart
+                          className="group-hover/heart:text-[#d70018]"
+                          size={12}
+                        />
+                      </button>
+                    </div>
                   </div>
-                  <span className="text-sm  text-gray-600 ml-2 ">
-                    ({product.rating})
-                  </span>
-                </div>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-20 text-gray-500">
+            Không tìm thấy sản phẩm nào.
+          </div>
+        )}
 
-                {/* <div className="mt-4 flex space-x-2">
-                          <button className="flex-1 bg-[#d0011b] text-white py-2 rounded-md hover:bg-[#b00117] transition-colors duration-300 font-medium text-sm flex items-center justify-center">
-                            <FaShoppingCart className="mr-2" size={12} />
-                            Thêm vào giỏ
-                          </button>
-                        </div> */}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-8 flex items-center justify-center text-center">
-          <button className="flex items-center justify-center rounded header_bg_color px-6 py-3 font-medium text-white hover:bg-red-700">
-            <p> Xem thêm sản phẩm</p>
-            <FaChevronDown className="ml-4" />
+        {/* Load More Button */}
+        <div className="mt-8 flex justify-center">
+          <button className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-10 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-[#fcebeb] hover:text-[#d70018] hover:border-[#d70018]">
+            Xem thêm 20 sản phẩm <FaChevronDown className="text-xs" />
           </button>
         </div>
-        {/* {products.length > visibleProducts && (
-                   
-                )} */}
       </div>
     </div>
   );

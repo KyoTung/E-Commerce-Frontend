@@ -10,7 +10,10 @@ import { IoArrowBackCircleOutline } from "react-icons/io5";
 import axiosClient from "../../../api/axiosClient";
 import { getAllBrand } from "../../../features/adminSlice/brand/brandSlice";
 import { getAllCategory } from "../../../features/adminSlice/category/categorySlice";
-import { getProduct, updateProduct } from "../../../features/adminSlice/products/productSlice";
+import {
+  getProduct,
+  updateProduct,
+} from "../../../features/adminSlice/products/productSlice";
 import { getAllColor } from "../../../features/adminSlice/color/colorSlice";
 
 const EditProduct = ({ placeholder }) => {
@@ -57,7 +60,7 @@ const EditProduct = ({ placeholder }) => {
     dispatch(getAllCategory());
     dispatch(getAllColor());
     if (product_id) {
-      dispatch(getProduct(product_id)); 
+      dispatch(getProduct(product_id));
     }
   }, [product_id, dispatch]);
 
@@ -94,7 +97,9 @@ const EditProduct = ({ placeholder }) => {
       if (product.variants && product.variants.length > 0) {
         setVariants(product.variants);
       } else {
-        setVariants([{ color: "", storage: "", price: "", quantity: "", images: [] }]);
+        setVariants([
+          { color: "", storage: "", price: "", quantity: "", images: [] },
+        ]);
       }
     }
   }, [product, product_id, reset]);
@@ -108,9 +113,13 @@ const EditProduct = ({ placeholder }) => {
     const uploadPromises = Array.from(files).map(async (file) => {
       const imageForm = new FormData();
       imageForm.append("images", file);
-      const response = await axiosClient.put("/product/upload-images", imageForm, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const response = await axiosClient.put(
+        "/product/upload-images",
+        imageForm,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
       const image = response.data[0];
       return {
         url: image.url,
@@ -140,13 +149,17 @@ const EditProduct = ({ placeholder }) => {
 
   const handleDeleteImage = async (image) => {
     try {
-        if(image.public_id){
-             await axiosClient.delete(`/product/delete-images/${product_id}/${image.public_id}`);
-        }
-        setGallery((prev) => prev.filter((img) => img.public_id !== image.public_id));
-        toast.success("Image deleted");
+      if (image.public_id) {
+        await axiosClient.delete(
+          `/product/delete-images/${product_id}/${image.public_id}`
+        );
+      }
+      setGallery((prev) =>
+        prev.filter((img) => img.public_id !== image.public_id)
+      );
+      toast.success("Image deleted");
     } catch (error) {
-        toast.error("Failed to delete image");
+      toast.error("Failed to delete image");
     }
   };
 
@@ -212,9 +225,9 @@ const EditProduct = ({ placeholder }) => {
 
   const removeVariantImage = (variantIndex, imageIndex) => {
     const updatedVariants = [...variants];
-    updatedVariants[variantIndex].images = updatedVariants[variantIndex].images.filter(
-      (_, i) => i !== imageIndex
-    );
+    updatedVariants[variantIndex].images = updatedVariants[
+      variantIndex
+    ].images.filter((_, i) => i !== imageIndex);
     setVariants(updatedVariants);
   };
 
@@ -235,7 +248,8 @@ const EditProduct = ({ placeholder }) => {
     try {
       const productData = {
         title: formData.title,
-        slug: formData.slug || formData.title.toLowerCase().replace(/\s+/g, "-"),
+        slug:
+          formData.slug || formData.title.toLowerCase().replace(/\s+/g, "-"),
         basePrice: Number(formData.basePrice),
         description: formData.description,
         brand: formData.brand,
@@ -246,7 +260,9 @@ const EditProduct = ({ placeholder }) => {
           price: Number(variant.price),
           quantity: Number(variant.quantity),
         })),
-        tags: formData.tags ? formData.tags.split(",").map((tag) => tag.trim()) : [],
+        tags: formData.tags
+          ? formData.tags.split(",").map((tag) => tag.trim())
+          : [],
         specifications: {
           screen: formData.screen,
           processor: formData.processor,
@@ -261,7 +277,6 @@ const EditProduct = ({ placeholder }) => {
         },
       };
 
-      
       const resultAction = await dispatch(
         updateProduct({
           productId: product_id,
@@ -273,7 +288,8 @@ const EditProduct = ({ placeholder }) => {
         toast.success("Product updated successfully");
         setTimeout(() => navigate("/admin/products"), 1000);
       } else {
-        const errorMessage = resultAction.payload?.message || "Failed to update product";
+        const errorMessage =
+          resultAction.payload?.message || "Failed to update product";
         toast.error(errorMessage);
       }
     } catch (error) {
@@ -305,20 +321,30 @@ const EditProduct = ({ placeholder }) => {
           {/* Left Column */}
           <div className="space-y-6">
             <div className="border-b pb-6">
-              <h2 className="mb-4 text-xl font-semibold">General Information</h2>
+              <h2 className="mb-4 text-xl font-semibold">
+                General Information
+              </h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Product Title *</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Product Title *
+                  </label>
                   <input
                     type="text"
                     {...register("title", { required: "Required" })}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   />
-                  {errors.title && <p className="text-red-500 text-sm">{errors.title.message}</p>}
+                  {errors.title && (
+                    <p className="text-red-500 text-sm">
+                      {errors.title.message}
+                    </p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Slug</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Slug
+                  </label>
                   <input
                     {...register("slug")}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
@@ -326,7 +352,9 @@ const EditProduct = ({ placeholder }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Base Price *</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Base Price *
+                  </label>
                   <input
                     type="number"
                     {...register("basePrice", { required: "Required" })}
@@ -336,19 +364,25 @@ const EditProduct = ({ placeholder }) => {
 
                 {/* Main Images */}
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700">Product Images</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Product Images
+                  </label>
                   <div className="flex items-center gap-2">
-                     <input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        disabled={isUploading}
-                        className="mt-1 block w-full text-sm text-gray-500"
-                      />
-                      {isUploading && <span className="text-sm text-blue-500">Uploading...</span>}
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      disabled={isUploading}
+                      className="mt-1 block w-full text-sm text-gray-500"
+                    />
+                    {isUploading && (
+                      <span className="text-sm text-blue-500">
+                        Uploading...
+                      </span>
+                    )}
                   </div>
-                 
+
                   <div className="flex flex-wrap gap-2 mt-2">
                     {gallery.map((image, index) => (
                       <div key={index} className="relative">
@@ -370,7 +404,9 @@ const EditProduct = ({ placeholder }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Tags</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Tags
+                  </label>
                   <input
                     {...register("tags")}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
@@ -384,26 +420,34 @@ const EditProduct = ({ placeholder }) => {
               <h2 className="mb-4 text-xl font-semibold">Relations</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Brand *</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Brand *
+                  </label>
                   <select
                     {...register("brand", { required: "Required" })}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   >
                     <option value="">Select Brand</option>
                     {brands.map((b) => (
-                      <option key={b._id || b.id} value={b.title}>{b.title}</option>
+                      <option key={b._id || b.id} value={b.title}>
+                        {b.title}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Category *</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Category *
+                  </label>
                   <select
                     {...register("category", { required: "Required" })}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   >
                     <option value="">Select Category</option>
                     {categories.map((c) => (
-                      <option key={c._id || c.id} value={c.title}>{c.title}</option>
+                      <option key={c._id || c.id} value={c.title}>
+                        {c.title}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -414,7 +458,10 @@ const EditProduct = ({ placeholder }) => {
             <div className="border-b pb-6">
               <h2 className="mb-4 text-xl font-semibold">Variants</h2>
               {variants.map((variant, index) => (
-                <div key={index} className="variant-item border-b pb-4 mb-4 border-gray-200">
+                <div
+                  key={index}
+                  className="variant-item border-b pb-4 mb-4 border-gray-200"
+                >
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="text-md font-medium">Variant {index + 1}</h3>
                     {variants.length > 1 && (
@@ -429,65 +476,112 @@ const EditProduct = ({ placeholder }) => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs text-gray-600">Color</label>
+                      <label className="block text-xs text-gray-600">
+                        Color
+                      </label>
                       <select
                         value={variant.color}
-                        onChange={(e) => handleVariantChange(index, "color", e.target.value)}
+                        onChange={(e) =>
+                          handleVariantChange(index, "color", e.target.value)
+                        }
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       >
                         <option value="">Select</option>
                         {colors.map((c, i) => (
-                          <option key={i} value={c.title}>{c.title}</option>
+                          <option key={i} value={c.title}>
+                            {c.title}
+                          </option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-600">Storage</label>
+                      <label className="block text-xs text-gray-600">
+                        Storage
+                      </label>
                       <select
                         value={variant.storage}
-                        onChange={(e) => handleVariantChange(index, "storage", e.target.value)}
+                        onChange={(e) =>
+                          handleVariantChange(index, "storage", e.target.value)
+                        }
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       >
                         <option value="">Select</option>
-                        {["64GB", "128GB", "256GB", "512GB", "1TB"].map((s) => <option key={s} value={s}>{s}</option>)}
+                        {["64GB", "128GB", "256GB", "512GB", "1TB"].map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-600">Price</label>
+                      <label className="block text-xs text-gray-600">
+                        Price
+                      </label>
                       <input
                         type="number"
                         value={variant.price}
-                        onChange={(e) => handleVariantChange(index, "price", e.target.value)}
+                        onChange={(e) =>
+                          handleVariantChange(index, "price", e.target.value)
+                        }
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-600">Quantity</label>
+                      <label className="block text-xs text-gray-600">
+                        Quantity
+                      </label>
                       <input
                         type="number"
                         value={variant.quantity}
-                        onChange={(e) => handleVariantChange(index, "quantity", e.target.value)}
+                        onChange={(e) =>
+                          handleVariantChange(index, "quantity", e.target.value)
+                        }
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       />
                     </div>
                   </div>
-                  
+
                   {/* Variant Images */}
                   <div className="mt-3">
-                    <label className="block text-xs text-gray-600 mb-1">Variant Images</label>
-                    <input type="file" multiple accept="image/*" onChange={(e) => handleVariantImageChange(e, index)} disabled={isUploading} className="text-xs text-gray-500" />
+                    <label className="block text-xs text-gray-600 mb-1">
+                      Variant Images
+                    </label>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => handleVariantImageChange(e, index)}
+                      disabled={isUploading}
+                      className="text-xs text-gray-500"
+                    />
                     <div className="flex flex-wrap gap-2 mt-2">
-                        {variant.images.map((img, imgIdx) => (
-                            <div key={imgIdx} className="relative">
-                                <img src={img.url || img} className="w-10 h-10 rounded border object-cover" alt="" />
-                                <button type="button" onClick={() => removeVariantImage(index, imgIdx)} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">×</button>
-                            </div>
-                        ))}
+                      {variant.images.map((img, imgIdx) => (
+                        <div key={imgIdx} className="relative">
+                          <img
+                            src={img.url || img}
+                            className="w-10 h-10 rounded border object-cover"
+                            alt=""
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeVariantImage(index, imgIdx)}
+                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
               ))}
-              <button type="button" onClick={addVariant} className="mt-2 text-sm text-blue-600 hover:text-blue-800">+ Add Variant</button>
+              <button
+                type="button"
+                onClick={addVariant}
+                className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+              >
+                + Add Variant
+              </button>
             </div>
           </div>
 
@@ -496,17 +590,28 @@ const EditProduct = ({ placeholder }) => {
             <div className="border-b pb-6">
               <h2 className="mb-4 text-xl font-semibold">Specifications</h2>
               <div className="grid grid-cols-1 gap-4">
-                 {['screen', 'os', 'processor', 'ram', 'storage', 'battery', 'frontCamera', 'rearCamera', 'sim', 'design'].map((field) => (
-                    <div key={field}>
-                        <label className="block text-sm font-medium text-gray-700 capitalize">
-                            {field.replace(/([A-Z])/g, ' $1').trim()}
-                        </label>
-                        <input
-                            {...register(field)}
-                            className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                        />
-                    </div>
-                 ))}
+                {[
+                  "screen",
+                  "os",
+                  "frontCamera",
+                  "rearCamera",
+                  "processor",
+                  "ram",
+                  "storage",
+                  "battery",
+                  "sim",
+                  "design",
+                ].map((field) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-gray-700 capitalize">
+                      {field.replace(/([A-Z])/g, " $1").trim()}
+                    </label>
+                    <input
+                      {...register(field)}
+                      className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -533,7 +638,9 @@ const EditProduct = ({ placeholder }) => {
               <button
                 type="submit"
                 className={`rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 font-medium ${
-                    (isSubmitting || isUploading) ? 'opacity-50 cursor-not-allowed' : ''
+                  isSubmitting || isUploading
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
                 disabled={isSubmitting || isUploading}
               >

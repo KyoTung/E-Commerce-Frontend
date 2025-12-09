@@ -13,6 +13,7 @@ import Checkout from "../pages/guest/Checkout";
 import OrderConfirmation from "../pages/guest/OrderConfirmation";
 import BlogPage from "../pages/guest/BlogPage";
 import BlogDetail from "../pages/guest/BlogDetail";
+import Profile from "../pages/guest/Profile";
 
 import AdminLayout from "../layouts/admin/layout";
 import DashboardPage from "../pages/admin/dashboard/page";
@@ -34,6 +35,7 @@ import Blog from "../pages/admin/blogs/Blog";
 import EditBlog from "../pages/admin/blogs/editBlog";
 import NewBlog from "../pages/admin/blogs/newBlog";
 
+
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginForm /> },
   { path: "/register", element: <RegisterForm /> },
@@ -46,15 +48,15 @@ export const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "/about",
-        element: <About />,
+        path: "/profile",
+        element: <Profile />,
       },
       {
         path: "/contact",
         element: <Contact />,
       },
       {
-        path: "/product-detail",
+        path: "/product/:id",
         element: <ProductDetail />,
       },
       {

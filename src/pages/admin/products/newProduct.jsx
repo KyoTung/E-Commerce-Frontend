@@ -228,8 +228,6 @@ const NewProduct = ({ placeholder }) => {
       };
 
       console.log("Submitting:", productData);
-
-      // SỬA: Gọi thunk createProduct chỉ với data (không token)
       const resultAction = await dispatch(createProduct(productData));
 
       if (createProduct.fulfilled.match(resultAction)) {
@@ -564,16 +562,15 @@ const NewProduct = ({ placeholder }) => {
             <div className="border-b pb-6">
               <h2 className="mb-4 text-xl font-semibold">Specifications</h2>
               <div className="grid grid-cols-1 gap-4">
-                {/* Helper function to render spec inputs */}
                 {[
                   "screen",
                   "os",
+                  "frontCamera",
+                  "rearCamera",
                   "processor",
                   "ram",
                   "storage",
                   "battery",
-                  "frontCamera",
-                  "rearCamera",
                   "sim",
                   "design",
                 ].map((field) => (
