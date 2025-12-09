@@ -37,8 +37,8 @@ const Banner = () => {
             slidesPerView: 2,
           },
         }}
-        onSlideChange={() => console.log("slide change")}
-        onSwiper={(swiper) => console.log(swiper)}
+        // onSlideChange={() => console.log("slide change")}
+        // onSwiper={(swiper) => console.log(swiper)}
       >
         {slideImages.map((slideImage, index) => (
           <SwiperSlide key={index}>
