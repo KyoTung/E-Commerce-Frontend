@@ -15,7 +15,6 @@ export const clearAccessToken = () => {
   accessToken = null;
 };
 
-// --- INJECT STORE (Để gọi Action Redux từ file này) ---
 let store = null;
 export const injectStore = (_store) => {
   store = _store;

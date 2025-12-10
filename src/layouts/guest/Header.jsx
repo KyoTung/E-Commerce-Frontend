@@ -85,7 +85,7 @@ const phoneMenuData = [
     ],
   },
 ];
-
+  
 const Header = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -95,6 +95,7 @@ const Header = () => {
   const { user, isSuccess, isError, message } = useSelector(
     (state) => state.auth
   );
+  const {cart} = useSelector((state) => state.cart);
 
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const categoryRef = useRef();
@@ -174,6 +175,7 @@ const Header = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
 
   return (
     <>
@@ -302,7 +304,7 @@ const Header = () => {
                 label="Giỏ"
                 subLabel="hàng"
                 to="/cart"
-                badge={5} // Demo badge
+                badge={cart?.products?.length || 0}
               />
 
               {/* User / Login */}

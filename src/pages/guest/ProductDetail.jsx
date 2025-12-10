@@ -36,6 +36,9 @@ const ProductDetail = () => {
   const [selectedStorage, setSelectedStorage] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
 
+  const [allStorages, setAllStorages] = useState([]);
+  const [allColors, setAllColors] = useState([]);
+
   // Modal Review State
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const {
@@ -48,7 +51,7 @@ const ProductDetail = () => {
   } = useForm({
     defaultValues: { rating: 5, comment: "" },
   });
-  const currentRating = watch("rating"); // Để highlight sao trong form
+  const currentRating = watch("rating");
 
   // --- EFFECT 1: Fetch Data ---
   useEffect(() => {
@@ -72,78 +75,114 @@ const ProductDetail = () => {
     }
   }, [product]);
 
+  useEffect(() => {
+    if (product && product.variants?.length > 0) {
+      // 1. Lấy danh sách Storage duy nhất
+      const storages = [
+        ...new Set(product.variants.map((v) => v.storage)),
+      ].sort();
+      setAllStorages(storages);
+
+      // 2. Lấy danh sách Color duy nhất
+      const colors = [...new Set(product.variants.map((v) => v.color))].sort();
+      setAllColors(colors);
+
+      // 3. Chọn variant mặc định (ưu tiên variant đầu tiên hoặc rẻ nhất)
+      const defaultVariant = product.variants[0];
+      setSelectedVariant(defaultVariant);
+
+      // 4. Set ảnh
+      if (defaultVariant.images?.length > 0) {
+        setSelectedImage(defaultVariant.images[0].url);
+      } else if (product.images?.length > 0) {
+        setSelectedImage(product.images[0].url);
+      }
+    }
+  }, [product]);
+
   // --- HELPER FUNCTIONS ---
+
+  const checkVariantExists = (storage, color) => {
+    return product.variants.find(
+      (v) => v.storage === storage && v.color === color
+    );
+  };
+
+  // Xử lý khi chọn Storage
+  const handleStorageClick = (storage) => {
+    // 1. Tìm xem có variant nào khớp với (Storage Mới + Màu Hiện Tại) không?
+    let nextVariant = checkVariantExists(storage, selectedVariant.color);
+
+    // 2. Nếu không có (Ví dụ: 128GB ko có màu Đen), tìm variant đầu tiên của Storage mới
+    if (!nextVariant) {
+      nextVariant = product.variants.find((v) => v.storage === storage);
+    }
+
+    if (nextVariant) {
+      setSelectedVariant(nextVariant);
+      // Nếu variant mới có ảnh riêng thì đổi ảnh
+      if (nextVariant.images?.[0]?.url)
+        setSelectedImage(nextVariant.images[0].url);
+    }
+  };
+
+  // Xử lý khi chọn Color
+  const handleColorClick = (color) => {
+    // 1. Tìm xem có variant nào khớp với (Màu Mới + Storage Hiện Tại) không?
+    let nextVariant = checkVariantExists(selectedVariant.storage, color);
+
+    // 2. Nếu không có (Ví dụ: Màu Xanh ko có bản 256GB), tìm variant đầu tiên của Màu mới
+    if (!nextVariant) {
+      nextVariant = product.variants.find((v) => v.color === color);
+    }
+
+    if (nextVariant) {
+      setSelectedVariant(nextVariant);
+      if (nextVariant.images?.[0]?.url)
+        setSelectedImage(nextVariant.images[0].url);
+    }
+  };
+
   const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
     }).format(price || 0);
 
-  // Logic lọc Variants: Lấy list Storage duy nhất
-  const uniqueStorages = product?.variants
-    ? [...new Set(product.variants.map((v) => v.storage))].sort()
-    : [];
-
-  // Lọc các màu khả dụng dựa trên Storage đang chọn
-  const availableColors = product?.variants
-    ? product.variants.filter((v) => v.storage === selectedStorage)
-    : [];
-
-  // Handle Select Storage
-  const handleStorageSelect = (storage) => {
-    setSelectedStorage(storage);
-    // Tự động chọn màu đầu tiên của storage mới
-    const firstVarOfStorage = product.variants.find(
-      (v) => v.storage === storage
-    );
-    setSelectedVariant(firstVarOfStorage);
-  };
-
-  // Handle Select Color
-  const handleColorSelect = (variant) => {
-    setSelectedVariant(variant);
-    // Nếu variant có ảnh riêng thì đổi ảnh
-    if (variant.images?.[0]?.url) setSelectedImage(variant.images[0].url);
-  };
-
   // Handle Add to Cart
   const handleAddToCart = async () => {
-    if (!selectedVariant && product?.variants?.length > 0) {
-      toast.warning("Vui lòng chọn phiên bản màu sắc/bộ nhớ!");
+    if (!selectedVariant) {
+      toast.warning("Vui lòng chọn Phiên bản và Màu sắc!");
       return;
     }
 
-    const cartItem = {
-      _id: product._id,
-      color: selectedVariant?.color,
-      storage: selectedVariant?.storage,
-      price: selectedVariant?.price || product.basePrice,
-      count: 1,
+    // Payload gửi đi
+    const cartItemData = {
+      cart: [
+        {
+          _id: product._id,
+          count: quantity,
+          color: selectedVariant.color,
+          storage: selectedVariant.storage, // Backend cần cái này để tìm giá
+        },
+      ],
     };
 
-    console.log("Add to cart:", cartItem);
-   const result = await dispatch(addToCart(cartItem));
-    if (addToCart.fulfilled.match(result)) {
-      toast.success("Đã thêm vào giỏ hàng!");
-        dispatch(getCart());
-    } else {
-      toast.error(result.payload?.message || "Thêm vào giỏ thất bại");
-    }
-  
+    dispatch(addToCart(cartItemData));
   };
 
   // --- REVIEW HANDLER ---
   const onSubmitReview = async (data) => {
     if (!user) {
       toast.info("Vui lòng đăng nhập để đánh giá");
-      navigate("/login", { state: { from: `/product/${id}` } }); // Chuyển hướng lại sau khi login
+      navigate("/login", { state: { from: `/product/${id}` } });
       return;
     }
 
     const commentData = {
       star: data.rating,
       comment: data.comment,
-      prdId: "691b40d5f9c4e8c12a80487e",
+      prdId: id,
     };
 
     console.log("Submitting review:", commentData);
@@ -151,9 +190,9 @@ const ProductDetail = () => {
     const result = await dispatch(commentProduct({ data: commentData }));
 
     if (commentProduct.fulfilled.match(result)) {
-      dispatch(getProduct(id)); // Fetch lại data để hiện comment mới ngay lập tức
+      dispatch(getProduct(id));
       setIsReviewModalOpen(false);
-      reset(); // Reset form
+      reset();
     }
   };
 
@@ -205,7 +244,6 @@ const ProductDetail = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* --- LEFT COLUMN: IMAGES (7/12) --- */}
           <div className="lg:col-span-7 bg-white rounded-xl shadow-sm p-4 border border-gray-100">
             <div className="relative aspect-[4/3] flex items-center justify-center overflow-hidden rounded-lg mb-4">
               <img
@@ -234,20 +272,8 @@ const ProductDetail = () => {
                 </button>
               ))}
             </div>
-
-            {/* Description (Đưa sang trái cho giống layout TMĐT) */}
-            <div className="mt-8">
-              <h3 className="bg-gray-100 p-3 rounded-t-lg font-bold text-gray-700 uppercase text-sm">
-                Đặc điểm nổi bật
-              </h3>
-              <div
-                className="p-4 border border-gray-100 rounded-b-lg text-gray-700 text-sm leading-relaxed prose max-w-none"
-                dangerouslySetInnerHTML={{ __html: product.description }}
-              />
-            </div>
           </div>
 
-          {/* --- RIGHT COLUMN: INFO & CART (5/12) --- */}
           <div className="lg:col-span-5 space-y-4">
             {/* Price Box */}
             <div className="flex items-end gap-3">
@@ -257,71 +283,99 @@ const ProductDetail = () => {
               {/* <span className="text-sm text-gray-400 line-through mb-1.5">30.000.000₫</span> */}
             </div>
 
-            {/* 1. Chọn Storage */}
-            {uniqueStorages.length > 0 && (
+            {allStorages.length > 0 && (
               <div>
                 <p className="font-bold text-sm mb-2 text-gray-700">
-                  Chọn dung lượng:
+                  Chọn phiên bản bộ nhớ:
                 </p>
                 <div className="grid grid-cols-3 gap-2">
-                  {uniqueStorages.map((storage, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleStorageSelect(storage)}
-                      className={`py-2 px-1 text-xs sm:text-sm border rounded-lg transition-all ${
-                        selectedStorage === storage
-                          ? "border-[#d70018] text-[#d70018] bg-red-50 font-bold"
-                          : "border-gray-300 text-gray-600 hover:border-gray-400"
-                      }`}
-                    >
-                      {storage}
-                    </button>
-                  ))}
+                  {allStorages.map((storage, idx) => {
+                    // Kiểm tra xem Storage này có hàng với Màu đang chọn không?
+                    // (Optional: Để làm mờ nếu muốn, nhưng ở đây ta dùng logic tự switch màu nên cứ hiện hết)
+                    const isSelected = selectedVariant?.storage === storage;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleStorageClick(storage)}
+                        className={`py-2 px-1 text-sm border rounded-lg transition-all ${
+                          isSelected
+                            ? "border-[#d70018] text-[#d70018] bg-red-50 font-bold"
+                            : "border-gray-300 text-gray-600 hover:border-gray-400"
+                        }`}
+                      >
+                        {storage}
+                        {/* Hiển thị giá thấp nhất của bản này */}
+                        <span className="block text-[10px] font-normal text-gray-500 mt-1">
+                          {/* Logic tìm giá demo */}
+                          {formatPrice(
+                            product.variants.find((v) => v.storage === storage)
+                              ?.price
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            {/* 2. Chọn Color */}
-            {availableColors.length > 0 && (
+            {/* 2. Chọn Màu sắc (Color) */}
+            {allColors.length > 0 && (
               <div>
                 <p className="font-bold text-sm mb-2 text-gray-700">
                   Chọn màu sắc:
                 </p>
                 <div className="grid grid-cols-3 gap-2">
-                  {availableColors.map((variant, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleColorSelect(variant)}
-                      className={`py-2 px-2 border rounded-lg flex items-center gap-2 transition-all relative ${
-                        selectedVariant?._id === variant._id
-                          ? "border-[#d70018] bg-white ring-1 ring-[#d70018]"
-                          : "border-gray-300 bg-white hover:border-gray-400"
-                      }`}
-                    >
-                      {/* <div className="w-6 h-6 rounded-full border shadow-sm" style={{ backgroundColor: 'gray' }}></div> */}
-                      <div className="flex flex-col items-start overflow-hidden">
-                        <span className="text-xs font-bold text-gray-700 truncate w-full">
-                          {variant.color}
-                        </span>
-                        <span className="text-[10px] text-gray-500">
-                          {formatPrice(variant.price)}
-                        </span>
-                      </div>
-                      {selectedVariant?._id === variant._id && (
-                        <div className="absolute top-0 right-0">
-                          <FaCheck
-                            size={10}
-                            className="text-white bg-[#d70018] p-0.5 rounded-bl-md"
-                          />
+                  {allColors.map((color, idx) => {
+                    const isSelected = selectedVariant?.color === color;
+
+                    // Nâng cao: Kiểm tra xem Màu này có kết hợp được với Storage đang chọn không?
+                    // Nếu không có, ta vẫn hiện nhưng có thể thêm visual hint (VD: giá khác)
+                    const exactVariant = checkVariantExists(
+                      selectedVariant?.storage,
+                      color
+                    );
+
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleColorClick(color)}
+                        className={`py-2 px-2 border rounded-lg flex items-center gap-2 transition-all relative ${
+                          isSelected
+                            ? "border-[#d70018] bg-white ring-1 ring-[#d70018]"
+                            : "border-gray-300 bg-white hover:border-gray-400"
+                        }`}
+                      >
+                        <div className="flex flex-col items-start overflow-hidden w-full">
+                          <span className="text-xs font-bold text-gray-700 truncate w-full">
+                            {color}
+                          </span>
+                          <span className="text-[10px] text-gray-500">
+                            {
+                              exactVariant
+                                ? formatPrice(exactVariant.price)
+                                : formatPrice(
+                                    product.variants.find(
+                                      (v) => v.color === color
+                                    )?.price
+                                  ) // Giá màu này ở bản khác
+                            }
+                          </span>
                         </div>
-                      )}
-                    </button>
-                  ))}
+                        {isSelected && (
+                          <div className="absolute top-0 right-0">
+                            <FaCheck
+                              size={10}
+                              className="text-white bg-[#d70018] p-0.5 rounded-bl-md"
+                            />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
-
-            {/* Promotion Box (Static) */}
             <div className="border border-[#d70018] rounded-lg overflow-hidden">
               <div className="bg-[#d70018] text-white py-1.5 px-3 text-sm font-bold flex items-center gap-2">
                 <FaStar /> Khuyến mãi đặc biệt
@@ -348,7 +402,6 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex gap-3">
               <button
                 onClick={handleAddToCart}
@@ -360,8 +413,23 @@ const ProductDetail = () => {
                 </span>
               </button>
             </div>
-
-            {/* Specifications Table (Mini) */}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Description */}
+          <div className="lg:col-span-7 bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+            <div className="mt-8">
+              <h3 className="bg-gray-100 p-3 rounded-t-lg font-bold text-gray-700 uppercase text-sm">
+                Đặc điểm nổi bật
+              </h3>
+              <div
+                className=" min-w-0 truncate p-4 border border-gray-100 rounded-b-lg text-gray-700 text-sm leading-relaxed prose max-w-none"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
+            </div>
+          </div>
+          {/* Specifications Table (Mini) */}
+          <div className="lg:col-span-5 space-y-4">
             <div className="rounded-lg border border-gray-200 overflow-hidden bg-white mt-4">
               <h3 className="bg-gray-100 p-2 font-bold text-gray-700 text-center text-sm">
                 Thông số kỹ thuật
