@@ -14,6 +14,9 @@ import OrderConfirmation from "../pages/guest/OrderConfirmation";
 import BlogPage from "../pages/guest/BlogPage";
 import BlogDetail from "../pages/guest/BlogDetail";
 import Profile from "../pages/guest/Profile";
+import OrderHistory from "../pages/guest/OrderHistory";
+import ChangePassword from "../pages/guest/ChangePassword";
+import ForgotPassword from "../pages/guest/ForgotPassword";
 
 import AdminLayout from "../layouts/admin/layout";
 import DashboardPage from "../pages/admin/dashboard/page";
@@ -35,10 +38,13 @@ import Blog from "../pages/admin/blogs/Blog";
 import EditBlog from "../pages/admin/blogs/editBlog";
 import NewBlog from "../pages/admin/blogs/newBlog";
 
-
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginForm /> },
   { path: "/register", element: <RegisterForm /> },
+  {
+    path: "/forgot-password",
+    element: <ForgotPassword />,
+  },
   {
     path: "/",
     element: <GuestLayout />,
@@ -72,12 +78,20 @@ export const router = createBrowserRouter([
         element: <OrderConfirmation />,
       },
       {
+        path: "/orders",
+        element: <OrderHistory />,
+      },
+      {
         path: "/blogs",
         element: <BlogPage />,
       },
       {
         path: "/blog-detail",
         element: <BlogDetail />,
+      },
+      {
+        path: "/change-password",
+        element: <ChangePassword />,
       },
     ],
   },
@@ -152,12 +166,12 @@ export const router = createBrowserRouter([
         element: <Blog />,
       },
       {
-        path:"add-blog",
-        element:<NewBlog/>,
+        path: "add-blog",
+        element: <NewBlog />,
       },
-       {
-        path:"edit-blog/:blog_id",
-        element:<EditBlog/>,
+      {
+        path: "edit-blog/:blog_id",
+        element: <EditBlog />,
       },
       {
         path: "enquiries",

@@ -1,6 +1,5 @@
 import axiosClient, { setAccessToken, clearAccessToken } from '../../api/axiosClient';
 
-// Login User
 const login = async (userData) => {
   const response = await axiosClient.post('/user/login', userData);
   
@@ -12,17 +11,36 @@ const login = async (userData) => {
   return userInfo;
 };
 
-// Logout User
 const logout = async () => {
   await axiosClient.post('/user/logout'); 
-  
-  // Xóa token trong RAM
+
   clearAccessToken();
+};
+
+const updatePassword = async (passwordData) => {
+
+  const response = await axiosClient.put("/user/password", passwordData);
+  return response.data;
+};
+
+
+const forgotPasswordToken = async (email) => {
+  const response = await axiosClient.post("/user/forgot-password-token", { email });
+  return response.data;
+};
+
+
+const resetPassword = async (token, password) => {
+  const response = await axiosClient.put(`/user/reset-password/${token}`, { password });
+  return response.data;
 };
 
 const authService = {
   login,
   logout,
+  updatePassword,
+  forgotPasswordToken,
+  resetPassword,
 };
 
 export default authService;

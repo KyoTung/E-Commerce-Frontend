@@ -74,6 +74,8 @@ const LoginForm = () => {
     }
   }, [isError, message]);
 
+  console.log("message:", message);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center py-8 px-4">
       <div className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
