@@ -12,6 +12,7 @@ import blogReducer from "./features/adminSlice/blog/blogSlice";
 import orderReducer from "./features/adminSlice/orders/orderSlice";
 import productClientReducer from "./features/guestSlice/product/productSlice";
 import cartReducer from "./features/guestSlice/cart/cartSlice";
+import orderClientReducer from "./features/guestSlice/order/orderSlice";
 
 export const store = configureStore({
   reducer: {
@@ -19,6 +20,7 @@ export const store = configureStore({
     user: userReducer,
     productClient: productClientReducer,
     cart: cartReducer,
+    orderClient: orderClientReducer,
 
     customer: customerReducer,
     categoryAdmin: categoryReducer,

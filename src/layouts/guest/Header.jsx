@@ -4,6 +4,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../features/authSlice/authSlice";
+import { getCart } from "../../features/guestSlice/cart/cartSlice";
 
 // Icons
 import {
@@ -103,6 +104,11 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isScroll, setIsScroll] = useState(false);
+
+   // Fetch Cart on Mount
+    useEffect(() => {
+      dispatch(getCart());
+    }, [dispatch]);
 
   const handleSearch = (e) => {
     e.preventDefault();

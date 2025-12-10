@@ -12,7 +12,7 @@ const Brands = () => {
     dispatch(getAllBrand());
   }, [dispatch]);
   
-  console.log("Brands data:", brands);
+  
   return (
     <section className="py-4 bg-gray-50"> 
       <div className="mx-auto max-w-[1200px] px-2 sm:px-4">

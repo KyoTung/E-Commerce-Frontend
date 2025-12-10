@@ -36,7 +36,6 @@ const AllProducts = () => {
     return list.slice(0, 3);
   };
 
-  console.log("Products:", products);
 
   if (isLoading) {
     return (
