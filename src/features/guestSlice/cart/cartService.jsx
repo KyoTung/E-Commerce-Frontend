@@ -20,11 +20,11 @@ const updateCartItem = async (data) => {
   return response.data;
 }
 const applyCoupon = async (data) => {
-  const response = await axiosClient.put(`/cart/apply-coupon`, data);
+  const response = await axiosClient.post(`/cart/apply-coupon`, data);
   return response.data;
 }
 const deleteCartItem = async (data) => {
-  const response = await axiosClient.delete(`/cart-item`, data);
+  const response = await axiosClient.delete(`/cart/cart-item`, {data: data});
   return response.data;
 }
 
