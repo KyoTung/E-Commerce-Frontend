@@ -28,6 +28,7 @@ const AllProducts = () => {
     minPrice: searchParams.get("minPrice") || "",
     maxPrice: searchParams.get("maxPrice") || "",
     tag: searchParams.get("tag") || "",
+    title: searchParams.get("title") || "",
     sort: "-createdAt",
   });
 
@@ -51,21 +52,18 @@ const AllProducts = () => {
       minPrice: searchParams.get("minPrice") || "",
       maxPrice: searchParams.get("maxPrice") || "",
       tag: searchParams.get("tag") || "",
+      title: searchParams.get("title") || "",
       sort: "-createdAt",
     });
-    // Khi URL thay đổi (Lọc mới), reset về trang 1
     setPage(1);
     setHasMore(true); 
-    // Lưu ý: Ta không setLocalProducts([]) ở đây để tránh nháy màn hình, 
-    // việc thay thế data sẽ xử lý ở useEffect [reduxProducts]
   }, [searchParams]);
 
-  // 3. Gọi API (Khi Filter hoặc Page thay đổi)
   useEffect(() => {
     const queryParams = {
         sort: filter.sort,
-        page: page,      // <--- Gửi thêm page
-        limit: LIMIT,    // <--- Gửi thêm limit
+        page: page,      
+        limit: LIMIT,    
     };
 
     if (filter.brand) queryParams.brand = filter.brand;
@@ -73,31 +71,31 @@ const AllProducts = () => {
     if (filter.tag) queryParams.tags = filter.tag;
     if (filter.minPrice !== "") queryParams["basePrice[gte]"] = Number(filter.minPrice);
     if (filter.maxPrice !== "") queryParams["basePrice[lte]"] = Number(filter.maxPrice);
+    if (filter.title) queryParams.title = filter.title;
 
     dispatch(getAllProducts(queryParams));
   }, [dispatch, filter, page]);
 
-  // 4. XỬ LÝ DỮ LIỆU TRẢ VỀ (Quan trọng)
+ 
   useEffect(() => {
     if (reduxProducts) {
       if (page === 1) {
-        // Nếu là trang 1 (Lọc mới/Load lại) -> Thay thế hoàn toàn
+      
         setLocalProducts(reduxProducts);
-        window.scrollTo({ top: 0, behavior: 'smooth' }); // Cuộn lên đầu
+        window.scrollTo({ top: 0, behavior: 'smooth' }); 
       } else {
-        // Nếu là trang > 1 (Xem thêm) -> Nối thêm vào danh sách cũ
+    
         setLocalProducts((prev) => [...prev, ...reduxProducts]);
       }
 
-      // Kiểm tra xem đã hết sản phẩm chưa
-      // Nếu số lượng trả về ít hơn LIMIT -> Đã hết hàng
+     
       if (reduxProducts.length < LIMIT) {
         setHasMore(false);
       } else {
         setHasMore(true);
       }
     }
-  }, [reduxProducts, page]); // Chạy mỗi khi Redux trả về data mới
+  }, [reduxProducts, page]); 
 
   // --- HANDLERS ---
 
@@ -107,7 +105,7 @@ const AllProducts = () => {
 
   const handleBrandClick = (brandSlug) => {
     setFilter(prev => ({ ...prev, brand: prev.brand === brandSlug ? "" : brandSlug }));
-    setPage(1); // Reset page khi bấm lọc tay
+    setPage(1); 
   };
 
   const handlePriceClick = (range) => {

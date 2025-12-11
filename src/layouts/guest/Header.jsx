@@ -69,7 +69,7 @@ const handleSearch = (e) => {
     const val = query.trim();
     if (!val) return;
     setQuery("");
-    navigate(`/products?keyword=${encodeURIComponent(val)}`);
+    navigate(`/products?title=${encodeURIComponent(val)}`);
 };
   const handleLogout = () => {
     dispatch(logout());
