@@ -1,162 +1,118 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaStar, FaHeart } from "react-icons/fa";
-
-// Dữ liệu giả lập phong phú hơn
-const products = [
-  {
-    id: 1,
-    name: "iPhone 15 Pro Max 256GB | Chính hãng VN/A",
-    img_url: "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-15-pro-max_3.png",
-    price: 29490000,
-    original_price: 34990000,
-    rating: 5,
-    review_count: 15,
-    discount: 15,
-    installment: true, // Có trả góp
-  },
-  {
-    id: 2,
-    name: "Samsung Galaxy S24 Ultra 12GB 256GB",
-    img_url: "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/s/ss-s24-ultra-xam-222.png",
-    price: 26990000,
-    original_price: 33990000,
-    rating: 4.8,
-    review_count: 42,
-    discount: 20,
-    installment: true,
-  },
-  {
-    id: 3,
-    name: "Xiaomi 14 12GB 256GB",
-    img_url: "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/x/i/xiaomi-14_2_.png",
-    price: 19990000,
-    original_price: 22990000,
-    rating: 4.9,
-    review_count: 8,
-    discount: 13,
-    installment: false,
-  },
-  {
-    id: 4,
-    name: "OPPO Reno11 F 5G 8GB 256GB",
-    img_url: "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/o/p/oppo-reno11-f-tim-1.png",
-    price: 8490000,
-    original_price: 8990000,
-    rating: 4.5,
-    review_count: 22,
-    discount: 5,
-    installment: true,
-  },
-  {
-    id: 5,
-    name: "iPad Air 6 M2 11 inch WiFi 128GB",
-    img_url: "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/ipad-air-6-11-blue-thum.png",
-    price: 15390000,
-    original_price: 16990000,
-    rating: 5,
-    review_count: 5,
-    discount: 9,
-    installment: true,
-  },
-];
+import productService from "../../features/guestSlice/product/productService";
 
 const FeaturedProduct = () => {
-  return (
-    // Wrapper màu đỏ (Hot Sale Style)
-    <div className="bg-[#cd1818] py-6 sm:py-8">
-      <div className="mx-auto max-w-[1200px] px-2 sm:px-4">
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeaturedProducts = async () => {
+      try {
+        setLoading(true);
+        const data = await productService.getAllProducts("?sort=-totalRating&limit=5");
         
-        {/* --- Header: Title + Countdown (Giả lập) --- */}
-        <div className="mb-4 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-end sm:mb-6">
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl font-black uppercase italic text-white sm:text-3xl tracking-tight">
-              SẢN PHẨM NỔI BẬT
-            </h2>
-            
-           
-          </div>
-          
-          
+        if (Array.isArray(data)) {
+          setProducts(data);
+        }
+      } catch (error) {
+        console.error("Lỗi tải sản phẩm nổi bật:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeaturedProducts();
+  }, []);
+
+  const formatPrice = (price) =>
+    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
+
+  if (loading) {
+    return <div className="py-10 text-center">Đang tải sản phẩm nổi bật...</div>;
+  }
+
+  return (
+    <div className="bg-white py-8 border-t-4 border-[#d70018]">
+      <div className="container mx-auto px-4 max-w-[1200px]">
+        
+        {/* Header Section */}
+        <div className="flex justify-between items-end mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 uppercase">
+            SẢN PHẨM NỔI BẬT
+          </h2>
+          <Link 
+            to="/products" 
+            className="text-sm font-medium text-gray-500 hover:text-[#d70018] transition-colors"
+          >
+            Xem tất cả &rarr;
+          </Link>
         </div>
 
-        {/* --- Product Grid --- */}
-        
-        <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-5">
-          {products.map((product) => (
-            <Link
-              key={product.id}
-              to={`/product/${product.id}`}
-              className="group relative flex h-full flex-col overflow-hidden rounded-xl bg-white p-2 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-3"
-            >
-              {/* Image Container */}
-              <div className="relative mb-2 flex h-40 w-full items-center justify-center overflow-hidden rounded-lg sm:h-48">
-                <img
-                  src={product.img_url}
-                  alt={product.name}
-                  className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
-                />
-                
-              
-               
-                  <div className="absolute left-0 top-0 rounded-br-lg bg-[#d70018] px-2 py-0.5 text-[10px] font-bold text-white shadow-sm sm:text-xs">
+        {/* Product Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          {products.map((product) => {
+             const displayPrice = product.variants?.length > 0 
+                ? Math.min(...product.variants.map(v => v.price))
+                : product.basePrice;
+
+             return (
+              <Link
+                key={product._id}
+                to={`/product/${product._id}`}
+                className="group relative bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 p-3 flex flex-col h-full"
+              >
+                {/* Image */}
+                <div className="relative aspect-square flex items-center justify-center overflow-hidden mb-3 rounded-lg">
+                  <img
+                    src={product.images?.[0]?.url || "https://via.placeholder.com/150"}
+                    alt={product.title}
+                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                  />
+                  {/* Badge HOT */}
+                  <div className="absolute top-0 left-0 bg-[#d70018] text-white text-[10px] font-bold px-2 py-0.5 rounded-br-lg shadow-sm">
                     HOT
                   </div>
-                
-                {product.installment && (
-                  <div className="absolute right-0 top-0 rounded-bl-lg bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600 sm:text-xs border border-gray-200">
-                    Trả góp 0%
-                  </div>
-                )}
-              </div>
-
-              {/* Product Info */}
-              <div className="flex flex-1 flex-col">
-                
-                <h3 className="mb-1 text-xs font-semibold leading-relaxed text-gray-700 line-clamp-2 hover:text-[#d70018] sm:mb-2 sm:text-sm h-9 sm:h-10">
-                  {product.name}
-                </h3>
-
-               
-                <div className="mb-2 flex flex-wrap items-baseline gap-x-2">
-                  <span className="text-sm font-bold text-[#d70018] sm:text-base">
-                    {product.price.toLocaleString("vi-VN")}₫
-                  </span>
-                  {product.discount > 0 && (
-                    <span className="text-xs text-gray-400 line-through">
-                      {product.original_price.toLocaleString("vi-VN")}₫
-                    </span>
-                  )}
                 </div>
 
-                
+                {/* Content */}
+                <div className="flex flex-col flex-1">
+                  <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 mb-1 group-hover:text-[#d70018] transition-colors h-10">
+                    {product.title}
+                  </h3>
 
-             
-                <div className="mt-auto flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <div className="flex text-yellow-400">
-                      {[...Array(5)].map((_, i) => (
-                        <FaStar
-                          key={i}
-                          className={i < Math.floor(product.rating) ? "fill-current" : "text-gray-300"}
-                          size={10}
-                        />
-                      ))}
+                  {/* Specs Chip (Ví dụ) */}
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    <span className="bg-gray-100 text-[10px] text-gray-500 px-1.5 py-0.5 rounded border border-gray-200">
+                        {product.specifications?.storage || "Chính hãng"}
+                    </span>
+                  </div>
+
+                  {/* Price & Rating */}
+                  <div className="mt-auto">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="text-base font-bold text-[#d70018]">
+                        {formatPrice(displayPrice)}
+                      </span>
                     </div>
-                    <span className="text-[10px] text-gray-500 sm:text-xs">
-                      ({product.review_count} đánh giá)
-                    </span>
+                    
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+                      <div className="flex items-center gap-1">
+                        <FaStar className="text-yellow-400 text-xs" />
+                        <span className="text-xs text-gray-500 font-medium">
+                            {product.totalRating || 0} ({product.rating?.length || 0})
+                        </span>
+                      </div>
+                      <FaHeart className="text-gray-300 hover:text-[#d70018] transition-colors text-sm"/>
+                    </div>
                   </div>
-                  
-                 
-                  <button className="text-gray-400 hover:text-red-500 transition-colors">
-                    <FaHeart size={14} />
-                  </button>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
+
       </div>
     </div>
   );
