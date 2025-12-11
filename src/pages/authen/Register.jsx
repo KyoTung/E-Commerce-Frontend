@@ -1,97 +1,72 @@
-import React, { useState, useRef, useEffect } from "react";
-import { EyeOff, Eye, User, Mail, Lock, Smartphone, MapPin } from "lucide-react";
-import Axios from "../../Axios";
-import { useStateContext } from "../../contexts/contextProvider";
-import { useNavigate, Link } from "react-router-dom";
-import "../../App.css"
+import React, { useState, useEffect } from "react";
+import { useForm } from "react-hook-form"; // Import Hook Form
+import { useDispatch, useSelector } from "react-redux"; // Import Redux
+import { Link, useNavigate } from "react-router-dom";
+import { EyeOff, Eye, User, Mail, Lock, Phone, MapPin } from "lucide-react"; // Dùng Phone thay Smartphone cho ngắn
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
+// Import Action
+import { register as registerUser, resetState } from "../../features/authSlice/authSlice";
 
 const RegisterForm = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // --- REDUX STATE ---
+  const { isSuccess, isError, isLoading, message } = useSelector(
+    (state) => state.auth
+  );
+
+  // --- LOCAL STATE (Cho UI) ---
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    password: "",
-    confirmPassword: ""
+
+  // --- REACT HOOK FORM ---
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm({
+    mode: "onTouched",
   });
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
 
-  const { setUser, setToken } = useStateContext();
+  
+  const password = watch("password");
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ""
-      }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/;
-
-    if (!formData.name.trim()) newErrors.name = "Vui lòng nhập họ tên";
-    if (!emailRegex.test(formData.email)) newErrors.email = "Email không hợp lệ";
-    if (!phoneRegex.test(formData.phone)) newErrors.phone = "Số điện thoại không hợp lệ";
-    if (!formData.address.trim()) newErrors.address = "Vui lòng nhập địa chỉ";
-    if (formData.password.length < 6) newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
-    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    if (!validateForm()) {
-      setIsLoading(false);
-      return;
+  
+  useEffect(() => {
+    if (isSuccess) {
+      
+      setTimeout(() => {
+        navigate("/login"); 
+      }, 1000);
     }
 
-    const payLoad = {
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      address: formData.address,
-      password: formData.password,
+    if (isError) {
+      
+    }
+
+    // Reset state khi rời trang để tránh lỗi cũ hiện lại
+    return () => {
+      dispatch(resetState());
     };
+  }, [isSuccess, isError, message, navigate, dispatch]);
 
-    try {
-      const response = await Axios.post("/user/register", payLoad);
-      const data = response.data;
+  // --- SUBMIT ---
+  const onSubmit = (data) => {
 
-      setUser(data.user);
-      setToken(data.token);
-      navigate("/");
-    } catch (err) {
-      setErrors({ 
-        submit: err.response?.data?.error || "Đăng ký thất bại. Vui lòng thử lại." 
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    dispatch(registerUser(data));
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center py-8 px-4">
+      <ToastContainer />
+      
       <div className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Side - Brand Information */}
+        
+        {/* --- LEFT SIDE: BRAND INFO (Giữ nguyên UI cũ) --- */}
         <div className="flex flex-col justify-center space-y-6">
           <div className="text-center lg:text-left">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -135,14 +110,15 @@ const RegisterForm = () => {
           </div>
         </div>
 
-        {/* Right Side - Registration Form */}
+        {/* --- RIGHT SIDE: FORM --- */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Đăng Ký Tài Khoản</h2>
             <p className="text-gray-600 mt-2">Tạo tài khoản để bắt đầu mua sắm</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            
             {/* Name Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -152,17 +128,15 @@ const RegisterForm = () => {
                 <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
+                  {...register("fullName", { required: "Vui lòng nhập họ tên" })}
                   className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${
-                    errors.name ? "border-red-500" : "border-gray-300"
+                    errors.fullName ? "border-red-500" : "border-gray-300"
                   }`}
                   placeholder="Nhập họ và tên của bạn"
                 />
               </div>
-              {errors.name && (
-                <p className="mt-2 text-sm text-red-600">{errors.name}</p>
+              {errors.fullName && (
+                <p className="mt-2 text-sm text-red-600">{errors.fullName.message}</p>
               )}
             </div>
 
@@ -175,9 +149,10 @@ const RegisterForm = () => {
                 <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <input
                   type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
+                  {...register("email", { 
+                    required: "Vui lòng nhập email",
+                    pattern: { value: /^\S+@\S+$/i, message: "Email không hợp lệ" }
+                  })}
                   className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${
                     errors.email ? "border-red-500" : "border-gray-300"
                   }`}
@@ -185,11 +160,36 @@ const RegisterForm = () => {
                 />
               </div>
               {errors.email && (
-                <p className="mt-2 text-sm text-red-600">{errors.email}</p>
+                <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
               )}
             </div>
 
-          
+            {/* Phone Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Số điện thoại
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <input
+                  type="tel"
+                  {...register("phone", { 
+                    required: "Vui lòng nhập số điện thoại",
+                    pattern: { value: /(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/, message: "Số điện thoại không hợp lệ" }
+                  })}
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${
+                    errors.phone ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="0912345678"
+                />
+              </div>
+              {errors.phone && (
+                <p className="mt-2 text-sm text-red-600">{errors.phone.message}</p>
+              )}
+            </div>
+
+            
+
             {/* Password Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -199,9 +199,10 @@ const RegisterForm = () => {
                 <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <input
                   type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
+                  {...register("password", { 
+                    required: "Vui lòng nhập mật khẩu",
+                    minLength: { value: 6, message: "Mật khẩu phải có ít nhất 6 ký tự" }
+                  })}
                   className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${
                     errors.password ? "border-red-500" : "border-gray-300"
                   }`}
@@ -216,7 +217,7 @@ const RegisterForm = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-2 text-sm text-red-600">{errors.password}</p>
+                <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>
               )}
             </div>
 
@@ -229,9 +230,10 @@ const RegisterForm = () => {
                 <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <input
                   type={showConfirmPassword ? "text" : "password"}
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
+                  {...register("confirmPassword", { 
+                    required: "Vui lòng xác nhận mật khẩu",
+                    validate: value => value === password || "Mật khẩu xác nhận không khớp"
+                  })}
                   className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${
                     errors.confirmPassword ? "border-red-500" : "border-gray-300"
                   }`}
@@ -246,7 +248,7 @@ const RegisterForm = () => {
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="mt-2 text-sm text-red-600">{errors.confirmPassword}</p>
+                <p className="mt-2 text-sm text-red-600">{errors.confirmPassword.message}</p>
               )}
             </div>
 
@@ -266,10 +268,10 @@ const RegisterForm = () => {
               )}
             </button>
 
-            {/* Error Message */}
-            {errors.submit && (
+            {/* Error Message from Backend (Hiển thị nếu có lỗi chung) */}
+            {isError && !errors.name && !errors.email && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-600 text-center">{errors.submit}</p>
+                <p className="text-sm text-red-600 text-center">{message || "Đăng ký thất bại"}</p>
               </div>
             )}
 
@@ -287,7 +289,7 @@ const RegisterForm = () => {
             </div>
           </form>
 
-          {/* Terms and Conditions */}
+          {/* Terms */}
           <div className="mt-6 text-center">
             <p className="text-xs text-gray-500">
               Bằng việc đăng ký, bạn đã đồng ý với{" "}

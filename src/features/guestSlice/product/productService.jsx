@@ -1,8 +1,7 @@
 import axiosClient from "../../../api/axiosClient";
 
 const getAllProducts = async (params) => {
-  const url = params ? `/product${params}` : "/product";
-  const response = await axiosClient.get(url);
+  const response = await axiosClient.get("/product", { params }); 
   return response.data;
 };
 

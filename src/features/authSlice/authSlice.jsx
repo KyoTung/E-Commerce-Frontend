@@ -1,11 +1,11 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import authService from './authService';
-import { toast } from 'react-toastify';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import authService from "./authService";
+import { toast } from "react-toastify";
 
 // Lấy user từ localStorage
 const getUserFromLocalStorage = () => {
   try {
-    const customer = localStorage.getItem('customer');
+    const customer = localStorage.getItem("customer");
     return customer ? JSON.parse(customer) : null;
   } catch (error) {
     return null;
@@ -17,38 +17,49 @@ const initialState = {
   isError: false,
   isSuccess: false,
   isLoading: false,
-  message: '',
+  message: "",
 };
 
 // Thunk: Login
-export const login = createAsyncThunk(
-  'auth/login',
-  async (user, thunkAPI) => {
+export const login = createAsyncThunk("auth/login", async (user, thunkAPI) => {
+  try {
+    return await authService.login(user);
+  } catch (error) {
+    const message =
+      (error.response && error.response.data && error.response.data.message) ||
+      error.message ||
+      error.toString();
+
+    return thunkAPI.rejectWithValue({ message });
+  }
+});
+
+export const register = createAsyncThunk(
+  "auth/register",
+  async (userData, thunkAPI) => {
     try {
-      return await authService.login(user);
+      return await authService.register(userData);
     } catch (error) {
-      const message = 
-        (error.response && error.response.data && error.response.data.message) ||
+      const message =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
         error.message ||
         error.toString();
-
       return thunkAPI.rejectWithValue({ message });
     }
   }
 );
 
-// Thunk: Logout 
-export const logout = createAsyncThunk(
-  'auth/logout',
-  async (_, thunkAPI) => {
-    try {
-      return await authService.logout();
-    } catch (error) {
-      const message = error.response?.data?.message || error.message;
-      return thunkAPI.rejectWithValue(message);
-    }
+// Thunk: Logout
+export const logout = createAsyncThunk("auth/logout", async (_, thunkAPI) => {
+  try {
+    return await authService.logout();
+  } catch (error) {
+    const message = error.response?.data?.message || error.message;
+    return thunkAPI.rejectWithValue(message);
   }
-);
+});
 
 export const updatePassword = createAsyncThunk(
   "auth/update-password",
@@ -84,7 +95,7 @@ export const resetPassword = createAsyncThunk(
 );
 
 export const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     // gọi axiosClient khi refresh token thất bại
@@ -93,23 +104,30 @@ export const authSlice = createSlice({
       state.isError = false;
       state.isSuccess = false;
       state.isLoading = false;
-      state.message = '';
-      localStorage.removeItem('customer');
+      state.message = "";
+      localStorage.removeItem("customer");
+    },
+    resetState: (state) => {
+      
+      return initialState; 
+      
     },
   },
+  
+  
   extraReducers: (builder) => {
     builder
-      
+
       .addCase(login.pending, (state) => {
         state.isLoading = true;
         state.isError = false;
-        state.message = '';
+        state.message = "";
       })
       .addCase(login.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.user = action.payload; 
-        localStorage.setItem('customer', JSON.stringify(action.payload));
+        state.user = action.payload;
+        localStorage.setItem("customer", JSON.stringify(action.payload));
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
@@ -118,15 +136,31 @@ export const authSlice = createSlice({
         state.message = action.payload?.message;
         state.user = null;
       })
-      
+
+      .addCase(register.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(register.fulfilled, (state) => {
+        state.isLoading = false;  
+        state.isSuccess = true;
+        toast.success("Đăng ký tài khoản thành công!");
+      })
+      .addCase(register.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        toast.error(action.payload?.message || "Đăng ký tài khoản thất bại");
+      })
+
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
-        state.isSuccess = false; 
-        localStorage.removeItem('customer');
+        state.isSuccess = false;
+        localStorage.removeItem("customer");
       })
 
       // --- UPDATE PASSWORD ---
-      .addCase(updatePassword.pending, (state) => { state.isLoading = true; })
+      .addCase(updatePassword.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(updatePassword.fulfilled, (state) => {
         state.isLoading = false;
         state.isSuccess = true;
@@ -136,11 +170,12 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         toast.error(action.payload?.message || "Đổi mật khẩu thất bại");
-       
       })
 
       // --- FORGOT PASSWORD ---
-      .addCase(forgotPasswordToken.pending, (state) => { state.isLoading = true; })
+      .addCase(forgotPasswordToken.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(forgotPasswordToken.fulfilled, (state) => {
         state.isLoading = false;
         state.isSuccess = true;
@@ -153,7 +188,9 @@ export const authSlice = createSlice({
       })
 
       // --- RESET PASSWORD ---
-      .addCase(resetPassword.pending, (state) => { state.isLoading = true; })
+      .addCase(resetPassword.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(resetPassword.fulfilled, (state) => {
         state.isLoading = false;
         state.isSuccess = true;
@@ -162,10 +199,12 @@ export const authSlice = createSlice({
       .addCase(resetPassword.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
-        toast.error(action.payload?.message || "Token hết hạn hoặc không hợp lệ");
-      })
+        toast.error(
+          action.payload?.message || "Token hết hạn hoặc không hợp lệ"
+        );
+      });
   },
 });
 
-export const { clearAuth } = authSlice.actions;
+export const { clearAuth, resetState } = authSlice.actions;
 export default authSlice.reducer;

@@ -11,9 +11,9 @@ const initialState = {
 
  export const getAllProducts = createAsyncThunk(
   "admin/product/get-all-products",
-  async (_, thunkAPI) => {
+  async (params, thunkAPI) => {
     try {
-      const response = await productService.getAllProducts();
+      const response = await productService.getAllProducts(params);
       return response;
     } catch (error) {
       const message = error.response?.data?.message || error.message;

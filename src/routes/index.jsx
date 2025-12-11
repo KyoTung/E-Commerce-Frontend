@@ -17,6 +17,7 @@ import Profile from "../pages/guest/Profile";
 import OrderHistory from "../pages/guest/OrderHistory";
 import ChangePassword from "../pages/guest/ChangePassword";
 import ForgotPassword from "../pages/guest/ForgotPassword";
+import AllProducts from "../pages/guest/AllProducts";
 
 import AdminLayout from "../layouts/admin/layout";
 import DashboardPage from "../pages/admin/dashboard/page";
@@ -53,6 +54,11 @@ export const router = createBrowserRouter([
         index: true,
         element: <Home />,
       },
+      {
+        path: "/products",
+        element: <AllProducts />,
+      },
+
       {
         path: "/profile",
         element: <Profile />,

@@ -7,6 +7,7 @@ import {
   FaMicrochip 
 } from "react-icons/fa";
 import { MdFlipCameraAndroid } from "react-icons/md";
+import {getAllCategory} from "../../features/adminSlice/category/categorySlice";
 
 const needs = [
   { 

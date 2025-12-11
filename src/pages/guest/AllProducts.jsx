@@ -1,206 +1,274 @@
-import React, { useEffect, useState } from "react";
-import { FaStar, FaHeart, FaSortAmountDown } from "react-icons/fa";
-import { FaChevronDown } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { FaStar, FaHeart, FaSortAmountDown, FaTimes, FaChevronDown, FaFilter } from "react-icons/fa";
 
 import { getAllProducts } from "../../features/guestSlice/product/productSlice";
+import { getAllBrand } from "../../features/adminSlice/brand/brandSlice";
 import Loading from "../../components/Loading";
 
 const AllProducts = () => {
   const dispatch = useDispatch();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const { products, isLoading, isError } = useSelector(
-    (state) => state.productClient
-  );
+  // Redux State
+  const { products: reduxProducts, isLoading, isError } = useSelector((state) => state.productClient);
+  const { brands } = useSelector((state) => state.brandAdmin || state.brandAdmin);
 
-  const [sort, setSort] = useState("popular");
+  // --- LOCAL STATE ---
+  const [localProducts, setLocalProducts] = useState([]); // Danh sách hiển thị
+  const [page, setPage] = useState(1); // Trang hiện tại
+  const [hasMore, setHasMore] = useState(true); // Kiểm tra còn dữ liệu không
+  const LIMIT = 10; // Số lượng sản phẩm mỗi lần tải (Nên chia hết cho 2 và 5 để đẹp grid)
 
+  // State Filter
+  const [filter, setFilter] = useState({
+    brand: searchParams.get("brand") || "",
+    category: searchParams.get("category") || "",
+    minPrice: searchParams.get("minPrice") || "",
+    maxPrice: searchParams.get("maxPrice") || "",
+    tag: searchParams.get("tag") || "",
+    sort: "-createdAt",
+  });
+
+  const priceRanges = [
+    { label: "Dưới 5 triệu", min: "", max: 5000000 },
+    { label: "5 - 10 triệu", min: 5000000, max: 10000000 },
+    { label: "10 - 20 triệu", min: 10000000, max: 20000000 },
+    { label: "Trên 20 triệu", min: 20000000, max: "" },
+  ];
+
+  // 1. Fetch Brands ban đầu
   useEffect(() => {
-    dispatch(getAllProducts());
+    dispatch(getAllBrand());
   }, [dispatch]);
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(price);
+  // 2. Sync URL -> Filter State
+  useEffect(() => {
+    setFilter({
+      brand: searchParams.get("brand") || "",
+      category: searchParams.get("category") || "",
+      minPrice: searchParams.get("minPrice") || "",
+      maxPrice: searchParams.get("maxPrice") || "",
+      tag: searchParams.get("tag") || "",
+      sort: "-createdAt",
+    });
+    // Khi URL thay đổi (Lọc mới), reset về trang 1
+    setPage(1);
+    setHasMore(true); 
+    // Lưu ý: Ta không setLocalProducts([]) ở đây để tránh nháy màn hình, 
+    // việc thay thế data sẽ xử lý ở useEffect [reduxProducts]
+  }, [searchParams]);
+
+  // 3. Gọi API (Khi Filter hoặc Page thay đổi)
+  useEffect(() => {
+    const queryParams = {
+        sort: filter.sort,
+        page: page,      // <--- Gửi thêm page
+        limit: LIMIT,    // <--- Gửi thêm limit
+    };
+
+    if (filter.brand) queryParams.brand = filter.brand;
+    if (filter.category) queryParams.category = filter.category;
+    if (filter.tag) queryParams.tags = filter.tag;
+    if (filter.minPrice !== "") queryParams["basePrice[gte]"] = Number(filter.minPrice);
+    if (filter.maxPrice !== "") queryParams["basePrice[lte]"] = Number(filter.maxPrice);
+
+    dispatch(getAllProducts(queryParams));
+  }, [dispatch, filter, page]);
+
+  // 4. XỬ LÝ DỮ LIỆU TRẢ VỀ (Quan trọng)
+  useEffect(() => {
+    if (reduxProducts) {
+      if (page === 1) {
+        // Nếu là trang 1 (Lọc mới/Load lại) -> Thay thế hoàn toàn
+        setLocalProducts(reduxProducts);
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // Cuộn lên đầu
+      } else {
+        // Nếu là trang > 1 (Xem thêm) -> Nối thêm vào danh sách cũ
+        setLocalProducts((prev) => [...prev, ...reduxProducts]);
+      }
+
+      // Kiểm tra xem đã hết sản phẩm chưa
+      // Nếu số lượng trả về ít hơn LIMIT -> Đã hết hàng
+      if (reduxProducts.length < LIMIT) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
+    }
+  }, [reduxProducts, page]); // Chạy mỗi khi Redux trả về data mới
+
+  // --- HANDLERS ---
+
+  const handleLoadMore = () => {
+    setPage((prevPage) => prevPage + 1);
   };
+
+  const handleBrandClick = (brandSlug) => {
+    setFilter(prev => ({ ...prev, brand: prev.brand === brandSlug ? "" : brandSlug }));
+    setPage(1); // Reset page khi bấm lọc tay
+  };
+
+  const handlePriceClick = (range) => {
+    const isSelected = filter.minPrice == range.min && filter.maxPrice == range.max;
+    setFilter(prev => ({
+      ...prev,
+      minPrice: isSelected ? "" : range.min,
+      maxPrice: isSelected ? "" : range.max
+    }));
+    setPage(1);
+  };
+
+  const clearFilter = () => {
+    setSearchParams({});
+    setPage(1);
+  };
+
+  // Helper
+  const formatPrice = (price) => 
+    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price || 0);
 
   const getSpecs = (specs) => {
     if (!specs) return [];
-    const list = [];
-    if (specs.screen) list.push(specs.screen);
-    if (specs.ram) list.push(specs.ram);
-    if (specs.storage) list.push(specs.storage);
-    return list.slice(0, 3);
+    return [specs.screen, specs.ram, specs.storage].filter(Boolean).slice(0, 3);
   };
-
-
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loading />
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="flex h-screen items-center justify-center text-red-500">
-        Đã có lỗi xảy ra khi tải sản phẩm.
-      </div>
-    );
-  }
 
   return (
     <div className="bg-[#f4f6f8] min-h-screen pb-10">
       <div className="mx-auto max-w-[1200px] px-2 sm:px-4 py-4">
-        {/* --- Header & Filter Bar --- */}
-        <div className="mb-4">
-          <h1 className="text-xl font-bold text-gray-800 uppercase mb-4">
-            Tất cả điện thoại
-          </h1>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-lg shadow-sm border border-gray-200">
-            {/* Quick Filters */}
-            <div className="flex flex-wrap gap-2">
-              {[
-                "Apple",
-                "Samsung",
-                "Xiaomi",
-                "OPPO",
-                "Từ 2-4 triệu",
-                "Pin khủng",
-              ].map((filter) => (
-                <button
-                  key={filter}
-                  className="px-3 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md hover:border-[#d70018] hover:text-[#d70018] bg-gray-50 transition-colors"
-                >
-                  {filter}
+        
+        {/* Header & Filter UI (Giữ nguyên) */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+             <h1 className="text-xl font-bold text-gray-800 uppercase">
+                {filter.category ? `Điện thoại ${filter.category}` : "Tất cả sản phẩm"}
+             </h1>
+             {(filter.brand || filter.minPrice !== "" || filter.category) && (
+                <button onClick={clearFilter} className="text-sm text-red-500 flex items-center gap-1 hover:underline font-medium">
+                    <FaTimes /> Xóa bộ lọc
                 </button>
-              ))}
+             )}
+          </div>
+
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 space-y-4">
+            {/* Brands */}
+            <div className="flex flex-wrap items-center gap-2">
+               <span className="text-sm font-bold text-gray-700 mr-2">Hãng:</span>
+               {brands && brands.map((item, idx) => {
+                 const isActive = filter.brand.toLowerCase() === item.title.toLowerCase(); 
+                 return (
+                   <button
+                     key={idx}
+                     onClick={() => handleBrandClick(item.title)}
+                     className={`px-4 py-1.5 text-xs sm:text-sm border rounded-full transition-all ${
+                       isActive ? "bg-red-50 border-[#d70018] text-[#d70018] font-bold" : "border-gray-300 text-gray-600 hover:border-gray-400"
+                     }`}
+                   >
+                     {item.title}
+                   </button>
+                 )
+               })}
             </div>
 
-            {/* Sort Dropdown */}
-            <div className="flex items-center gap-2 ml-auto">
-              <FaSortAmountDown className="text-gray-500" />
-              <span className="text-sm font-medium text-gray-700 hidden sm:inline">
-                Sắp xếp:
-              </span>
-              <select
-                className="text-sm border-none bg-transparent font-medium text-gray-800 focus:ring-0 cursor-pointer"
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-              >
-                <option value="popular">Nổi bật</option>
-                <option value="price_asc">Giá thấp đến cao</option>
-                <option value="price_desc">Giá cao đến thấp</option>
-              </select>
+            {/* Price & Sort */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t pt-4 border-gray-100">
+               <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-bold text-gray-700 mr-2">Giá:</span>
+                  {priceRanges.map((range, idx) => {
+                      const isSelected = filter.minPrice == range.min && filter.maxPrice == range.max;
+                      return (
+                        <button
+                            key={idx}
+                            onClick={() => handlePriceClick(range)}
+                            className={`px-3 py-1.5 text-xs sm:text-sm border rounded-md transition-all ${
+                                isSelected ? "bg-red-50 border-[#d70018] text-[#d70018] font-bold" : "border-gray-300 text-gray-600 hover:border-gray-400"
+                            }`}
+                        >
+                            {range.label}
+                        </button>
+                      )
+                  })}
+               </div>
+
+               <div className="flex items-center gap-2 ml-auto">
+                  <FaSortAmountDown className="text-gray-500" />
+                  <select
+                    className="text-sm border-none bg-transparent font-medium text-gray-800 focus:ring-0 cursor-pointer hover:text-[#d70018] outline-none"
+                    value={filter.sort}
+                    onChange={(e) => { setFilter({ ...filter, sort: e.target.value }); setPage(1); }}
+                  >
+                    <option value="-createdAt">Mới nhất</option>
+                    <option value="basePrice">Giá thấp đến cao</option>
+                    <option value="-basePrice">Giá cao đến thấp</option>
+                    <option value="-sold">Bán chạy nhất</option>
+                  </select>
+               </div>
             </div>
           </div>
         </div>
 
-        {/* --- Product Grid --- */}
-        {products && products.length > 0 ? (
-          <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-5">
-            {products.map((product) => {
-              const specsList = getSpecs(product.specifications);
-              const discount = 0;
+        {/* --- PRODUCT LIST --- */}
+        {/* Chỉ hiện loading khi load trang 1, còn load more thì hiện loading ở nút bấm */}
+        {isLoading && page === 1 ? (
+           <div className="h-[50vh] flex items-center justify-center"><Loading /></div>
+        ) : localProducts && localProducts.length > 0 ? (
+          <>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-5">
+                {localProducts.map((product) => {
+                    const displayPrice = product.variants?.length > 0 ? Math.min(...product.variants.map(v => v.price)) : product.basePrice;
+                    const specsList = getSpecs(product.specifications);
+                    return (
+                        <Link to={`/product/${product._id}`} key={product._id} className="group relative flex flex-col h-full overflow-hidden rounded-xl bg-white p-2 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-3">
+                            <div className="relative mb-2 flex h-40 w-full items-center justify-center overflow-hidden rounded-lg sm:h-48">
+                                <img src={product.images?.[0]?.url || "https://via.placeholder.com/300"} alt={product.title} className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105" />
+                                {product.tags?.includes("hot") && <div className="absolute top-0 left-0 bg-[#d70018] text-white text-[10px] font-bold px-2 py-0.5 rounded-br-lg shadow-sm">HOT</div>}
+                            </div>
+                            <div className="flex flex-1 flex-col">
+                                <h3 className="mb-1 text-xs font-semibold leading-relaxed text-gray-700 line-clamp-2 hover:text-[#d70018] sm:mb-2 sm:text-sm min-h-[2.5em]" title={product.title}>{product.title}</h3>
+                                <div className="mb-2 flex flex-wrap gap-1">
+                                    {specsList.map((spec, idx) => (
+                                        <span key={idx} className="bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded border border-gray-200 truncate max-w-[80px]">{spec}</span>
+                                    ))}
+                                </div>
+                                <div className="mb-1 flex flex-wrap items-baseline gap-x-2 mt-auto">
+                                    <span className="text-sm font-bold text-[#d70018] sm:text-base">{formatPrice(displayPrice)}</span>
+                                </div>
+                                <div className="mt-auto flex items-center justify-between pt-2 border-t border-gray-50">
+                                    <div className="flex items-center gap-1">
+                                        <FaStar className="text-yellow-400" size={10} />
+                                        <span className="text-[10px] text-gray-500 sm:text-xs font-medium">{product.totalRating || 0}</span>
+                                    </div>
+                                    <FaHeart className="text-gray-300 text-xs"/>
+                                </div>
+                            </div>
+                        </Link>
+                    )
+                })}
+            </div>
 
-              return (
-                <Link
-                  to={`/product/${product._id || product.id}`}
-                  key={product._id || product.id}
-                  className="group relative flex flex-col h-full overflow-hidden rounded-xl bg-white p-2 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-3"
-                >
-                  {/* Image Section */}
-                  <div className="relative mb-2 flex h-40 w-full items-center justify-center overflow-hidden rounded-lg sm:h-48">
-                    <img
-                      src={
-                        product.images?.[0]?.url ||
-                        "https://via.placeholder.com/300"
-                      }
-                      alt={product.title}
-                      className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
-                    />
-
-                    {discount > 0 && (
-                      <div className="absolute left-0 top-0 rounded-br-lg bg-[#d70018] px-2 py-0.5 text-[10px] font-bold text-white shadow-sm sm:text-xs">
-                        Giảm {discount}%
-                      </div>
-                    )}
-
-                    {product.basePrice > 3000000 && (
-                      <div className="absolute right-0 top-0 rounded-bl-lg bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600 sm:text-xs border border-gray-200">
-                        Trả góp 0%
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Content Section */}
-                  <div className="flex flex-1 flex-col">
-                    <h3
-                      className="mb-1 text-xs font-semibold leading-relaxed text-gray-700 line-clamp-3 hover:text-[#d70018] sm:mb-2 sm:text-sm min-h-[2.5em]"
-                      title={product.title}
+            {/* --- LOAD MORE BUTTON --- */}
+            {hasMore && (
+                <div className="mt-8 flex justify-center">
+                    <button 
+                        onClick={handleLoadMore}
+                        disabled={isLoading}
+                        className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-10 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-[#fcebeb] hover:text-[#d70018] hover:border-[#d70018] disabled:opacity-70 disabled:cursor-not-allowed"
                     >
-                      {product.title}
-                    </h3>
-
-                    {/* Specs Chips */}
-                    <div className="mb-2 flex flex-wrap gap-1">
-                      {specsList.map((spec, idx) => (
-                        <span
-                          key={idx}
-                          className="bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded border border-gray-200 truncate max-w-[80px]"
-                          title={spec}
-                        >
-                          {spec}
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* Price */}
-                    <div className="mb-1 flex flex-wrap items-baseline gap-x-2 mt-auto">
-                      <span className="text-sm font-bold text-[#d70018] sm:text-base">
-                        {formatPrice(product.basePrice)}
-                      </span>
-                    </div>
-
-                    {/* Footer: Rating & Wishlist */}
-                    <div className="mt-auto flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <FaStar className="text-yellow-400" size={10} />
-                        <span className="text-[10px] text-gray-500 sm:text-xs font-medium">
-                          {product.totalRating || 0} (
-                          {product.rating?.length || 0})
-                        </span>
-                      </div>
-                      <button className="text-gray-400 hover:text-[#d70018] transition-colors flex items-center gap-1 text-xs group/heart">
-                        Yêu thích
-                        <FaHeart
-                          className="group-hover/heart:text-[#d70018]"
-                          size={12}
-                        />
-                      </button>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+                        {isLoading ? "Đang tải..." : `Xem thêm ${LIMIT} sản phẩm`} 
+                        {!isLoading && <FaChevronDown className="text-xs" />}
+                    </button>
+                </div>
+            )}
+          </>
         ) : (
-          <div className="text-center py-20 text-gray-500">
-            Không tìm thấy sản phẩm nào.
+          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-lg shadow-sm">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-400 text-3xl"><FaFilter /></div>
+            <p className="text-gray-500 mb-4">Không tìm thấy sản phẩm nào phù hợp.</p>
+            <button onClick={clearFilter} className="text-[#d70018] font-medium hover:underline">Xóa bộ lọc</button>
           </div>
         )}
 
-        {/* Load More Button */}
-        <div className="mt-8 flex justify-center">
-          <button className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-10 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-[#fcebeb] hover:text-[#d70018] hover:border-[#d70018]">
-            Xem thêm 20 sản phẩm <FaChevronDown className="text-xs" />
-          </button>
-        </div>
       </div>
     </div>
   );

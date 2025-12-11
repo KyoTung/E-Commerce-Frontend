@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../features/authSlice/authSlice";
 import { getCart } from "../../features/guestSlice/cart/cartSlice";
-
+import { getAllBrand } from "../../features/adminSlice/brand/brandSlice";
+import {getAllCategory} from "../../features/adminSlice/category/categorySlice";
 // Icons
 import {
   FiShoppingCart,
@@ -34,58 +35,7 @@ import { LuClipboardList } from "react-icons/lu";
 import { MdFlipCameraAndroid } from "react-icons/md";
 import { ImBlogger } from "react-icons/im";
 
-const phoneMenuData = [
-  {
-    title: "Thương hiệu",
-    icon: <FiSmartphone />,
-    items: [
-      { name: "iPhone", link: "/products?brand=apple" },
-      { name: "Samsung", link: "/products?brand=samsung" },
-      { name: "Xiaomi", link: "/products?brand=xiaomi" },
-      { name: "OPPO", link: "/products?brand=oppo" },
-      { name: "Realme", link: "/products?brand=realme" },
-    ],
-  },
-  {
-    title: "Mức giá",
-    icon: <FiDollarSign />,
-    items: [
-      { name: "Dưới 5 triệu", link: "/products?price_lte=5000000" },
-      {
-        name: "Từ 5 - 7 triệu",
-        link: "/products?price_gte=5000000&price_lte=7000000",
-      },
-      {
-        name: "Từ 7 - 10 triệu",
-        link: "/products?price_gte=7000000&price_lte=10000000",
-      },
-      {
-        name: "Từ 10 - 15 triệu",
-        link: "/products?price_gte=10000000&price_lte=15000000",
-      },
-      { name: "Trên 15 triệu", link: "/products?price_gte=15000000" },
-    ],
-  },
-  {
-    title: "Nhu cầu",
-    icon: <FiFilter />,
-    items: [
-      { name: "Chơi game", icon: <FiCpu />, link: "/products?tag=gaming" },
-      { name: "Pin khủng", icon: <FiBattery />, link: "/products?tag=battery" },
-      {
-        name: "Chụp ảnh đẹp",
-        icon: <FiCamera />,
-        link: "/products?tag=camera",
-      },
-      {
-        name: "Gập / Trượt",
-        icon: <MdFlipCameraAndroid />,
-        link: "/products?tag=foldable",
-      },
-      { name: "Cấu hình AI", icon: <FaMicrochip />, link: "/products?tag=ai" },
-    ],
-  },
-];
+
   
 const Header = () => {
   const dispatch = useDispatch();
@@ -96,6 +46,8 @@ const Header = () => {
   const { user, isSuccess, isError, message } = useSelector(
     (state) => state.auth
   );
+  const { brands } = useSelector((state) => state.brandAdmin);
+  const { categories, loading } = useSelector((state) => state.categoryAdmin);
   const {cart} = useSelector((state) => state.cart);
 
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -108,16 +60,17 @@ const Header = () => {
    // Fetch Cart on Mount
     useEffect(() => {
       dispatch(getCart());
+      dispatch(getAllBrand());
+      dispatch(getAllCategory());
     }, [dispatch]);
 
-  const handleSearch = (e) => {
+const handleSearch = (e) => {
     e.preventDefault();
     const val = query.trim();
     if (!val) return;
     setQuery("");
-    navigate(`/product-search?q=${encodeURIComponent(val)}`);
-  };
-
+    navigate(`/products?keyword=${encodeURIComponent(val)}`);
+};
   const handleLogout = () => {
     dispatch(logout());
     setIsUserDropdownOpen(false);
@@ -143,6 +96,41 @@ const Header = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+  
+  const phoneMenuData = useMemo(() => {
+    return [
+      {
+        title: "Thương hiệu",
+        icon: <FiSmartphone />,
+        items: brands && brands.length > 0 
+          ? brands.map(brand => ({
+              name: brand.title,
+              link: `/products?brand=${brand.title}` // Gắn brand vào URL
+            }))
+          : [{ name: "Đang tải...", link: "#" }]
+      },
+      {
+        title: "Mức giá", // Phần này giữ tĩnh vì là logic lọc
+        icon: <FiDollarSign />,
+        items: [
+          { name: "Dưới 5 triệu", link: "/products?maxPrice=5000000" },
+          { name: "Từ 5 - 10 triệu", link: "/products?minPrice=5000000&maxPrice=10000000" },
+          { name: "Từ 10 - 20 triệu", link: "/products?minPrice=10000000&maxPrice=20000000" },
+          { name: "Trên 20 triệu", link: "/products?minPrice=20000000" },
+        ],
+      },
+      {
+        title: "Danh mục", // Thay thế 'Nhu cầu' bằng Category thật từ DB
+        icon: <FiFilter />,
+        items: categories && categories.length > 0
+          ? categories.map(cat => ({
+              name: cat.title,
+              link: `/products?category=${cat.slug}`
+            }))
+          : [{ name: "Đang tải...", link: "#" }]
+      },
+    ];
+  }, [brands,categories]);
 
   const HeaderItem = ({
     icon: Icon,
@@ -392,38 +380,6 @@ const Header = () => {
           </div>
         </div>
 
-        {/* <div className="lg:hidden overflow-x-auto whitespace-nowrap px-4 py-2 bg-[#b80015] text-white text-xs scrollbar-hide flex gap-4">
-          <Link
-            to="/products"
-            className="opacity-90 hover:opacity-100 hover:underline"
-          >
-            Điện thoại
-          </Link>
-          <Link
-            to="/products"
-            className="opacity-90 hover:opacity-100 hover:underline"
-          >
-            Laptop
-          </Link>
-          <Link
-            to="/products"
-            className="opacity-90 hover:opacity-100 hover:underline"
-          >
-            Tai nghe
-          </Link>
-          <Link
-            to="/products"
-            className="opacity-90 hover:opacity-100 hover:underline"
-          >
-            Đồng hồ
-          </Link>
-          <Link
-            to="/products"
-            className="opacity-90 hover:opacity-100 hover:underline"
-          >
-            Phụ kiện
-          </Link>
-        </div> */}
       </header>
     </>
   );

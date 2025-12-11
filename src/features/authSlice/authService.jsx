@@ -11,6 +11,11 @@ const login = async (userData) => {
   return userInfo;
 };
 
+const register = async (userData) => {
+  const response = await axiosClient.post('/user/register', userData);
+  return response.data;
+}
+
 const logout = async () => {
   await axiosClient.post('/user/logout'); 
 
@@ -41,6 +46,7 @@ const authService = {
   updatePassword,
   forgotPasswordToken,
   resetPassword,
+  register
 };
 
 export default authService;
