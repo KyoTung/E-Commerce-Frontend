@@ -109,7 +109,7 @@ const BlogsSection = () => {
 
         <div className="text-center mt-12">
           <Link
-            to="/blog"
+            to="/blogs"
             className="inline-flex items-center bg-[#d0011b] text-white px-6 py-3 rounded-md font-semibold hover:bg-[#b00117] transition-colors duration-300"
           >
             Xem tất cả bài viết
