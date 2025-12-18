@@ -207,7 +207,6 @@ const AllProducts = () => {
         </div>
 
         {/* --- PRODUCT LIST --- */}
-        {/* Chỉ hiện loading khi load trang 1, còn load more thì hiện loading ở nút bấm */}
         {isLoading && page === 1 ? (
            <div className="h-[50vh] flex items-center justify-center"><Loading /></div>
         ) : localProducts && localProducts.length > 0 ? (
