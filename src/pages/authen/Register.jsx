@@ -164,32 +164,7 @@ const RegisterForm = () => {
               )}
             </div>
 
-            {/* Phone Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Số điện thoại
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <input
-                  type="tel"
-                  {...register("phone", { 
-                    required: "Vui lòng nhập số điện thoại",
-                    pattern: { value: /(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/, message: "Số điện thoại không hợp lệ" }
-                  })}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${
-                    errors.phone ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="0912345678"
-                />
-              </div>
-              {errors.phone && (
-                <p className="mt-2 text-sm text-red-600">{errors.phone.message}</p>
-              )}
-            </div>
-
-            
-
+          
             {/* Password Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
