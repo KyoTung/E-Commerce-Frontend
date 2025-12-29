@@ -60,6 +60,11 @@ const ProductDetail = () => {
     }
   }, [id, dispatch]);
 
+  // Cuộn lên đầu mỗi khi component được mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // --- EFFECT 2: Init Data khi có Product ---
   useEffect(() => {
     if (product) {

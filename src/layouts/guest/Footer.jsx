@@ -170,27 +170,6 @@ const Footer = () => {
             </div>
           </div>
         </div>
-
-        {/* --- BOTTOM SECTION (Copyright & Company Info) --- */}
-        <div className="bg-gray-100 rounded-lg p-4 text-xs text-gray-500 text-center md:text-left">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <p className="mb-1">
-                        <strong>Công ty TNHH Thương Mại và Dịch Vụ Nest Store</strong>
-                    </p>
-                    <p className="mb-1">
-                        Địa chỉ: 123 Đường ABC, Phường XYZ, Quận 1, TP. Hồ Chí Minh
-                    </p>
-                    <p>
-                        Giấy phép ĐKKD số 0123456789 do Sở Kế hoạch và Đầu tư TP.HCM cấp ngày 01/01/2025
-                    </p>
-                </div>
-                <div className="md:text-right flex flex-col justify-end">
-                    <p className="mb-1">© 2025 Nest Store. All rights reserved.</p>
-                    <p className="text-gray-400">Designed for educational purposes.</p>
-                </div>
-            </div>
-        </div>
       </div>
     </footer>
   );

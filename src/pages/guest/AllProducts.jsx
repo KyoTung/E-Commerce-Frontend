@@ -12,12 +12,14 @@ import {
 
 import { getAllProducts } from "../../features/guestSlice/product/productSlice";
 import { getAllBrand } from "../../features/adminSlice/brand/brandSlice";
+import { getAllCategory } from "../../features/adminSlice/category/categorySlice";
 import Loading from "../../components/Loading";
 
 const AllProducts = () => {
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
-
+  const productListRef = useRef(null);
+  const isFirstLoad = useRef(true);
   // Redux State
   const {
     products: reduxProducts,
@@ -26,6 +28,9 @@ const AllProducts = () => {
   } = useSelector((state) => state.productClient);
   const { brands } = useSelector(
     (state) => state.brandAdmin || state.brandAdmin
+  );
+  const { categories } = useSelector(
+    (state) => state.categoryAdmin || state.categoryAdmin
   );
 
   // --- LOCAL STATE ---
@@ -37,7 +42,7 @@ const AllProducts = () => {
   // State Filter
   const [filter, setFilter] = useState({
     brand: searchParams.get("brand") || "",
-    category: searchParams.get("category") || "",
+    slugCategory: searchParams.get("category") || "",
     minPrice: searchParams.get("minPrice") || "",
     maxPrice: searchParams.get("maxPrice") || "",
     tag: searchParams.get("tag") || "",
@@ -55,13 +60,14 @@ const AllProducts = () => {
   // 1. Fetch Brands ban đầu
   useEffect(() => {
     dispatch(getAllBrand());
+    dispatch(getAllCategory());
   }, [dispatch]);
 
   // 2. Sync URL -> Filter State
   useEffect(() => {
     setFilter({
       brand: searchParams.get("brand") || "",
-      category: searchParams.get("category") || "",
+      slugCategory: searchParams.get("category") || "",
       minPrice: searchParams.get("minPrice") || "",
       maxPrice: searchParams.get("maxPrice") || "",
       tag: searchParams.get("tag") || "",
@@ -80,7 +86,7 @@ const AllProducts = () => {
     };
 
     if (filter.brand) queryParams.brand = filter.brand;
-    if (filter.category) queryParams.category = filter.category;
+    if (filter.slugCategory) queryParams.slugCategory = filter.slugCategory;
     if (filter.tag) queryParams.tags = filter.tag;
     if (filter.minPrice !== "")
       queryParams["basePrice[gte]"] = Number(filter.minPrice);
@@ -95,7 +101,17 @@ const AllProducts = () => {
     if (reduxProducts) {
       if (page === 1) {
         setLocalProducts(reduxProducts);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+
+        if (isFirstLoad.current) {
+          window.scrollTo(0, 0);
+        } else {
+          if (productListRef.current) {
+            productListRef.current.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        }
       } else {
         setLocalProducts((prev) => [...prev, ...reduxProducts]);
       }
@@ -119,6 +135,7 @@ const AllProducts = () => {
       ...prev,
       brand: prev.brand === brandSlug ? "" : brandSlug,
     }));
+    isFirstLoad.current = false;
     setPage(1);
   };
 
@@ -130,12 +147,34 @@ const AllProducts = () => {
       minPrice: isSelected ? "" : range.min,
       maxPrice: isSelected ? "" : range.max,
     }));
+    isFirstLoad.current = false;
     setPage(1);
   };
 
   const clearFilter = () => {
     setSearchParams({});
     setPage(1);
+  };
+
+  const handleCategoryClick = (slug) => {
+    // Nếu đang chọn chính nó thì bỏ chọn, ngược lại thì chọn mới
+    const newCategory = filter.slugCategory === slug ? "" : slug;
+
+    // Cập nhật URL
+    if (newCategory) {
+      setSearchParams({
+        ...Object.fromEntries(searchParams),
+        category: newCategory,
+      });
+    } else {
+      const newParams = Object.fromEntries(searchParams);
+      delete newParams.category;
+      setSearchParams(newParams);
+    }
+
+    // Reset về trang 1 và scroll lên
+    setPage(1);
+    isFirstLoad.current = false;
   };
 
   // Helper
@@ -152,8 +191,10 @@ const AllProducts = () => {
 
   return (
     <div className="bg-[#f4f6f8] min-h-screen pb-10">
-      <div className="mx-auto max-w-[1200px] px-2 sm:px-4 py-4">
-        {/* Header & Filter UI (Giữ nguyên) */}
+      <div
+        ref={productListRef}
+        className="mx-auto max-w-[1200px] px-2 sm:px-4 py-4"
+      >
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-bold text-gray-800 uppercase">
@@ -173,6 +214,32 @@ const AllProducts = () => {
 
           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 space-y-4">
             {/* Brands */}
+            {/* --- CATEGORY FILTER --- */}
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-4">
+              <h3 className="text-sm font-bold text-gray-700 mb-2">
+                Danh mục sản phẩm
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {categories &&
+                  categories.map((item, index) => {
+                    // So sánh slug trên URL với slug của item
+                    const isActive = filter.slugCategory === item.slug;
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => handleCategoryClick(item.slug)} // Truyền slug vào
+                        className={`px-3 py-1.5 text-xs sm:text-sm border rounded-lg transition-all ${
+                          isActive
+                            ? "bg-blue-50 border-blue-500 text-blue-600 font-bold"
+                            : "border-gray-200 text-gray-600 hover:border-gray-400 hover:bg-gray-50"
+                        }`}
+                      >
+                        {item.title}
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-bold text-gray-700 mr-2">
                 Hãng:
@@ -298,14 +365,13 @@ const AllProducts = () => {
                         </span>
                       </div>
                       <div className="mt-auto flex items-center justify-between pt-2 border-t border-gray-50">
-                      
                         <div className="flex items-center gap-1">
-                        <FaStar className="text-yellow-400" size={10} />
-                        <span className="text-[10px] text-gray-500 sm:text-xs font-medium">
-                          {product.totalRating || 0} (
-                          {product.rating?.length || 0})
-                        </span>
-                      </div>
+                          <FaStar className="text-yellow-400" size={10} />
+                          <span className="text-[10px] text-gray-500 sm:text-xs font-medium">
+                            {product.totalRating || 0} (
+                            {product.rating?.length || 0})
+                          </span>
+                        </div>
                         <button className="text-gray-400 hover:text-[#d70018] transition-colors flex items-center gap-1 text-xs group/heart">
                           Yêu thích
                           <FaHeart
