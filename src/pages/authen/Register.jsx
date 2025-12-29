@@ -56,7 +56,6 @@ const RegisterForm = () => {
 
   // --- SUBMIT ---
   const onSubmit = (data) => {
-
     dispatch(registerUser(data));
   };
 

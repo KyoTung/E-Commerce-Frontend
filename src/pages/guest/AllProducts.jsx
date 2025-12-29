@@ -213,9 +213,9 @@ const AllProducts = () => {
           </div>
 
           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 space-y-4">
-            {/* Brands */}
+            
             {/* --- CATEGORY FILTER --- */}
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-4">
+            <div className="bg-white rounded-lg  mb-4">
               <h3 className="text-sm font-bold text-gray-700 mb-2">
                 Danh mục sản phẩm
               </h3>
@@ -240,6 +240,7 @@ const AllProducts = () => {
                   })}
               </div>
             </div>
+            {/* Brands */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-bold text-gray-700 mr-2">
                 Hãng:
@@ -298,6 +299,7 @@ const AllProducts = () => {
                   onChange={(e) => {
                     setFilter({ ...filter, sort: e.target.value });
                     setPage(1);
+                    isFirstLoad.current = false;
                   }}
                 >
                   <option value="-createdAt">Mới nhất</option>
