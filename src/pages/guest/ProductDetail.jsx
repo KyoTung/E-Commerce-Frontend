@@ -296,7 +296,6 @@ const ProductDetail = () => {
                 <div className="grid grid-cols-3 gap-2">
                   {allStorages.map((storage, idx) => {
                     // Kiểm tra xem Storage này có hàng với Màu đang chọn không?
-                    // (Optional: Để làm mờ nếu muốn, nhưng ở đây ta dùng logic tự switch màu nên cứ hiện hết)
                     const isSelected = selectedVariant?.storage === storage;
                     return (
                       <button
@@ -333,9 +332,6 @@ const ProductDetail = () => {
                 <div className="grid grid-cols-3 gap-2">
                   {allColors.map((color, idx) => {
                     const isSelected = selectedVariant?.color === color;
-
-                    // Nâng cao: Kiểm tra xem Màu này có kết hợp được với Storage đang chọn không?
-                    // Nếu không có, ta vẫn hiện nhưng có thể thêm visual hint (VD: giá khác)
                     const exactVariant = checkVariantExists(
                       selectedVariant?.storage,
                       color
@@ -363,7 +359,7 @@ const ProductDetail = () => {
                                     product.variants.find(
                                       (v) => v.color === color
                                     )?.price
-                                  ) // Giá màu này ở bản khác
+                                  ) 
                             }
                           </span>
                         </div>

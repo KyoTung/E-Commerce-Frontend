@@ -11,7 +11,7 @@ const getProduct = async (productId) => {
 };
 
 const addwishList = async (productId) => {
-  const response = await axiosClient.put(`/product/wishlist`, { productId });
+  const response = await axiosClient.put(`/product/wishlist`, {prdId: productId });
   return response.data;
 }
 

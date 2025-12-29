@@ -26,6 +26,10 @@ const Cart = () => {
   useEffect(() => {
     dispatch(getCart());
   }, [dispatch]);
+  
+   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   // Helper Format Tiền
   const formatPrice = (price) =>

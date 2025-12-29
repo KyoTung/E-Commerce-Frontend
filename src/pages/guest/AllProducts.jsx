@@ -9,10 +9,15 @@ import {
   FaChevronDown,
   FaFilter,
 } from "react-icons/fa";
+import { toast } from "react-toastify";
 
-import { getAllProducts } from "../../features/guestSlice/product/productSlice";
+import {
+  getAllProducts,
+  addwishList,
+} from "../../features/guestSlice/product/productSlice";
 import { getAllBrand } from "../../features/adminSlice/brand/brandSlice";
 import { getAllCategory } from "../../features/adminSlice/category/categorySlice";
+import { getWishlist } from "../../features/guestSlice/user/userSlice";
 import Loading from "../../components/Loading";
 
 const AllProducts = () => {
@@ -20,6 +25,7 @@ const AllProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const productListRef = useRef(null);
   const isFirstLoad = useRef(true);
+
   // Redux State
   const {
     products: reduxProducts,
@@ -32,6 +38,8 @@ const AllProducts = () => {
   const { categories } = useSelector(
     (state) => state.categoryAdmin || state.categoryAdmin
   );
+  const { user } = useSelector((state) => state.auth);
+  const { wishlist } = useSelector((state) => state.user);
 
   // --- LOCAL STATE ---
   const [localProducts, setLocalProducts] = useState([]); // Danh sách hiển thị
@@ -61,6 +69,7 @@ const AllProducts = () => {
   useEffect(() => {
     dispatch(getAllBrand());
     dispatch(getAllCategory());
+    dispatch(getWishlist());
   }, [dispatch]);
 
   // 2. Sync URL -> Filter State
@@ -177,6 +186,26 @@ const AllProducts = () => {
     isFirstLoad.current = false;
   };
 
+  //  thêm vào yêu thích
+  const addToWish = (id) => {
+    if (!user) {
+      toast.warn("Vui lòng đăng nhập để thêm vào yêu thích!", {
+        position: "top-center", // Hiện ở giữa cho dễ thấy
+        autoClose: 2000,
+      });
+      return; // Dừng lại, không chạy code bên dưới
+    }
+    dispatch(addwishList(id))
+      .unwrap()
+      .then((res) => {
+        toast.success("Đã cập nhật danh sách yêu thích!");
+        dispatch(getWishlist());
+      })
+      .catch((err) => {
+        toast.error(err.message || "Có lỗi xảy ra");
+      });
+  };
+
   // Helper
   const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN", {
@@ -189,6 +218,18 @@ const AllProducts = () => {
     return [specs.screen, specs.ram, specs.storage].filter(Boolean).slice(0, 3);
   };
 
+  //ham kiểm tra xem 1 sản phẩm có nằm trong wishlist của user không
+  const checkIsLiked = (productId) => {
+    // Nếu chưa có wishlist hoặc rỗng -> false
+    if (!wishlist || wishlist.length === 0) return false;
+
+    return wishlist.some((item) => {
+      const itemId = typeof item === "string" ? item : item?._id;
+      return itemId === productId;
+    });
+  };
+
+  
   return (
     <div className="bg-[#f4f6f8] min-h-screen pb-10">
       <div
@@ -213,7 +254,6 @@ const AllProducts = () => {
           </div>
 
           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 space-y-4">
-            
             {/* --- CATEGORY FILTER --- */}
             <div className="bg-white rounded-lg  mb-4">
               <h3 className="text-sm font-bold text-gray-700 mb-2">
@@ -323,6 +363,7 @@ const AllProducts = () => {
               {localProducts.map((product) => {
                 const displayPrice = product.basePrice;
                 const specsList = getSpecs(product.specifications);
+                const isLiked = checkIsLiked(product._id);
                 return (
                   <Link
                     to={`/product/${product._id}`}
@@ -374,10 +415,21 @@ const AllProducts = () => {
                             {product.rating?.length || 0})
                           </span>
                         </div>
-                        <button className="text-gray-400 hover:text-[#d70018] transition-colors flex items-center gap-1 text-xs group/heart">
-                          Yêu thích
+                        <button
+                          className="text-gray-400 hover:text-[#d70018] transition-colors flex items-center gap-1 text-xs group/heart"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            addToWish(product._id);
+                          }}
+                        >
+                          {isLiked ? "Đã thích" : "Yêu thích"}
+
                           <FaHeart
-                            className="group-hover/heart:text-[#d70018]"
+                            className={`transition-colors ${
+                              isLiked
+                                ? "text-[#d70018]"
+                                : "text-gray-300 group-hover/heart:text-[#d70018]"
+                            }`}
                             size={12}
                           />
                         </button>

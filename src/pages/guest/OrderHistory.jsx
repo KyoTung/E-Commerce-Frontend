@@ -22,6 +22,10 @@ const OrderHistory = () => {
     dispatch(getUserOrders());
   }, [dispatch]);
 
+   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Helper Format
   const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price || 0);

@@ -10,9 +10,15 @@ const updateUser = async (userData, id) => {
   return response.data;
 };
 
+const getWishlist = async () =>{
+  const response = await axiosClient.get("/user/wishlist");
+  return response.data;
+}
+
 const userService = {
   getUser,
   updateUser,
+  getWishlist
 };
 
 export default userService;
