@@ -53,14 +53,12 @@ const ProductDetail = () => {
   });
   const currentRating = watch("rating");
 
-  // --- EFFECT 1: Fetch Data ---
   useEffect(() => {
     if (id) {
       dispatch(getProduct(id));
     }
   }, [id, dispatch]);
 
-  // Cuộn lên đầu mỗi khi component được mount
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -258,7 +256,7 @@ const ProductDetail = () => {
               />
             </div>
             {/* Thumbnails */}
-            <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+            {/* <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
               {product.images?.map((img, idx) => (
                 <button
                   key={idx}
@@ -276,7 +274,7 @@ const ProductDetail = () => {
                   />
                 </button>
               ))}
-            </div>
+            </div> */}
           </div>
 
           <div className="lg:col-span-5 space-y-4">
@@ -417,18 +415,7 @@ const ProductDetail = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Description */}
-          <div className="lg:col-span-7 bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-            <div className="mt-8">
-              <h3 className="bg-gray-100 p-3 rounded-t-lg font-bold text-gray-700 uppercase text-sm">
-                Đặc điểm nổi bật
-              </h3>
-              <div
-                className=" min-w-0 truncate p-4 border border-gray-100 rounded-b-lg text-gray-700 text-sm leading-relaxed prose max-w-none"
-                dangerouslySetInnerHTML={{ __html: product.description }}
-              />
-            </div>
-          </div>
+          
           {/* Specifications Table (Mini) */}
           <div className="lg:col-span-5 space-y-4">
             <div className="rounded-lg border border-gray-200 overflow-hidden bg-white mt-4">
@@ -457,6 +444,18 @@ const ProductDetail = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+          {/* Description */}
+          <div className="lg:col-span-7 bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+            <div className="">
+              <h3 className="bg-gray-100 p-3 rounded-t-lg font-bold text-gray-700 uppercase text-sm">
+                Đặc điểm nổi bật
+              </h3>
+              <div
+                className=" min-w-0 truncate p-4 border border-gray-100 rounded-b-lg text-gray-700 text-sm leading-relaxed prose max-w-none"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
             </div>
           </div>
         </div>
