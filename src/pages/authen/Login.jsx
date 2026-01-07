@@ -16,11 +16,10 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
-
+  const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:5000/api";
   //  LOGIN GOOGLE
   const handleGoogleLogin = () => {
-
-    window.open("http://localhost:5000/api/user/auth/google", "_self");
+    window.open(`${baseURL}/user/auth/google`, "_self");
   };
 
   const handleChange = (e) => {
@@ -83,7 +82,8 @@ const Login = () => {
               Chào mừng đến với <span className="text-red-600">Nest Store</span>
             </h1>
             <p className="text-lg text-gray-600 mb-6">
-              Đăng nhập tài khoản để trải nghiệm mua sắm tốt nhất với những ưu đãi độc quyền
+              Đăng nhập tài khoản để trải nghiệm mua sắm tốt nhất với những ưu
+              đãi độc quyền
             </p>
           </div>
 
@@ -93,8 +93,12 @@ const Login = () => {
                 <span className="text-red-600 font-bold">🚚</span>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Giao hàng miễn phí</h3>
-                <p className="text-sm text-gray-600">Cho đơn hàng từ 500.000₫</p>
+                <h3 className="font-semibold text-gray-900">
+                  Giao hàng miễn phí
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Cho đơn hàng từ 500.000₫
+                </p>
               </div>
             </div>
 
@@ -103,7 +107,9 @@ const Login = () => {
                 <span className="text-red-600 font-bold">🎁</span>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Ưu đãi thành viên</h3>
+                <h3 className="font-semibold text-gray-900">
+                  Ưu đãi thành viên
+                </h3>
                 <p className="text-sm text-gray-600">Giảm giá lên đến 20%</p>
               </div>
             </div>
@@ -113,7 +119,9 @@ const Login = () => {
                 <span className="text-red-600 font-bold">🔒</span>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Bảo mật thông tin</h3>
+                <h3 className="font-semibold text-gray-900">
+                  Bảo mật thông tin
+                </h3>
                 <p className="text-sm text-gray-600">Cam kết bảo vệ dữ liệu</p>
               </div>
             </div>

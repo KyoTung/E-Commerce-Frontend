@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// URL Backend
 const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:5000/api";
 
 const axiosClient = axios.create({
@@ -11,81 +10,86 @@ const axiosClient = axios.create({
   },
 });
 
-// --- 1. KHÔI PHỤC CÁC HÀM HELPER (Đã chỉnh sửa để đồng bộ LocalStorage) ---
+// --- HELPER FUNCTIONS ---
 let store = null;
+export const injectStore = (_store) => { store = _store; };
 
-export const injectStore = (_store) => {
-  store = _store;
+export const getAccessToken = () => {
+  const customer = localStorage.getItem("customer");
+  return customer ? JSON.parse(customer).token : null;
 };
 
-// Hàm này giờ sẽ xóa token trong LocalStorage (Nơi lưu trữ chính)
-export const clearAccessToken = () => {
-  localStorage.removeItem("customer"); // Xóa key "customer"
-  
-  // Nếu có Redux Store, dispatch action logout để UI cập nhật ngay
-  if (store) {
-    // Bạn thay "auth/logout" bằng action logout thực tế trong slice của bạn
-    // Ví dụ: store.dispatch(logout()); 
-    store.dispatch({ type: "auth/reset" }); // Hoặc action reset state
+export const setAccessToken = (token) => {
+  const customer = localStorage.getItem("customer");
+  if (customer) {
+    const parsed = JSON.parse(customer);
+    parsed.token = token;
+    localStorage.setItem("customer", JSON.stringify(parsed));
   }
 };
 
-// --- 2. BIẾN CỜ & HÀNG ĐỢI (LOGIC REFRESH) ---
+export const clearAccessToken = () => {
+  localStorage.removeItem("customer");
+  if (store) store.dispatch({ type: "auth/reset" });
+};
+
+// --- LOGIC REFRESH ---
 let isRefreshing = false;
 let failedQueue = [];
 
 const processQueue = (error, token = null) => {
   failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
+    if (error) prom.reject(error);
+    else prom.resolve(token);
   });
   failedQueue = [];
 };
 
-// --- 3. REQUEST INTERCEPTOR ---
+// --- REQUEST INTERCEPTOR ---
 axiosClient.interceptors.request.use(
   (config) => {
-    // Luôn lấy token mới nhất từ LocalStorage
-    const customer = localStorage.getItem("customer");
-    if (customer) {
-      try {
-        const parsedCustomer = JSON.parse(customer);
-        const token = parsedCustomer.token;
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-      } catch (e) {
-        // JSON lỗi thì thôi
-      }
-    }
+    const token = getAccessToken();
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// --- 4. RESPONSE INTERCEPTOR ---
+// --- RESPONSE INTERCEPTOR (VÁ LỖI TẠI ĐÂY) ---
 axiosClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
+    // 1. Chỉ xử lý lỗi 401
     if (error.response?.status !== 401) {
       return Promise.reject(error);
     }
 
-    // Tránh loop vô tận nếu chính API refresh bị lỗi
+    // --- CHỐT CHẶN QUAN TRỌNG (FIX LOOP) ---
+    
+    // A. Nếu chính API Refresh bị lỗi -> DỪNG NGAY (Tránh lặp vô tận)
     if (originalRequest.url.includes("/user/refresh-token")) {
+      // Nếu refresh lỗi, nghĩa là phiên đăng nhập hết hạn hẳn -> Logout
+      clearAccessToken();
+      window.location.href = "/login"; 
       return Promise.reject(error);
     }
 
+    // B. Nếu LocalStorage không có token (Khách vãng lai) -> DỪNG NGAY
+    // (Khách chưa đăng nhập mà bị 401 thì là lỗi quyền hạn, không phải do hết hạn token)
+    const currentToken = getAccessToken();
+    if (!currentToken) {
+        return Promise.reject(error);
+    }
+
+    // C. Nếu đã retry 1 lần rồi mà vẫn lỗi -> DỪNG
     if (originalRequest._retry) {
       return Promise.reject(error);
     }
 
-    // --- LOGIC XẾP HÀNG (FLAG + QUEUE) ---
+    // ----------------------------------------
+
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({
@@ -93,9 +97,7 @@ axiosClient.interceptors.response.use(
             originalRequest.headers.Authorization = `Bearer ${token}`;
             resolve(axiosClient(originalRequest));
           },
-          reject: (err) => {
-            reject(err);
-          },
+          reject: (err) => reject(err),
         });
       });
     }
@@ -104,32 +106,18 @@ axiosClient.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      // Gọi API Refresh
-      const response = await axiosClient.get("/user/refresh-token"); 
+      const response = await axiosClient.get("/user/refresh-token");
       const newAccessToken = response.data.accessToken || response.data.token;
 
-      // Cập nhật LocalStorage
-      const customer = localStorage.getItem("customer");
-      if (customer) {
-        const parsedCustomer = JSON.parse(customer);
-        parsedCustomer.token = newAccessToken;
-        localStorage.setItem("customer", JSON.stringify(parsedCustomer));
-      }
-
-      // Mở hàng đợi
+      setAccessToken(newAccessToken);
       processQueue(null, newAccessToken);
 
-      // Gửi lại request lỗi
       originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
       return axiosClient(originalRequest);
 
     } catch (err) {
-      // Refresh thất bại -> Xử lý Logout
       processQueue(err, null);
-      
-      // GỌI HÀM HELPER BẠN CẦN Ở ĐÂY
-      clearAccessToken(); 
-      
+      clearAccessToken();
       window.location.href = "/login";
       return Promise.reject(err);
     } finally {
