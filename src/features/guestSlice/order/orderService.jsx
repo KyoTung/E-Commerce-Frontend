@@ -20,10 +20,16 @@ const getOrderDetail = async (orderId) => {
   return response.data;
 };
 
+const cancelOrder = async (orderId) => {
+  const response = await axiosClient.put(`/order/cancel-order/${orderId}`);
+  return response.data;
+}
+
 const orderService = {
   createOrder,
   getUserOrders,
   getOrderDetail,
+  cancelOrder,
 };
 
 export default orderService;

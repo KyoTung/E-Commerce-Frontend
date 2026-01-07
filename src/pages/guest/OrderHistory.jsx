@@ -1,10 +1,11 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { FiUser, FiShoppingBag, FiLock, FiLogOut, FiBox, FiClock, FiChevronRight, FiSearch } from "react-icons/fi";
+import { FiUser, FiShoppingBag, FiLock, FiLogOut, FiBox, FiClock, FiChevronRight, FiSearch, FiXCircle } from "react-icons/fi"; // Thêm icon FiXCircle
 
 // Import Actions & Helpers
-import { getUserOrders } from "../../features/guestSlice/order/orderSlice";
+// LƯU Ý: Đảm bảo import cancelOrder từ đúng đường dẫn slice của bạn
+import { getUserOrders, cancelOrder } from "../../features/guestSlice/order/orderSlice"; 
 import { logout } from "../../features/authSlice/authSlice";
 import Loading from "../../components/Loading";
 import { translateOrderStatus, translatePaymentStatus } from "../../utils/statusHelpers";
@@ -22,7 +23,7 @@ const OrderHistory = () => {
     dispatch(getUserOrders());
   }, [dispatch]);
 
-   useEffect(() => {
+  useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
@@ -41,17 +42,28 @@ const OrderHistory = () => {
     navigate("/");
   };
 
+  // --- XỬ LÝ HỦY ĐƠN HÀNG ---
+  const handleCancelOrder = (orderId) => {
+    if (window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này không thể hoàn tác.")) {
+      dispatch(cancelOrder(orderId));
+      // Lưu ý: Không cần reload trang hay gọi lại API getUserOrders
+      // vì trong orderSlice (ở bước trước) ta đã cập nhật state.orders ngay khi thành công.
+    }
+  };
+
+  // Danh sách các trạng thái ĐƯỢC PHÉP hủy
+  const cancellableStatus = ["Not Processed", "Confirmed"]; 
+  // (Hoặc tiếng Việt nếu DB lưu tiếng Việt: ["Chờ xử lý", "Đã xác nhận"])
+
   // --- RENDER LOADING ---
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loading /></div>;
-
-  console.log("User Orders:", orders);
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           
-          {/* --- LEFT SIDEBAR (Menu Tài khoản) --- */}
+          {/* --- LEFT SIDEBAR (Giữ nguyên) --- */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-4">
               {/* User Info */}
@@ -84,25 +96,22 @@ const OrderHistory = () => {
             </div>
           </div>
 
-          {/* --- RIGHT CONTENT (Danh sách đơn hàng) --- */}
+          {/* --- RIGHT CONTENT --- */}
           <div className="lg:col-span-3">
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Lịch sử đơn hàng</h1>
-                {/* Search Box giả lập */}
                 <div className="relative hidden sm:block">
                     <input type="text" placeholder="Tìm đơn hàng..." className="border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:border-[#d70018] outline-none" />
                     <FiSearch className="absolute left-3 top-2.5 text-gray-400"/>
                 </div>
             </div>
 
-            {/* ERROR STATE */}
             {isError && (
                 <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-4 text-center">
                     Có lỗi xảy ra khi tải danh sách đơn hàng. Vui lòng thử lại sau.
                 </div>
             )}
 
-            {/* EMPTY STATE */}
             {!isError && (!orders || orders.length === 0) ? (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -118,13 +127,12 @@ const OrderHistory = () => {
               /* LIST ORDERS */
               <div className="space-y-4">
                 {orders.map((order) => {
-                  // Dịch trạng thái
                   const statusObj = translateOrderStatus(order.orderStatus);
-                  const payStatusObj = translatePaymentStatus(order.paymentStatus);
-                  
-                  // Lấy sản phẩm đại diện (để hiển thị ảnh)
                   const firstProduct = order.products?.[0]?.product;
                   const otherItemsCount = order.products?.length - 1;
+
+                  // Kiểm tra điều kiện hiển thị nút hủy
+                  const canCancel = cancellableStatus.includes(order.orderStatus);
 
                   return (
                     <div key={order._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
@@ -141,9 +149,6 @@ const OrderHistory = () => {
                             <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusObj.color}`}>
                                 {statusObj.label}
                             </span>
-                            {/* <span className={`px-3 py-1 rounded-full text-xs font-bold ${payStatusObj.color}`}>
-                                {payStatusObj.label}
-                            </span> */}
                         </div>
                       </div>
 
@@ -174,18 +179,34 @@ const OrderHistory = () => {
                                 </p>
                             </div>
 
-                            {/* Tổng tiền & Button */}
-                            <div className="text-center sm:text-right">
-                                <p className="text-sm text-gray-500 mb-1">Tổng tiền</p>
-                                <p className="text-lg font-bold text-[#d70018] mb-3">
-                                    {formatPrice(order.paymentIntent?.amount || order.total || order.totalAfterDiscount)}
-                                </p>
-                                <Link 
-                                    to={`/order-confirmation/${order._id}`} 
-                                    className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
-                                >
-                                    Xem chi tiết <FiChevronRight />
-                                </Link>
+                            {/* ACTIONS & TOTAL PRICE */}
+                            <div className="text-center sm:text-right flex flex-col items-end gap-2">
+                                <div>
+                                    <p className="text-sm text-gray-500 mb-1">Tổng tiền</p>
+                                    <p className="text-lg font-bold text-[#d70018]">
+                                        {formatPrice(order.paymentIntent?.amount || order.total || order.totalAfterDiscount)}
+                                    </p>
+                                </div>
+                                
+                                <div className="flex items-center gap-3 mt-1">
+                                    {/* Nút Hủy Đơn (Chỉ hiện khi đủ điều kiện) */}
+                                    {canCancel && (
+                                        <button
+                                            onClick={() => handleCancelOrder(order._id)}
+                                            className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-red-600 transition-colors border border-gray-200 hover:border-red-200 px-3 py-1.5 rounded-lg bg-white"
+                                        >
+                                            <FiXCircle className="mr-1" /> Hủy đơn
+                                        </button>
+                                    )}
+
+                                    {/* Nút Xem Chi Tiết */}
+                                    <Link 
+                                        to={`/order-confirmation/${order._id}`} 
+                                        className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline px-2 py-1.5"
+                                    >
+                                        Xem chi tiết <FiChevronRight />
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                       </div>
