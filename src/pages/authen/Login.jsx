@@ -195,7 +195,12 @@ const Login = () => {
                 <p className="mt-2 text-sm text-red-600">{errors.password}</p>
               )}
             </div>
-
+            {/* Submit error */}
+            {errors.submit && (
+              <p className="mt-4 text-center text-sm text-red-600">
+                {errors.submit}
+              </p>
+            )}
             {/* Submit Button */}
             <button
               type="submit"
@@ -245,13 +250,6 @@ const Login = () => {
               </svg>
               Đăng nhập bằng Google
             </button>
-
-            {/* Submit error */}
-            {errors.submit && (
-              <p className="mt-4 text-center text-sm text-red-600">
-                {errors.submit}
-              </p>
-            )}
 
             {/* Extra actions */}
             <div className="mt-4 flex justify-between text-sm text-gray-600">

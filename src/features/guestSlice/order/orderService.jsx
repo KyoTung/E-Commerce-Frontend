@@ -25,11 +25,30 @@ const cancelOrder = async (orderId) => {
   return response.data;
 }
 
+const createPaymentZaloPay = async (data) => {
+  // data gồm: { orderId, totalAmount }
+  const response = await axiosClient.post("/order/zalopay", data);
+  return response.data;
+};
+
+const simulatePaymentSuccess = async (orderId) => {
+  const response = await axiosClient.put("/order/simulate-success", { orderId });
+  return response.data;
+};
+
+const deleteOrder = async (orderId) => {
+  const response = await axiosClient.delete(`/order/${orderId}`);
+  return response.data;
+} 
+
 const orderService = {
   createOrder,
   getUserOrders,
   getOrderDetail,
   cancelOrder,
+  createPaymentZaloPay,
+  simulatePaymentSuccess,
+  deleteOrder
 };
 
 export default orderService;
