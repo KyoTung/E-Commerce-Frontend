@@ -116,9 +116,8 @@ axiosClient.interceptors.response.use(
         throw new Error("No refresh token available");
       }
 
-      // 2. Gọi API Refresh (Sử dụng PUT và gửi token trong Body)
-      // Lưu ý: Kiểm tra route backend của bạn là PUT hay POST. Thường là PUT.
-      const response = await axiosClient.put("/user/refresh-token", {
+      // 2. Gọi API Refresh (Sử dụng POST và gửi token trong Body)
+      const response = await axiosClient.post("/user/refresh-token", {
         refreshToken: refreshToken, // <--- Gửi kèm refreshToken
       });
 
