@@ -56,6 +56,28 @@ export const getOrderDetail = createAsyncThunk(
   }
 );
 
+export const cancelOrder = createAsyncThunk(
+  "order/cancel-order",
+  async (id, thunkAPI) => {
+    try {
+      return await orderService.cancelOrder(id);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+export const deleteOrder = createAsyncThunk(
+  "order/delete-order",
+  async (id, thunkAPI) => {
+    try {
+      return await orderService.deleteOrder(id);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
 export const orderSlice = createSlice({
   name: "order",
   initialState,
@@ -117,7 +139,59 @@ export const orderSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload?.message;
+      })
+
+      .addCase(cancelOrder.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(cancelOrder.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.isError = false;
+        const updatedOrder = action.payload.cancelledOrder;
+        // 1. Cập nhật trong danh sách orders
+        if (state.orders && state.orders.length > 0) {
+           const index = state.orders.findIndex((o) => o._id === updatedOrder._id);
+           if (index !== -1) {
+             state.orders[index] = updatedOrder;
+           }
+        }
+        // 2. Cập nhật currentOrder (nếu đang xem chi tiết đơn hàng đó)
+        if (state.currentOrder && state.currentOrder._id === updatedOrder._id) {
+          state.currentOrder = updatedOrder;
+        }
+
+        toast.success("Hủy đơn hàng thành công!");
+      })
+      .addCase(cancelOrder.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload?.message || "Hủy đơn thất bại";
+        toast.error(state.message);
+      })
+
+      .addCase(deleteOrder.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(deleteOrder.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.isError = false;
+        const deletedOrderId = action.payload.deletedOrderId;
+        state.orders = state.orders.filter((o) => o._id !== deletedOrderId);
+        // Nếu đang xem chi tiết đơn hàng đó, reset currentOrder
+        if (state.currentOrder && state.currentOrder._id === deletedOrderId) {
+          state.currentOrder = null;
+        }
+        toast.success("Xóa đơn hàng thành công!");
+      })
+      .addCase(deleteOrder.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload?.message || "Xóa đơn hàng thất bại";
+        toast.error(state.message);
       });
+
   },
 });
 

@@ -19,6 +19,7 @@ import ChangePassword from "../pages/guest/ChangePassword";
 import ForgotPassword from "../pages/guest/ForgotPassword";
 import AllProducts from "../pages/guest/AllProducts";
 import Wishlist from "../pages/guest/Wishlist";
+import LoginSuccess from "../pages/authen/LoginSuccess";
 
 import AdminLayout from "../layouts/admin/layout";
 import DashboardPage from "../pages/admin/dashboard/page";
@@ -46,6 +47,10 @@ export const router = createBrowserRouter([
   {
     path: "/forgot-password",
     element: <ForgotPassword />,
+  },
+  {
+   path: "/login-success",
+   element: <LoginSuccess />,
   },
   {
     path: "/",

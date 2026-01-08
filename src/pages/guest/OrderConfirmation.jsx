@@ -9,7 +9,7 @@ import {
 
 import { getOrderDetail } from "../../features/guestSlice/order/orderSlice";
 import Loading from "../../components/Loading";
-
+import { getCart } from "../../features/guestSlice/cart/cartSlice";
 import { 
   translateOrderStatus, 
   translatePaymentStatus, 
@@ -26,6 +26,7 @@ const OrderConfirmation = () => {
   useEffect(() => {
     if (id) {
       dispatch(getOrderDetail(id));
+      dispatch(getCart());
     }
   }, [id, dispatch]);
 
