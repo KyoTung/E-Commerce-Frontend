@@ -3,15 +3,21 @@ import axiosClient, { setAccessToken, clearAccessToken } from '../../api/axiosCl
 const login = async (userData) => {
   const response = await axiosClient.post('/user/login', userData);
   
-  const { token, ...userInfo } = response.data;
+  const { token, refreshToken, ...userInfo } = response.data; 
 
   if (token) {
+    // 1. Lưu Access Token
     setAccessToken(token);
+    
+    // 2. Lưu Refresh Token
     if (refreshToken) {
         localStorage.setItem("refreshToken", refreshToken);
+    } else {
+        console.warn("Backend không trả về refreshToken! Kiểm tra lại userController.");
     }
   }
-  return userInfo;
+
+  return { ...userInfo, token };
 };
 
 const register = async (userData) => {
