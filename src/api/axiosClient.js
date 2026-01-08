@@ -4,7 +4,6 @@ const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:5000/api";
 
 const axiosClient = axios.create({
   baseURL,
-  withCredentials: true, // <--- BẬT LẠI CÁI NÀY (Để Email Login gửi được Cookie)
   headers: {
     "Content-Type": "application/json",
   },
@@ -12,23 +11,22 @@ const axiosClient = axios.create({
 
 // --- HELPER FUNCTIONS ---
 let store = null;
-export const injectStore = (_store) => {
-  store = _store;
-};
+export const injectStore = (_store) => { store = _store; };
 
 export const getAccessToken = () => {
-  // Ưu tiên lấy token lẻ, nếu không có thì tìm trong object customer
   return localStorage.getItem("token") || 
          (localStorage.getItem("customer") ? JSON.parse(localStorage.getItem("customer")).token : null);
 };
 
 export const setAccessToken = (token) => {
+  // Cập nhật state customer
   const customer = localStorage.getItem("customer");
   if (customer) {
     const parsed = JSON.parse(customer);
     parsed.token = token;
     localStorage.setItem("customer", JSON.stringify(parsed));
   }
+  // Cập nhật token lẻ
   localStorage.setItem("token", token);
 };
 
@@ -39,7 +37,18 @@ export const clearAccessToken = () => {
   if (store) store.dispatch({ type: "auth/reset" });
 };
 
-// --- LOGIC REFRESH ---
+// --- REQUEST INTERCEPTOR (Giữ nguyên) ---
+axiosClient.interceptors.request.use(
+  (config) => {
+    const token = getAccessToken();
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// --- RESPONSE INTERCEPTOR (LOGIC MỚI ĐỒNG NHẤT) ---
+// Queue xử lý request đợi refresh
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -51,45 +60,34 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-// --- REQUEST INTERCEPTOR ---
-axiosClient.interceptors.request.use(
-  (config) => {
-    const token = getAccessToken();
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// --- RESPONSE INTERCEPTOR ---
 axiosClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // 1. Chỉ xử lý lỗi 401
+    // 1. Chỉ bắt lỗi 401 (Unauthorized)
     if (error.response?.status !== 401) {
       return Promise.reject(error);
     }
 
-    // A. Chặn loop: Nếu lỗi xảy ra tại chính API refresh -> Logout ngay
+    // 2. Chặn Loop: Nếu chính API refresh bị lỗi -> Logout ngay
     if (originalRequest.url.includes("/user/refresh-token")) {
       clearAccessToken();
       window.location.href = "/login";
       return Promise.reject(error);
     }
 
-    // B. Nếu không có Access Token -> Không refresh
-    const currentToken = getAccessToken();
-    if (!currentToken) {
-      return Promise.reject(error);
+    // 3. Nếu không có token từ đầu -> Không cứu
+    if (!getAccessToken()) {
+        return Promise.reject(error);
     }
 
-    // C. Nếu đã retry rồi -> Dừng
+    // 4. Nếu đã retry rồi mà vẫn lỗi -> Không cứu
     if (originalRequest._retry) {
       return Promise.reject(error);
     }
 
+    // 5. Logic hàng đợi (Queue) nếu đang có tiến trình refresh chạy
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({
@@ -106,39 +104,35 @@ axiosClient.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      // --- SỬA LOGIC HYBRID TẠI ĐÂY ---
-      
-      // 1. Tìm Refresh Token trong LocalStorage (Cho Google Login)
-      const localRefreshToken = localStorage.getItem("refreshToken");
+      // ✅ LOGIC ĐỒNG NHẤT: LUÔN LẤY TỪ LOCAL STORAGE
+      const refreshToken = localStorage.getItem("refreshToken");
 
-      // 2. Chuẩn bị payload: 
-      // - Nếu có localRefreshToken -> Gửi body: { refreshToken: ... }
-      // - Nếu KHÔNG có (Email Login) -> Gửi body rỗng {} (Backend sẽ tự tìm Cookie)
-      const payload = localRefreshToken ? { refreshToken: localRefreshToken } : {};
+      if (!refreshToken) {
+        throw new Error("No refresh token in storage");
+      }
 
-      // 3. Gọi API Refresh bằng AXIOS GỐC (tránh dùng axiosClient để không dính interceptor)
-      const response = await axios.post(`${baseURL}/user/refresh-token`, payload, {
-          withCredentials: true // QUAN TRỌNG: Để Email Login gửi kèm Cookie
+      // Gọi API (Backend phải chấp nhận req.body.refreshToken)
+      const response = await axios.post(`${baseURL}/user/refresh-token`, {
+        refreshToken: refreshToken 
       });
 
       const newAccessToken = response.data.accessToken || response.data.token;
 
-      // 4. Lưu token mới
+      // Lưu token mới
       setAccessToken(newAccessToken);
       
-      // 5. Xả hàng đợi
+      // Xử lý hàng đợi
       processQueue(null, newAccessToken);
 
-      // 6. Gọi lại request gốc
+      // Gọi lại request gốc
       originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-      
-      // Dùng axiosClient gọi lại (để request này vẫn được hưởng các config khác nếu có)
       return axiosClient(originalRequest);
 
     } catch (err) {
+      // Refresh thất bại (hết hạn refresh token hoặc lỗi mạng)
       processQueue(err, null);
-      clearAccessToken();
-      window.location.href = "/login";
+      clearAccessToken(); // Xóa sạch
+      window.location.href = "/login"; // Đá về login
       return Promise.reject(err);
     } finally {
       isRefreshing = false;

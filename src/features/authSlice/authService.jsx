@@ -7,6 +7,9 @@ const login = async (userData) => {
 
   if (token) {
     setAccessToken(token);
+    if (refreshToken) {
+        localStorage.setItem("refreshToken", refreshToken);
+    }
   }
   return userInfo;
 };
