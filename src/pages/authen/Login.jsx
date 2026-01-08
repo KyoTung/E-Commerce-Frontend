@@ -16,7 +16,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
-  const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:5000/api";
+  const baseURL = import.meta.env.VITE_BASE_URL || "https://e-commerce-backend-f62w.onrender.com/api";
   //  LOGIN GOOGLE
   const handleGoogleLogin = () => {
     window.open(`${baseURL}/user/auth/google`, "_self");
