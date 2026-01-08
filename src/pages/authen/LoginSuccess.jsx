@@ -12,6 +12,7 @@ const LoginSuccess = () => {
     const name = searchParams.get("name");
     const email = searchParams.get("email");
     const role = searchParams.get("role");
+    const refreshToken = searchParams.get("refreshToken");
 
     // 2. Kiểm tra Access Token
     if (token) {
@@ -31,6 +32,10 @@ const LoginSuccess = () => {
       // 4. Lưu vào LocalStorage
       // Lưu ý: Không cần lưu RefreshToken vì nó đã nằm an toàn trong Cookie của trình duyệt
       localStorage.setItem("customer", JSON.stringify(userData));
+      localStorage.setItem("token", token);
+      if (refreshToken) {
+        localStorage.setItem("refreshToken", refreshToken);
+      }
 
       // 5. Chuyển hướng và Reload
       setTimeout(() => {
@@ -50,7 +55,9 @@ const LoginSuccess = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
       {/* Hiệu ứng loading xoay vòng */}
       <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-      <h2 className="text-xl font-semibold text-gray-700">Đang đăng nhập Google...</h2>
+      <h2 className="text-xl font-semibold text-gray-700">
+        Đang đăng nhập Google...
+      </h2>
       <p className="text-gray-500 text-sm mt-2">Vui lòng đợi trong giây lát</p>
     </div>
   );

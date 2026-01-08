@@ -4,7 +4,7 @@ const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:5000/api";
 
 const axiosClient = axios.create({
   baseURL,
-  withCredentials: true,
+  // withCredentials: true, // <-- TẠM TẮT HOẶC ĐỂ CŨNG ĐƯỢC (Vì giờ ta không phụ thuộc Cookie nữa)
   headers: {
     "Content-Type": "application/json",
   },
@@ -12,7 +12,9 @@ const axiosClient = axios.create({
 
 // --- HELPER FUNCTIONS ---
 let store = null;
-export const injectStore = (_store) => { store = _store; };
+export const injectStore = (_store) => {
+  store = _store;
+};
 
 export const getAccessToken = () => {
   const customer = localStorage.getItem("customer");
@@ -25,11 +27,16 @@ export const setAccessToken = (token) => {
     const parsed = JSON.parse(customer);
     parsed.token = token;
     localStorage.setItem("customer", JSON.stringify(parsed));
+    // Cập nhật cả key lẻ bên ngoài nếu bạn có dùng
+    localStorage.setItem("token", token);
   }
 };
 
+// SỬA: Xóa sạch cả refresh token
 export const clearAccessToken = () => {
   localStorage.removeItem("customer");
+  localStorage.removeItem("token");
+  localStorage.removeItem("refreshToken"); // <--- XÓA CÁI NÀY NỮA
   if (store) store.dispatch({ type: "auth/reset" });
 };
 
@@ -55,7 +62,7 @@ axiosClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// --- RESPONSE INTERCEPTOR (VÁ LỖI TẠI ĐÂY) ---
+// --- RESPONSE INTERCEPTOR ---
 axiosClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -66,29 +73,23 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // --- CHỐT CHẶN QUAN TRỌNG (FIX LOOP) ---
-    
-    // A. Nếu chính API Refresh bị lỗi -> DỪNG NGAY (Tránh lặp vô tận)
+    // A. Chặn loop vô tận tại chính API refresh
     if (originalRequest.url.includes("/user/refresh-token")) {
-      // Nếu refresh lỗi, nghĩa là phiên đăng nhập hết hạn hẳn -> Logout
       clearAccessToken();
-      window.location.href = "/login"; 
+      window.location.href = "/login";
       return Promise.reject(error);
     }
 
-    // B. Nếu LocalStorage không có token (Khách vãng lai) -> DỪNG NGAY
-    // (Khách chưa đăng nhập mà bị 401 thì là lỗi quyền hạn, không phải do hết hạn token)
+    // B. Nếu không có token (Khách vãng lai) -> Không refresh
     const currentToken = getAccessToken();
     if (!currentToken) {
-        return Promise.reject(error);
+      return Promise.reject(error);
     }
 
-    // C. Nếu đã retry 1 lần rồi mà vẫn lỗi -> DỪNG
+    // C. Nếu đã retry rồi mà vẫn lỗi -> Dừng
     if (originalRequest._retry) {
       return Promise.reject(error);
     }
-
-    // ----------------------------------------
 
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
@@ -106,12 +107,30 @@ axiosClient.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      const response = await axiosClient.get("/user/refresh-token");
+      // --- THAY ĐỔI QUAN TRỌNG Ở ĐÂY ---
+      
+      // 1. Lấy Refresh Token từ LocalStorage
+      const refreshToken = localStorage.getItem("refreshToken");
+
+      if (!refreshToken) {
+        throw new Error("No refresh token available");
+      }
+
+      // 2. Gọi API Refresh (Sử dụng PUT và gửi token trong Body)
+      // Lưu ý: Kiểm tra route backend của bạn là PUT hay POST. Thường là PUT.
+      const response = await axiosClient.put("/user/refresh-token", {
+        refreshToken: refreshToken, // <--- Gửi kèm refreshToken
+      });
+
       const newAccessToken = response.data.accessToken || response.data.token;
 
+      // 3. Lưu token mới
       setAccessToken(newAccessToken);
+      
+      // 4. Xử lý hàng đợi đang chờ
       processQueue(null, newAccessToken);
 
+      // 5. Gọi lại request ban đầu
       originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
       return axiosClient(originalRequest);
 
