@@ -34,7 +34,7 @@ const Checkout = () => {
   const { isLoading } = useSelector((state) => state.orderClient);
 
   // --- LOCAL STATE ---
-  const [paymentMethod, setPaymentMethod] = useState("cod"); 
+  const [paymentMethod, setPaymentMethod] = useState("COD"); 
   const [shippingFee, setShippingFee] = useState(0);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   
@@ -263,8 +263,8 @@ const Checkout = () => {
               </h2>
               <div className="space-y-3">
                 {/* COD */}
-                <label className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === "cod" ? "border-red-500 bg-red-50" : "border-gray-200 hover:border-gray-300"}`}>
-                  <input type="radio" name="payment_method" value="cod" checked={paymentMethod === "cod"} onChange={(e) => setPaymentMethod(e.target.value)} className="w-5 h-5 text-red-600 focus:ring-red-500" />
+                <label className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === "COD" ? "border-red-500 bg-red-50" : "border-gray-200 hover:border-gray-300"}`}>
+                  <input type="radio" name="payment_method" value="COD" checked={paymentMethod === "COD"} onChange={(e) => setPaymentMethod(e.target.value)} className="w-5 h-5 text-red-600 focus:ring-red-500" />
                   <div className="ml-4">
                     <div className="flex items-center font-bold text-gray-800"><FiTruck className="mr-2" /> Thanh toán khi nhận hàng (COD)</div>
                     <p className="text-xs text-gray-500 mt-1">Thanh toán bằng tiền mặt cho shipper khi nhận hàng.</p>
