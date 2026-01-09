@@ -112,7 +112,7 @@ const OrderConfirmation = () => {
 
   // --- LOGIC XÁC ĐỊNH TRẠNG THÁI HIỂN THỊ ---
   // Đơn hàng lỗi nếu: Là ZaloPay VÀ Chưa trả tiền
-  const isPaymentFailed = currentOrder.paymentMethod === 'ZaloPay' && !currentOrder.isPaid;
+  const isPaymentFailed = currentOrder.paymentMethod === 'ZaloPay' && currentOrder.paymentStatus !== 'paid';
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
