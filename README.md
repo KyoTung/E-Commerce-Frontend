@@ -64,5 +64,62 @@ Wishlist: Save favorite products.
 <img width="1879" height="803" alt="image" src="https://github.com/user-attachments/assets/77464ce4-2cbb-4de1-97ca-6a1767b4c87c" />
 <img width="1889" height="827" alt="image" src="https://github.com/user-attachments/assets/ccb6ff56-1983-4761-acbe-9bcfefa4ac20" />
 <img width="1883" height="812" alt="image" src="https://github.com/user-attachments/assets/6860c80c-a95c-49f0-b16a-2e31794bdbca" />
+<img width="1911" height="902" alt="image" src="https://github.com/user-attachments/assets/3ffa8fba-55bb-45ab-b067-392c891d23d0" />
+<img width="1873" height="822" alt="image" src="https://github.com/user-attachments/assets/fdbfcdf2-9d9c-4865-935f-3b99a50a4e75" />
+<img width="1898" height="946" alt="image" src="https://github.com/user-attachments/assets/29bf53de-8aa2-4eac-8eb3-fdd62d58f6b5" />
 
+⚙️ Installation & Run
+1. Clone the repository
+Bash
 
+git clone https://github.com/your-username/e-commerce-frontend.git
+cd e-commerce-frontend
+2. Install Dependencies
+Bash
+
+npm install
+3. Environment Variables Configuration
+Create a .env file in the root directory:
+
+Đoạn mã
+
+# API Endpoint (Your Backend URL)
+VITE_BASE_URL=http://localhost:5000/api
+
+# Other configs (if any)
+4. Start the App
+Development Mode:
+
+Bash
+
+npm run dev
+The app will run at http://localhost:3000
+
+Production Build:
+
+Bash
+
+npm run build
+npm run preview
+📁 Folder Structure
+src/
+├── app/                # Redux Store configuration
+├── assets/             # Images, fonts, static files
+├── components/         # Reusable UI components (Header, Footer, Cards...)
+├── features/           # Redux Slices & Services (Auth, Cart, Order...)
+│   ├── auth/
+│   ├── cart/
+│   └── ...
+├── layout/             # Main Layouts (Default, Admin...)
+├── pages/              # Page components (Home, ProductDetail, Checkout...)
+├── routes/             # Route definitions (Public/Private/Open)
+├── utils/              # Helper functions (Format currency, Axios config)
+├── App.jsx             # Main App Component
+└── main.jsx            # Entry point
+🤝 Contribution
+Contributions are welcome! Please fork the repository and submit a pull request.
+
+👨‍💻 Author
+Name: Hoang Thanh Tung
+
+Email: hoangthanhtung.ac1@gmail.com
