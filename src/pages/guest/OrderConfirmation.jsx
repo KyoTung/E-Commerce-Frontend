@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useSearchParams } from "react-router-dom"; // Thêm useSearchParams
+import { useParams, Link, useSearchParams } from "react-router-dom"; 
 import { useDispatch, useSelector } from "react-redux";
 import { 
   FiCheckCircle, FiShoppingBag, FiCalendar, FiCreditCard, 
@@ -8,7 +8,7 @@ import {
 
 import { getOrderDetail } from "../../features/guestSlice/order/orderSlice";
 import { getCart } from "../../features/guestSlice/cart/cartSlice";
-import orderService from "../../features/guestSlice/order/orderService"; // Import Service để gọi API xử lý
+import orderService from "../../features/guestSlice/order/orderService"; 
 import Loading from "../../components/Loading";
 import { 
   translateOrderStatus, 
@@ -19,7 +19,7 @@ import {
 const OrderConfirmation = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const [searchParams] = useSearchParams(); // Lấy params từ ZaloPay redirect về
+  const [searchParams] = useSearchParams(); 
 
   const { currentOrder, isLoading, isError } = useSelector((state) => state.orderClient);
   
@@ -41,10 +41,9 @@ const OrderConfirmation = () => {
     if (window.confirm("Bạn muốn đổi sang thanh toán tiền mặt khi nhận hàng (COD)?")) {
       setIsActionLoading(true);
       try {
-        await orderService.switchToCOD(id); // Dùng id từ URL
+        await orderService.switchToCOD(id); 
         alert("Đã đổi phương thức thanh toán thành công!");
-        // Reload lại thông tin đơn hàng để cập nhật giao diện
-        dispatch(getOrderDetail(id));
+        dispatch(getOrderDetail(id)); // Reload lại đơn hàng
       } catch (error) {
         console.error("Lỗi đổi COD:", error);
         alert(error.response?.data?.message || "Lỗi khi đổi phương thức.");
@@ -58,7 +57,7 @@ const OrderConfirmation = () => {
   const handleRetryZalo = async () => {
     setIsActionLoading(true);
     try {
-      const data = await orderService.repayOrder(id); // Dùng id từ URL
+      const data = await orderService.repayOrder(id); 
       if (data && data.paymentUrl) {
         window.location.href = data.paymentUrl;
       } else {
@@ -112,17 +111,17 @@ const OrderConfirmation = () => {
   const paymentMethodLabel = translatePaymentMethod(currentOrder.paymentMethod);
 
   // --- LOGIC XÁC ĐỊNH TRẠNG THÁI HIỂN THỊ ---
-  // Đơn hàng bị coi là lỗi thanh toán nếu: Phương thức là ZaloPay VÀ Chưa trả tiền
-  const isPaymentFailed = currentOrder.paymentMethod === 'ZaloPay' && currentOrder.paymentStatus !== 'paid';
+  // Đơn hàng lỗi nếu: Là ZaloPay VÀ Chưa trả tiền
+  const isPaymentFailed = currentOrder.paymentMethod === 'ZaloPay' && !currentOrder.isPaid;
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-5xl mx-auto">
         
-        {/* --- DYNAMIC HEADER --- */}
+        {/* --- DYNAMIC HEADER (Thay đổi theo trạng thái thanh toán) --- */}
         <div className="text-center mb-10">
           {isPaymentFailed ? (
-            // GIAO DIỆN THẤT BẠI (ĐỎ)
+            // TRƯỜNG HỢP LỖI
             <>
                <div className="flex items-center justify-center w-20 h-20 rounded-full bg-red-100 mx-auto mb-4 shadow-sm animate-pulse">
                 <FiXCircle className="w-10 h-10 text-red-600" />
@@ -132,7 +131,7 @@ const OrderConfirmation = () => {
               <p className="text-gray-500 text-sm mt-1">Đơn hàng vẫn được giữ. Bạn có thể thanh toán lại bên dưới.</p>
             </>
           ) : (
-            // GIAO DIỆN THÀNH CÔNG (XANH)
+            // TRƯỜNG HỢP THÀNH CÔNG
             <>
               <div className="flex items-center justify-center w-20 h-20 rounded-full bg-green-100 mx-auto mb-4 shadow-sm">
                 <FiCheckCircle className="w-10 h-10 text-green-600" />
@@ -199,7 +198,7 @@ const OrderConfirmation = () => {
                 </div>
               </div>
 
-              {/* Product List */}
+              {/* Product List - GIỮ NGUYÊN CODE CŨ CỦA BẠN Ở ĐÂY */}
               <div className="border-t border-gray-100 pt-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-4">Sản phẩm đã mua</h3>
                 <div className="space-y-4">
@@ -217,11 +216,16 @@ const OrderConfirmation = () => {
                       </div>
                       <div className="ml-4 flex-1">
                         <Link to={`/product/${item.product?._id}`} className="font-medium text-gray-800 line-clamp-2 hover:text-[#d70018] transition">
-                            {item.product?.title}
+                            {item.product?.title}  {item?.title}
                         </Link>
+                         <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                            {item.storage && <span className="bg-gray-100 px-2 py-0.5 rounded border border-gray-200">{item.storage}</span>}
+                            {item.color && <span className="bg-gray-100 px-2 py-0.5 rounded border border-gray-200">{item.color}</span>}
+                        </div>
                       </div>
                       <div className="text-right ml-2">
                         <p className="font-bold text-[#d70018]">{formatPrice(item.price * item.count)}</p>
+                         <p className="text-xs text-gray-400">{formatPrice(item.price)}/sp</p>
                       </div>
                     </div>
                   ))}
@@ -230,6 +234,18 @@ const OrderConfirmation = () => {
 
               {/* Order Totals */}
               <div className="border-t border-gray-200 pt-4 mt-6 space-y-2">
+                 <div className="flex justify-between text-gray-600 text-sm">
+                  <span>Tạm tính:</span>
+                  <span className="font-medium text-gray-900">
+                    {formatPrice(currentOrder.products?.reduce((acc, item) => acc + item.price * item.count, 0))}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between text-gray-600 text-sm">
+                  <span>Phí vận chuyển:</span>
+                  <span className="text-green-600 font-medium">Miễn phí</span>
+                </div>
+
                 <div className="flex justify-between pt-3 border-t border-dashed border-gray-200 items-end">
                   <span className="font-bold text-gray-800">Tổng thanh toán:</span>
                   <span className="text-2xl font-bold text-[#d70018]">
@@ -243,7 +259,7 @@ const OrderConfirmation = () => {
           {/* RIGHT COLUMN: ACTIONS & CUSTOMER */}
           <div className="space-y-6">
             
-            {/*KHU VỰC CỨU ĐƠN (CHỈ HIỆN KHI THANH TOÁN LỖI)*/}
+            {/* 🔥 KHU VỰC CỨU ĐƠN (CHỈ HIỆN KHI THANH TOÁN LỖI) 🔥 */}
             {isPaymentFailed && (
                 <div className="bg-red-50 rounded-xl shadow-sm border border-red-100 p-6">
                     <h2 className="text-lg font-bold text-red-700 mb-4 flex items-center">
