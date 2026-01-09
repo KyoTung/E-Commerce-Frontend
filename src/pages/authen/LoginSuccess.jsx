@@ -1,9 +1,13 @@
 import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useDispatch } from "react-redux"; 
+import { loginSuccess } from "../../features/authSlice/authSlice";
+
 
 const LoginSuccess = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     // 1. Lấy dữ liệu từ URL
@@ -28,6 +32,11 @@ const LoginSuccess = () => {
         role: role,
         token: token, // Access Token dùng để gọi API
       };
+
+      dispatch(loginSuccess(userData));
+
+      // 3. 🔥 QUAN TRỌNG: Xóa sạch dấu vết trên URL (Bảo mật)
+      window.history.replaceState(null, '', window.location.pathname);
 
       // 4. Lưu vào LocalStorage
       // Lưu ý: Không cần lưu RefreshToken vì nó đã nằm an toàn trong Cookie của trình duyệt

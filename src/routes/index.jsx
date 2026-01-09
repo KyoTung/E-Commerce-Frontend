@@ -49,8 +49,8 @@ export const router = createBrowserRouter([
     element: <ForgotPassword />,
   },
   {
-   path: "/login-success",
-   element: <LoginSuccess />,
+    path: "/login-success",
+    element: <LoginSuccess />,
   },
   {
     path: "/",
@@ -96,6 +96,7 @@ export const router = createBrowserRouter([
         path: "/orders",
         element: <OrderHistory />,
       },
+
       {
         path: "/blogs",
         element: <BlogPage />,
