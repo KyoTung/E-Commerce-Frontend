@@ -7,8 +7,13 @@ import trafficService from '../../features/traffic/trafficService'
 const GuestLayout = () => {
   useEffect(() => {
     const trackVisit = async () => {
-      await trafficService.recordVisit();
+      try {
+        await trafficService.recordVisit();
+      } catch (error) {
+        console.error("Tracking error:", error);
+      }
     };
+    
     trackVisit();
   }, []);
   return (

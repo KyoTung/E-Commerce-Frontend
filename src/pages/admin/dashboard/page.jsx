@@ -14,6 +14,7 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
+import { FaEye } from "react-icons/fa";
 import { useTheme } from "@/hooks/use-theme";
 import { Footer } from "@/layouts/admin/footer";
 import { getAllCoupon } from "../../../features/adminSlice/coupons/couponSlice";
@@ -21,7 +22,7 @@ import { getAllBlog } from "../../../features/adminSlice/blog/blogSlice";
 import { getAllOrder } from "../../../features/adminSlice/orders/orderSlice";
 import { getAllProducts } from "../../../features/adminSlice/products/productSlice";
 import { getAllUser } from "../../../features/adminSlice/customerSlice/customerSlice";
-import { trafficService } from "../../../features/traffic/trafficService";
+import trafficService from "../../../features/traffic/trafficService";
 
 const DashboardPage = () => {
   const { theme } = useTheme();
@@ -516,17 +517,24 @@ const DashboardPage = () => {
             Published articles
           </div>
         </div>
-        {/*Card 9: LƯỢT TRUY CẬP */}
-        <div className="d-flex justify-content-between align-items-end flex-grow-1 bg-white p-3 roudned-3">
-          <div>
-            <p className="desc">Total Visits</p>
-            <h4 className="mb-0 sub-title">{visitCount}</h4>
+        {/* Card 9:Total Visits */}
+        <div className="rounded-lg border bg-white p-5 shadow-sm transition-all hover:shadow dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex items-center">
+            <div className="rounded-lg bg-green-100 p-3 dark:bg-green-900">
+              <FaEye className="h-6 w-6 text-green-600 dark:text-green-300" />
+            </div>
+            
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Total Visits
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {visitCount ? new Intl.NumberFormat().format(visitCount) : 0}
+              </p>
+            </div>
           </div>
-          <div className="d-flex flex-column align-items-end">
-            <h6 className="green">
-              <FaEye /> View
-            </h6>
-            <p className="mb-0 desc">Lifetime</p>
+          <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+            Lifetime views
           </div>
         </div>
       </div>

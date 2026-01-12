@@ -1,17 +1,18 @@
 import axiosClient from "../../api/axiosClient";
 
-
-const recordTraffic = async (trafficData) => {
-  const response = await axiosClient.post("/traffic/record", trafficData);
+const recordVisit = async () => {
+  const response = await axiosClient.post("/traffic/record");
   return response.data;
 };
 
 const getTrafficStats = async () => {
-  const response = await axiosClient.get("/traffic/stats");
+  const response = await axiosClient.get("/traffic");
   return response.data;
 };
 
-export const trafficService = {
-  recordTraffic,
+const trafficService = {
+  recordVisit,
   getTrafficStats,
 };
+
+export default trafficService;
