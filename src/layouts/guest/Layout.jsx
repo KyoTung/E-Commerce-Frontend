@@ -1,9 +1,16 @@
-import React from 'react'
+import {useEffect} from 'react'
 import { Outlet } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
+import trafficService from '../../features/traffic/trafficService'
 
 const GuestLayout = () => {
+  useEffect(() => {
+    const trackVisit = async () => {
+      await trafficService.recordVisit();
+    };
+    trackVisit();
+  }, []);
   return (
     <>
     <Header/>

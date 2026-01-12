@@ -21,10 +21,12 @@ import { getAllBlog } from "../../../features/adminSlice/blog/blogSlice";
 import { getAllOrder } from "../../../features/adminSlice/orders/orderSlice";
 import { getAllProducts } from "../../../features/adminSlice/products/productSlice";
 import { getAllUser } from "../../../features/adminSlice/customerSlice/customerSlice";
+import { trafficService } from "../../../features/traffic/trafficService";
 
 const DashboardPage = () => {
   const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
+  const [visitCount, setVisitCount] = useState(0);
   const currentUser = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
 
@@ -41,6 +43,13 @@ const DashboardPage = () => {
     getOrders();
     getProducts();
     getUsers();
+    const fetchStats = async () => {
+      const data = await trafficService.getTrafficStats();
+      if (data) {
+        setVisitCount(data.totalVisits);
+      }
+    };
+    fetchStats();
   }, []);
 
   const getCoupons = async () => {
@@ -505,6 +514,19 @@ const DashboardPage = () => {
           </div>
           <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
             Published articles
+          </div>
+        </div>
+        {/*Card 9: LƯỢT TRUY CẬP */}
+        <div className="d-flex justify-content-between align-items-end flex-grow-1 bg-white p-3 roudned-3">
+          <div>
+            <p className="desc">Total Visits</p>
+            <h4 className="mb-0 sub-title">{visitCount}</h4>
+          </div>
+          <div className="d-flex flex-column align-items-end">
+            <h6 className="green">
+              <FaEye /> View
+            </h6>
+            <p className="mb-0 desc">Lifetime</p>
           </div>
         </div>
       </div>
