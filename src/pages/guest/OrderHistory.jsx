@@ -209,7 +209,7 @@ const OrderHistory = () => {
                                 <div>
                                     <p className="text-sm text-gray-500 mb-1">Tổng tiền</p>
                                     <p className="text-lg font-bold text-[#d70018]">
-                                        {formatPrice(order.totalPrice || order.totalAfterDiscount)}
+                                        {formatPrice(order.total || order.totalAfterDiscount)}
                                     </p>
                                 </div>
                                 
