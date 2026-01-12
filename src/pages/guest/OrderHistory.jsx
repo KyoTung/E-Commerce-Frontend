@@ -238,7 +238,7 @@ const OrderHistory = () => {
 
                                     {/* Nút Xem Chi Tiết */}
                                     <Link 
-                                        to={`/order-detail/${order._id}`} // Sửa lại route cho đúng với app của bạn
+                                        to={`/order-confirmation/${order._id}`} // Sửa lại route cho đúng với app của bạn
                                         className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline px-2 py-1.5"
                                     >
                                         Chi tiết <FiChevronRight />
