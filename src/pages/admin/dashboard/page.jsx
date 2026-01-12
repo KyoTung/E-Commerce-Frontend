@@ -100,17 +100,17 @@ const DashboardPage = () => {
 
     // 3. Sản phẩm sắp hết hàng (tính tổng quantity của sản phẩm gốc hoặc tổng các variants)
     const lowStockProductsList = products.filter((product) => {
-        // Nếu sản phẩm có biến thể, tính tổng số lượng từ các biến thể
-        if (product.variants && product.variants.length > 0) {
-            const totalVariantQuantity = product.variants.reduce(
-                (sum, variant) => sum + (variant.quantity || 0),
-                0
-            );
-            return totalVariantQuantity < 10;
-        }
-        
-        // Nếu không có biến thể, dùng quantity của sản phẩm gốc
-        return (product.quantity || 0) < 10;
+      // Nếu sản phẩm có biến thể, tính tổng số lượng từ các biến thể
+      if (product.variants && product.variants.length > 0) {
+        const totalVariantQuantity = product.variants.reduce(
+          (sum, variant) => sum + (variant.quantity || 0),
+          0
+        );
+        return totalVariantQuantity < 10;
+      }
+
+      // Nếu không có biến thể, dùng quantity của sản phẩm gốc
+      return (product.quantity || 0) < 10;
     });
 
     const lowStockProducts = lowStockProductsList.length;
@@ -234,19 +234,28 @@ const DashboardPage = () => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      "Not Processed": "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
-      Processing: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+      "Not Processed":
+        "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
+      Processing:
+        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
       Shipped: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-      Delivered: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-      Completed: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300",
+      Delivered:
+        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+      Completed:
+        "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300",
       Cancelled: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-      Refunded: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
-      Confirmed: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
-      Dispatched: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300",
+      Refunded:
+        "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+      Confirmed:
+        "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
+      Dispatched:
+        "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300",
       Returned: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300",
     };
 
-    const className = statusConfig[status] || "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
+    const className =
+      statusConfig[status] ||
+      "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
 
     return (
       <span
@@ -259,12 +268,18 @@ const DashboardPage = () => {
 
   const getPaymentMethodText = (method) => {
     switch (method) {
-      case "cod": return "COD";
-      case "bank_transfer": return "Bank Transfer";
-      case "momo": return "MoMo";
-      case "vnpay": return "VNPay";
-      case "paypal": return "PayPal";
-      default: return method;
+      case "cod":
+        return "COD";
+      case "bank_transfer":
+        return "Bank Transfer";
+      case "momo":
+        return "MoMo";
+      case "vnpay":
+        return "VNPay";
+      case "paypal":
+        return "PayPal";
+      default:
+        return method;
     }
   };
 
@@ -279,7 +294,7 @@ const DashboardPage = () => {
     };
 
     if (orders && orders.length > 0) {
-      orders.forEach(order => {
+      orders.forEach((order) => {
         switch (order.orderStatus) {
           case "Not Processed":
             stats.notProcessed++;
@@ -528,55 +543,74 @@ const DashboardPage = () => {
                 </thead>
                 <tbody className="divide-y dark:divide-gray-700">
                   {dashboardStats.topSaleProducts.length > 0 ? (
-                    dashboardStats.topSaleProducts.map((item, index) => (
-                      <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td className="py-3">
-                          <div className="flex items-center">
-                            <div className="h-10 w-10 flex-shrink-0">
-                              <img
-                                className="h-10 w-10 rounded-lg object-cover"
-                                src={
-                                  item.product.image_url ||
-                                  "https://via.placeholder.com/40"
-                                }
-                                alt={item.product.name}
-                              />
-                            </div>
-                            <div className="ml-3">
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                {item.product.name.length > 20
-                                  ? `${item.product.name.substring(0, 20)}...`
-                                  : item.product.name}
+                    dashboardStats.topSaleProducts.map((item, index) => {
+                      // LOGIC MỚI: Tính toán tổng số lượng tồn kho (bao gồm cả biến thể)
+                      const displayQuantity =
+                        item.product.variants &&
+                        item.product.variants.length > 0
+                          ? item.product.variants.reduce(
+                              (sum, variant) => sum + (variant.quantity || 0),
+                              0
+                            )
+                          : item.product.quantity;
+
+                      return (
+                        <tr
+                          key={index}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                        >
+                          <td className="py-3">
+                            <div className="flex items-center">
+                              <div className="h-10 w-10 flex-shrink-0">
+                                <img
+                                  className="h-10 w-10 rounded-lg object-cover"
+                                  src={
+                                    item.product.image_url ||
+                                    "https://via.placeholder.com/40"
+                                  }
+                                  alt={item.product.name}
+                                />
+                              </div>
+                              <div className="ml-3">
+                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {item.product.name.length > 20
+                                    ? `${item.product.name.substring(0, 20)}...`
+                                    : item.product.name}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="py-3">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {formatPrice(item.product.price)}
-                          </div>
-                        </td>
-                        <td className="py-3">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {formatNumber(item.total_sold)}
-                          </div>
-                        </td>
-                        <td className="py-3">
-                          {item.product.quantity > 0 ? (
-                            <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900 dark:text-green-300">
-                              {formatNumber(item.product.quantity)}
-                            </span>
-                          ) : (
-                            <span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800 dark:bg-red-900 dark:text-red-300">
-                              Out of stock
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td className="py-3">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {formatPrice(item.product.price)}
+                            </div>
+                          </td>
+                          <td className="py-3">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {formatNumber(item.total_sold)}
+                            </div>
+                          </td>
+                          <td className="py-3">
+                            {/* SỬ DỤNG BIẾN displayQuantity ĐÃ TÍNH Ở TRÊN */}
+                            {displayQuantity > 0 ? (
+                              <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900 dark:text-green-300">
+                                {formatNumber(displayQuantity)}
+                              </span>
+                            ) : (
+                              <span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800 dark:bg-red-900 dark:text-red-300">
+                                Out of stock
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
-                      <td colSpan="4" className="py-8 text-center text-gray-500 dark:text-gray-400">
+                      <td
+                        colSpan="4"
+                        className="py-8 text-center text-gray-500 dark:text-gray-400"
+                      >
                         No sales data available
                       </td>
                     </tr>
@@ -616,70 +650,82 @@ const DashboardPage = () => {
                 </thead>
                 <tbody className="divide-y dark:divide-gray-700">
                   {dashboardStats.lowStockProductsList.length > 0 ? (
-                    dashboardStats.lowStockProductsList.map((product, index) => (
-                      <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td className="py-3">
-                          <div className="flex items-center">
-                            <div className="h-10 w-10 flex-shrink-0">
-                              <img
-                                className="h-10 w-10 rounded-lg object-cover"
-                                src={
-                                  product.images?.[0]?.url ||
-                                  "https://via.placeholder.com/40"
-                                }
-                                alt={product.title}
-                              />
-                            </div>
-                            <div className="ml-3">
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                {product.title.length > 20
-                                  ? `${product.title.substring(0, 20)}...`
-                                  : product.title}
+                    dashboardStats.lowStockProductsList.map(
+                      (product, index) => (
+                        <tr
+                          key={index}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                        >
+                          <td className="py-3">
+                            <div className="flex items-center">
+                              <div className="h-10 w-10 flex-shrink-0">
+                                <img
+                                  className="h-10 w-10 rounded-lg object-cover"
+                                  src={
+                                    product.images?.[0]?.url ||
+                                    "https://via.placeholder.com/40"
+                                  }
+                                  alt={product.title}
+                                />
                               </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                {product.brand || "No brand"}
+                              <div className="ml-3">
+                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {product.title.length > 20
+                                    ? `${product.title.substring(0, 20)}...`
+                                    : product.title}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  {product.brand || "No brand"}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="py-3">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {formatPrice(product.price)}
-                          </div>
-                        </td>
-                        <td className="py-3">
-                          <div className="flex items-center">
-                            <div className="w-16 rounded-full bg-gray-200 dark:bg-gray-700">
-                              <div
-                                className="h-2 rounded-full bg-yellow-500"
-                                style={{ width: `${(product.quantity / 10) * 100}%` }}
-                              ></div>
+                          </td>
+                          <td className="py-3">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {formatPrice(product.price)}
                             </div>
-                            <span className="ml-2 text-sm font-medium text-gray-900 dark:text-white">
-                              {product.quantity}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3">
-                          {product.quantity <= 5 ? (
-                            <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800 dark:bg-red-900 dark:text-red-300">
-                              <AlertTriangle className="mr-1 h-3 w-3" />
-                              Critical
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
-                              <AlertTriangle className="mr-1 h-3 w-3" />
-                              Low
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td className="py-3">
+                            <div className="flex items-center">
+                              <div className="w-16 rounded-full bg-gray-200 dark:bg-gray-700">
+                                <div
+                                  className="h-2 rounded-full bg-yellow-500"
+                                  style={{
+                                    width: `${(product.quantity / 10) * 100}%`,
+                                  }}
+                                ></div>
+                              </div>
+                              <span className="ml-2 text-sm font-medium text-gray-900 dark:text-white">
+                                {product.quantity}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3">
+                            {product.quantity <= 5 ? (
+                              <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800 dark:bg-red-900 dark:text-red-300">
+                                <AlertTriangle className="mr-1 h-3 w-3" />
+                                Critical
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+                                <AlertTriangle className="mr-1 h-3 w-3" />
+                                Low
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    )
                   ) : (
                     <tr>
-                      <td colSpan="4" className="py-8 text-center text-gray-500 dark:text-gray-400">
+                      <td
+                        colSpan="4"
+                        className="py-8 text-center text-gray-500 dark:text-gray-400"
+                      >
                         <CheckCircle className="mx-auto h-8 w-8 text-green-500" />
-                        <p className="mt-2">All products have sufficient stock</p>
+                        <p className="mt-2">
+                          All products have sufficient stock
+                        </p>
                       </td>
                     </tr>
                   )}
@@ -802,24 +848,44 @@ const DashboardPage = () => {
         </h2>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
           <div className="rounded-lg border p-4 text-center">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Not Processed</div>
-            <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{getOrderStats.notProcessed}</div>
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Not Processed
+            </div>
+            <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
+              {getOrderStats.notProcessed}
+            </div>
           </div>
           <div className="rounded-lg border p-4 text-center">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Processing</div>
-            <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{getOrderStats.processing}</div>
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Processing
+            </div>
+            <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
+              {getOrderStats.processing}
+            </div>
           </div>
           <div className="rounded-lg border p-4 text-center">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Shipped</div>
-            <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{getOrderStats.shipped}</div>
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Shipped
+            </div>
+            <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
+              {getOrderStats.shipped}
+            </div>
           </div>
           <div className="rounded-lg border p-4 text-center">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Delivered</div>
-            <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{getOrderStats.delivered}</div>
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Delivered
+            </div>
+            <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
+              {getOrderStats.delivered}
+            </div>
           </div>
           <div className="rounded-lg border p-4 text-center">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Cancelled</div>
-            <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{getOrderStats.cancelled}</div>
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Cancelled
+            </div>
+            <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
+              {getOrderStats.cancelled}
+            </div>
           </div>
         </div>
       </div>
