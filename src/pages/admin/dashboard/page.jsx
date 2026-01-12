@@ -98,10 +98,21 @@ const DashboardPage = () => {
       );
     }, 0);
 
-    // 3. Sản phẩm sắp hết hàng (stock < 10)
-    const lowStockProductsList = products.filter(
-      (product) => product.quantity < 10
-    );
+    // 3. Sản phẩm sắp hết hàng (tính tổng quantity của sản phẩm gốc hoặc tổng các variants)
+    const lowStockProductsList = products.filter((product) => {
+        // Nếu sản phẩm có biến thể, tính tổng số lượng từ các biến thể
+        if (product.variants && product.variants.length > 0) {
+            const totalVariantQuantity = product.variants.reduce(
+                (sum, variant) => sum + (variant.quantity || 0),
+                0
+            );
+            return totalVariantQuantity < 10;
+        }
+        
+        // Nếu không có biến thể, dùng quantity của sản phẩm gốc
+        return (product.quantity || 0) < 10;
+    });
+
     const lowStockProducts = lowStockProductsList.length;
 
     // 4. Tổng số coupon
