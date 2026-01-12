@@ -158,6 +158,11 @@ const ProductDetail = () => {
       toast.warning("Vui lòng chọn Phiên bản và Màu sắc!");
       return;
     }
+    if (!user) {
+      toast.info("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
+      // navigate("/login", { state: { from: `/product/${id}` } });
+      return;
+    }
 
     // Payload gửi đi
     const cartItemData = {
