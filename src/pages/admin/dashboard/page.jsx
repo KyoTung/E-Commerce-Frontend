@@ -603,16 +603,16 @@ const DashboardPage = () => {
                               </div>
                               <div className="ml-3">
                                 <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                  {item.product.name.length > 20
-                                    ? `${item.product.name.substring(0, 20)}...`
-                                    : item.product.name}
+                                  {item.product.title.length > 20
+                                    ? `${item.product.title.substring(0, 20)}...`
+                                    : item.product.title}
                                 </div>
                               </div>
                             </div>
                           </td>
                           <td className="py-3">
                             <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {formatPrice(item.product.price)}
+                              {formatPrice(item.product.basePrice)}
                             </div>
                           </td>
                           <td className="py-3">
