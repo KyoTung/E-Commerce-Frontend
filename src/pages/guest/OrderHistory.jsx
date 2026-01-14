@@ -5,7 +5,7 @@ import {
   FiUser, FiShoppingBag, FiLock, FiLogOut, FiBox, 
   FiClock, FiChevronRight, FiSearch, FiXCircle, FiCreditCard 
 } from "react-icons/fi"; 
-
+import { ToastContainer, toast } from "react-toastify";
 // Import Actions & Services
 import { getUserOrders, cancelOrder } from "../../features/guestSlice/order/orderSlice"; 
 import { logout } from "../../features/authSlice/authSlice";
@@ -80,6 +80,7 @@ const OrderHistory = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
+       <ToastContainer />
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           
