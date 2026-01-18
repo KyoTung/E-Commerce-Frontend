@@ -510,9 +510,6 @@ const DashboardPage = () => {
                     <th className="pb-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                       Sold
                     </th>
-                    <th className="pb-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                      Stock
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y dark:divide-gray-700">
@@ -549,17 +546,6 @@ const DashboardPage = () => {
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {formatNumber(item.total_sold)}
                           </div>
-                        </td>
-                        <td className="py-3">
-                          {item.product.quantity > 0 ? (
-                            <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900 dark:text-green-300">
-                              {formatNumber(item.product.quantity)}
-                            </span>
-                          ) : (
-                            <span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800 dark:bg-red-900 dark:text-red-300">
-                              Out of stock
-                            </span>
-                          )}
                         </td>
                       </tr>
                     ))
