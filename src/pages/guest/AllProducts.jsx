@@ -9,14 +9,22 @@ import {
   FaChevronDown,
   FaFilter,
 } from "react-icons/fa";
+import { toast } from "react-toastify";
 
-import { getAllProducts } from "../../features/guestSlice/product/productSlice";
+import {
+  getAllProducts,
+  addwishList,
+} from "../../features/guestSlice/product/productSlice";
 import { getAllBrand } from "../../features/adminSlice/brand/brandSlice";
+import { getAllCategory } from "../../features/adminSlice/category/categorySlice";
+import { getWishlist } from "../../features/guestSlice/user/userSlice";
 import Loading from "../../components/Loading";
 
 const AllProducts = () => {
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
+  const productListRef = useRef(null);
+  const isFirstLoad = useRef(true);
 
   // Redux State
   const {
@@ -27,6 +35,11 @@ const AllProducts = () => {
   const { brands } = useSelector(
     (state) => state.brandAdmin || state.brandAdmin
   );
+  const { categories } = useSelector(
+    (state) => state.categoryAdmin || state.categoryAdmin
+  );
+  const { user } = useSelector((state) => state.auth);
+  const { wishlist } = useSelector((state) => state.user);
 
   // --- LOCAL STATE ---
   const [localProducts, setLocalProducts] = useState([]); // Danh sách hiển thị
@@ -37,7 +50,7 @@ const AllProducts = () => {
   // State Filter
   const [filter, setFilter] = useState({
     brand: searchParams.get("brand") || "",
-    category: searchParams.get("category") || "",
+    slugCategory: searchParams.get("category") || "",
     minPrice: searchParams.get("minPrice") || "",
     maxPrice: searchParams.get("maxPrice") || "",
     tag: searchParams.get("tag") || "",
@@ -55,13 +68,15 @@ const AllProducts = () => {
   // 1. Fetch Brands ban đầu
   useEffect(() => {
     dispatch(getAllBrand());
+    dispatch(getAllCategory());
+    dispatch(getWishlist());
   }, [dispatch]);
 
   // 2. Sync URL -> Filter State
   useEffect(() => {
     setFilter({
       brand: searchParams.get("brand") || "",
-      category: searchParams.get("category") || "",
+      slugCategory: searchParams.get("category") || "",
       minPrice: searchParams.get("minPrice") || "",
       maxPrice: searchParams.get("maxPrice") || "",
       tag: searchParams.get("tag") || "",
@@ -80,7 +95,7 @@ const AllProducts = () => {
     };
 
     if (filter.brand) queryParams.brand = filter.brand;
-    if (filter.category) queryParams.category = filter.category;
+    if (filter.slugCategory) queryParams.slugCategory = filter.slugCategory;
     if (filter.tag) queryParams.tags = filter.tag;
     if (filter.minPrice !== "")
       queryParams["basePrice[gte]"] = Number(filter.minPrice);
@@ -95,7 +110,17 @@ const AllProducts = () => {
     if (reduxProducts) {
       if (page === 1) {
         setLocalProducts(reduxProducts);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+
+        if (isFirstLoad.current) {
+          window.scrollTo(0, 0);
+        } else {
+          if (productListRef.current) {
+            productListRef.current.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        }
       } else {
         setLocalProducts((prev) => [...prev, ...reduxProducts]);
       }
@@ -119,6 +144,7 @@ const AllProducts = () => {
       ...prev,
       brand: prev.brand === brandSlug ? "" : brandSlug,
     }));
+    isFirstLoad.current = false;
     setPage(1);
   };
 
@@ -130,12 +156,54 @@ const AllProducts = () => {
       minPrice: isSelected ? "" : range.min,
       maxPrice: isSelected ? "" : range.max,
     }));
+    isFirstLoad.current = false;
     setPage(1);
   };
 
   const clearFilter = () => {
     setSearchParams({});
     setPage(1);
+  };
+
+  const handleCategoryClick = (slug) => {
+    // Nếu đang chọn chính nó thì bỏ chọn, ngược lại thì chọn mới
+    const newCategory = filter.slugCategory === slug ? "" : slug;
+
+    // Cập nhật URL
+    if (newCategory) {
+      setSearchParams({
+        ...Object.fromEntries(searchParams),
+        category: newCategory,
+      });
+    } else {
+      const newParams = Object.fromEntries(searchParams);
+      delete newParams.category;
+      setSearchParams(newParams);
+    }
+
+    // Reset về trang 1 và scroll lên
+    setPage(1);
+    isFirstLoad.current = false;
+  };
+
+  //  thêm vào yêu thích
+  const addToWish = (id) => {
+    if (!user) {
+      toast.warn("Vui lòng đăng nhập để thêm vào yêu thích!", {
+        position: "top-center", // Hiện ở giữa cho dễ thấy
+        autoClose: 2000,
+      });
+      return; // Dừng lại, không chạy code bên dưới
+    }
+    dispatch(addwishList(id))
+      .unwrap()
+      .then((res) => {
+        toast.success("Đã cập nhật danh sách yêu thích!");
+        dispatch(getWishlist());
+      })
+      .catch((err) => {
+        toast.error(err.message || "Có lỗi xảy ra");
+      });
   };
 
   // Helper
@@ -150,10 +218,24 @@ const AllProducts = () => {
     return [specs.screen, specs.ram, specs.storage].filter(Boolean).slice(0, 3);
   };
 
+  //ham kiểm tra xem 1 sản phẩm có nằm trong wishlist của user không
+  const checkIsLiked = (productId) => {
+    // Nếu chưa có wishlist hoặc rỗng -> false
+    if (!wishlist || wishlist.length === 0) return false;
+
+    return wishlist.some((item) => {
+      const itemId = typeof item === "string" ? item : item?._id;
+      return itemId === productId;
+    });
+  };
+
+  
   return (
     <div className="bg-[#f4f6f8] min-h-screen pb-10">
-      <div className="mx-auto max-w-[1200px] px-2 sm:px-4 py-4">
-        {/* Header & Filter UI (Giữ nguyên) */}
+      <div
+        ref={productListRef}
+        className="mx-auto max-w-[1200px] px-2 sm:px-4 py-4"
+      >
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-bold text-gray-800 uppercase">
@@ -172,6 +254,32 @@ const AllProducts = () => {
           </div>
 
           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 space-y-4">
+            {/* --- CATEGORY FILTER --- */}
+            <div className="bg-white rounded-lg  mb-4">
+              <h3 className="text-sm font-bold text-gray-700 mb-2">
+                Danh mục sản phẩm
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {categories &&
+                  categories.map((item, index) => {
+                    // So sánh slug trên URL với slug của item
+                    const isActive = filter.slugCategory === item.slug;
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => handleCategoryClick(item.slug)} // Truyền slug vào
+                        className={`px-3 py-1.5 text-xs sm:text-sm border rounded-lg transition-all ${
+                          isActive
+                            ? "bg-blue-50 border-blue-500 text-blue-600 font-bold"
+                            : "border-gray-200 text-gray-600 hover:border-gray-400 hover:bg-gray-50"
+                        }`}
+                      >
+                        {item.title}
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
             {/* Brands */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-bold text-gray-700 mr-2">
@@ -231,6 +339,7 @@ const AllProducts = () => {
                   onChange={(e) => {
                     setFilter({ ...filter, sort: e.target.value });
                     setPage(1);
+                    isFirstLoad.current = false;
                   }}
                 >
                   <option value="-createdAt">Mới nhất</option>
@@ -254,6 +363,7 @@ const AllProducts = () => {
               {localProducts.map((product) => {
                 const displayPrice = product.basePrice;
                 const specsList = getSpecs(product.specifications);
+                const isLiked = checkIsLiked(product._id);
                 return (
                   <Link
                     to={`/product/${product._id}`}
@@ -298,18 +408,28 @@ const AllProducts = () => {
                         </span>
                       </div>
                       <div className="mt-auto flex items-center justify-between pt-2 border-t border-gray-50">
-                      
                         <div className="flex items-center gap-1">
-                        <FaStar className="text-yellow-400" size={10} />
-                        <span className="text-[10px] text-gray-500 sm:text-xs font-medium">
-                          {product.totalRating || 0} (
-                          {product.rating?.length || 0})
-                        </span>
-                      </div>
-                        <button className="text-gray-400 hover:text-[#d70018] transition-colors flex items-center gap-1 text-xs group/heart">
-                          Yêu thích
+                          <FaStar className="text-yellow-400" size={10} />
+                          <span className="text-[10px] text-gray-500 sm:text-xs font-medium">
+                            {product.totalRating || 0} (
+                            {product.rating?.length || 0})
+                          </span>
+                        </div>
+                        <button
+                          className="text-gray-400 hover:text-[#d70018] transition-colors flex items-center gap-1 text-xs group/heart"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            addToWish(product._id);
+                          }}
+                        >
+                          {isLiked ? "Đã thích" : "Yêu thích"}
+
                           <FaHeart
-                            className="group-hover/heart:text-[#d70018]"
+                            className={`transition-colors ${
+                              isLiked
+                                ? "text-[#d70018]"
+                                : "text-gray-300 group-hover/heart:text-[#d70018]"
+                            }`}
                             size={12}
                           />
                         </button>

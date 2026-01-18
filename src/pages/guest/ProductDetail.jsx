@@ -53,12 +53,15 @@ const ProductDetail = () => {
   });
   const currentRating = watch("rating");
 
-  // --- EFFECT 1: Fetch Data ---
   useEffect(() => {
     if (id) {
       dispatch(getProduct(id));
     }
   }, [id, dispatch]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   // --- EFFECT 2: Init Data khi có Product ---
   useEffect(() => {
@@ -153,6 +156,11 @@ const ProductDetail = () => {
   const handleAddToCart = async () => {
     if (!selectedVariant) {
       toast.warning("Vui lòng chọn Phiên bản và Màu sắc!");
+      return;
+    }
+    if (!user) {
+      toast.info("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
+      // navigate("/login", { state: { from: `/product/${id}` } });
       return;
     }
 
@@ -253,7 +261,7 @@ const ProductDetail = () => {
               />
             </div>
             {/* Thumbnails */}
-            <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+            {/* <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
               {product.images?.map((img, idx) => (
                 <button
                   key={idx}
@@ -271,7 +279,7 @@ const ProductDetail = () => {
                   />
                 </button>
               ))}
-            </div>
+            </div> */}
           </div>
 
           <div className="lg:col-span-5 space-y-4">
@@ -291,7 +299,6 @@ const ProductDetail = () => {
                 <div className="grid grid-cols-3 gap-2">
                   {allStorages.map((storage, idx) => {
                     // Kiểm tra xem Storage này có hàng với Màu đang chọn không?
-                    // (Optional: Để làm mờ nếu muốn, nhưng ở đây ta dùng logic tự switch màu nên cứ hiện hết)
                     const isSelected = selectedVariant?.storage === storage;
                     return (
                       <button
@@ -328,9 +335,6 @@ const ProductDetail = () => {
                 <div className="grid grid-cols-3 gap-2">
                   {allColors.map((color, idx) => {
                     const isSelected = selectedVariant?.color === color;
-
-                    // Nâng cao: Kiểm tra xem Màu này có kết hợp được với Storage đang chọn không?
-                    // Nếu không có, ta vẫn hiện nhưng có thể thêm visual hint (VD: giá khác)
                     const exactVariant = checkVariantExists(
                       selectedVariant?.storage,
                       color
@@ -358,7 +362,7 @@ const ProductDetail = () => {
                                     product.variants.find(
                                       (v) => v.color === color
                                     )?.price
-                                  ) // Giá màu này ở bản khác
+                                  ) 
                             }
                           </span>
                         </div>
@@ -416,18 +420,7 @@ const ProductDetail = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Description */}
-          <div className="lg:col-span-7 bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-            <div className="mt-8">
-              <h3 className="bg-gray-100 p-3 rounded-t-lg font-bold text-gray-700 uppercase text-sm">
-                Đặc điểm nổi bật
-              </h3>
-              <div
-                className=" min-w-0 truncate p-4 border border-gray-100 rounded-b-lg text-gray-700 text-sm leading-relaxed prose max-w-none"
-                dangerouslySetInnerHTML={{ __html: product.description }}
-              />
-            </div>
-          </div>
+          
           {/* Specifications Table (Mini) */}
           <div className="lg:col-span-5 space-y-4">
             <div className="rounded-lg border border-gray-200 overflow-hidden bg-white mt-4">
@@ -456,6 +449,18 @@ const ProductDetail = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+          {/* Description */}
+          <div className="lg:col-span-7 bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+            <div className="">
+              <h3 className="bg-gray-100 p-3 rounded-t-lg font-bold text-gray-700 uppercase text-sm">
+                Đặc điểm nổi bật
+              </h3>
+              <div
+                className=" min-w-0 truncate p-4 border border-gray-100 rounded-b-lg text-gray-700 text-sm leading-relaxed prose max-w-none"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
             </div>
           </div>
         </div>

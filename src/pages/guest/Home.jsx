@@ -15,9 +15,9 @@ const Home = () => {
       <div>
         {/*<Brands/>*/}
       </div>
-      <div>
+      {/* <div>
         <Categories/>
-      </div>
+      </div> */}
       <div>
         <FeaturedProduct/>
       </div>

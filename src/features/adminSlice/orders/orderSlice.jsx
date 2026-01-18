@@ -1,6 +1,6 @@
 import OrderService from "./orderService";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-
+import { toast } from "react-toastify";
 const initialState = {
   orders: [],
   order: null,
@@ -62,6 +62,7 @@ export const orderSlice = createSlice({
       .addCase(updateOrder.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Failed to update order";
+        toast.error(state.error);
       })
 
 

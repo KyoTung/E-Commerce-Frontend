@@ -1,33 +1,33 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { router } from "./routes";
-import axiosClient, { setAccessToken } from "./api/axiosClient";
-import { logout } from "./features/authSlice/authSlice"; 
+import { loginSuccess } from "./features/authSlice/authSlice";
 
 function App() {
   const dispatch = useDispatch();
 
-  const [isReady, setIsReady] = useState(false);
+
 
   useEffect(() => {
-    const initApp = async () => {
+    // Logic: Kiểm tra xem trong kho có User không?
+    const customer = localStorage.getItem("customer");
+    const token = localStorage.getItem("token");
+
+    if (customer && token) {
       try {
-        const { data } = await axiosClient.post("/user/refresh");
-        if (data?.accessToken) {
-          setAccessToken(data.accessToken);
-        }
+        const userData = JSON.parse(customer);
+        // Nạp lại vào Redux để app biết là "Đã đăng nhập"
+        dispatch(loginSuccess(userData)); 
       } catch (error) {
-        dispatch(logout());
-      } finally {
-        setIsReady(true);
+        console.error("Lỗi parse JSON user:", error);
+        localStorage.removeItem("customer");
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
       }
-    };
-
-    initApp();
+    }
   }, [dispatch]);
-
 
   return (
     <ThemeProvider storageKey="theme">

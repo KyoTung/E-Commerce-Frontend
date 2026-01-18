@@ -60,7 +60,7 @@ const Categories = () => {
           {needs.map((item) => (
             <Link
               key={item.id}
-              to={`/products?search=${item.slug}`} 
+              to={`/products?category=${item.slug}`}
               className="group flex flex-col items-center justify-center 
                          rounded-xl border border-gray-100 bg-white shadow-sm 
                          hover:border-[#d70018] hover:shadow-md transition-all duration-300 cursor-pointer
@@ -78,7 +78,7 @@ const Categories = () => {
               <div className="text-center">
                 
                 <p className="font-bold text-gray-700 group-hover:text-[#d70018] transition-colors whitespace-nowrap
-                              text-[10px] lg:text-base" /* Mobile: chữ bé tí, Desktop: chữ to rõ */
+                              text-[10px] lg:text-base"
                 >
                   {item.name}
                 </p>

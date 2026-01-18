@@ -18,6 +18,8 @@ import OrderHistory from "../pages/guest/OrderHistory";
 import ChangePassword from "../pages/guest/ChangePassword";
 import ForgotPassword from "../pages/guest/ForgotPassword";
 import AllProducts from "../pages/guest/AllProducts";
+import Wishlist from "../pages/guest/Wishlist";
+import LoginSuccess from "../pages/authen/LoginSuccess";
 
 import AdminLayout from "../layouts/admin/layout";
 import DashboardPage from "../pages/admin/dashboard/page";
@@ -47,6 +49,10 @@ export const router = createBrowserRouter([
     element: <ForgotPassword />,
   },
   {
+    path: "/login-success",
+    element: <LoginSuccess />,
+  },
+  {
     path: "/",
     element: <GuestLayout />,
     children: [
@@ -58,7 +64,10 @@ export const router = createBrowserRouter([
         path: "/products",
         element: <AllProducts />,
       },
-
+      {
+        path: "/wishlist",
+        element: <Wishlist />,
+      },
       {
         path: "/profile",
         element: <Profile />,
@@ -87,6 +96,7 @@ export const router = createBrowserRouter([
         path: "/orders",
         element: <OrderHistory />,
       },
+
       {
         path: "/blogs",
         element: <BlogPage />,

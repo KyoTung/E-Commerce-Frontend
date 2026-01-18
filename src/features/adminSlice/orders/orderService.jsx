@@ -10,8 +10,8 @@ const getAllOrder = async () => {
   return response.data;
 };
 
-const getOrder = async (id) => {
-  const response = await axiosClient.get(`/order/order-detail/${id}`);
+const getOrder = async (orderId) => {
+  const response = await axiosClient.get(`/order/order-detail/${orderId}`);
   return response.data;
 };
 

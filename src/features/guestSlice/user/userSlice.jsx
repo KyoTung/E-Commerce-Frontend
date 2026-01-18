@@ -37,7 +37,18 @@ export const updateInfor = createAsyncThunk("user/update-infor", async ({ userDa
   }
 });
 
-
+export const getWishlist = createAsyncThunk(
+  "user/wishlist",
+  async (_, thunkAPI) => {
+    try {
+      const response = await userService.getWishlist();
+      return response;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue({ message });
+    }
+  }
+);
 
 export const userSlice = createSlice({
   name: "user",
@@ -79,6 +90,23 @@ export const userSlice = createSlice({
       state.message =
         action.payload?.message;
     });
+
+    builder
+      .addCase(getWishlist.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getWishlist.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.isError = false;
+        state.wishlist = action.payload.wishlist || action.payload; 
+      })
+      .addCase(getWishlist.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.isSuccess = false;
+        state.message = action.payload?.message;
+      });
   },
 });
 
