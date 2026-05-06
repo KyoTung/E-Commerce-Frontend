@@ -97,6 +97,7 @@ const DashboardPage = () => {
       };
     }
 
+
     // 1. Tổng số sản phẩm
     const totalProducts = products.length;
 
@@ -177,6 +178,7 @@ const DashboardPage = () => {
         productSales[productId].total_sold += count;
       });
     });
+
 
     // Chuyển object thành mảng và sắp xếp theo số lượng bán
     const topSaleProducts = Object.values(productSales)
@@ -603,9 +605,10 @@ const DashboardPage = () => {
                               </div>
                               <div className="ml-3">
                                 <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                  {item.product.title.length > 20
+                                  {/* {item.product.title.length > 20
                                     ? `${item.product.title.substring(0, 20)}...`
-                                    : item.product.title}
+                                    : item.product.title} */}
+                                    {item.product.name}
                                 </div>
                               </div>
                             </div>
