@@ -89,7 +89,6 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // 🔥🔥🔥 [CHỐT CHẶN QUAN TRỌNG - FIX LOOP] 🔥🔥🔥
     // Kiểm tra ngay lập tức: Nếu không có RefreshToken trong kho -> Đây là khách vãng lai.
     // -> Trả lỗi ngay để Component tự xử lý (hiện thông báo), KHÔNG Refresh, KHÔNG Redirect.
     const storedRefreshToken = localStorage.getItem("refreshToken");
@@ -118,8 +117,7 @@ axiosClient.interceptors.response.use(
     isRefreshing = true;
 
     try {
-     // Dùng FETCH để tránh loop interceptor
-      // ⚠️ KIỂM TRA KỸ ĐƯỜNG DẪN NÀY: /refresh hay /refresh-token ???
+     // Dùng FETCH để tránh loop interceptor khi gọi API Refresh (vì axiosClient sẽ tự động thêm token vào header
       const response = await fetch(`${baseURL}/user/refresh`, { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -145,8 +143,7 @@ axiosClient.interceptors.response.use(
       // 1. Lưu Access Token
       setAccessToken(newAccessToken);
 
-      // 2. Lưu Refresh Token mới
-      // 🔥 NẾU LOG TRÊN KHÔNG CÓ refreshToken -> LỖI Ở BACKEND
+      // 2. Lưu Refresh Token mới (nếu có)
       if (newRefreshToken) {
         localStorage.setItem("refreshToken", newRefreshToken);
       } else {
