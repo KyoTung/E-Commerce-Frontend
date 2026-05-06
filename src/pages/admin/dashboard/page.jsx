@@ -14,7 +14,6 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import { FaEye } from "react-icons/fa";
 import { useTheme } from "@/hooks/use-theme";
 import { Footer } from "@/layouts/admin/footer";
 import { getAllCoupon } from "../../../features/adminSlice/coupons/couponSlice";
@@ -23,11 +22,11 @@ import { getAllOrder } from "../../../features/adminSlice/orders/orderSlice";
 import { getAllProducts } from "../../../features/adminSlice/products/productSlice";
 import { getAllUser } from "../../../features/adminSlice/customerSlice/customerSlice";
 import trafficService from "../../../features/traffic/trafficService";
+import { FaEye } from "react-icons/fa";
 
 const DashboardPage = () => {
   const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
-  const [visitCount, setVisitCount] = useState(0);
   const currentUser = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
 
@@ -37,6 +36,7 @@ const DashboardPage = () => {
   const { allUsers } = useSelector((state) => state.customer);
   const { blogs } = useSelector((state) => state.blogAdmin);
   const { coupons } = useSelector((state) => state.couponAdmin);
+  const [visitCount, setVisitCount] = useState(0);
 
   useEffect(() => {
     getCoupons();
@@ -109,21 +109,10 @@ const DashboardPage = () => {
       );
     }, 0);
 
-    // 3. Sản phẩm sắp hết hàng (tính tổng quantity của sản phẩm gốc hoặc tổng các variants)
-    const lowStockProductsList = products.filter((product) => {
-      // Nếu sản phẩm có biến thể, tính tổng số lượng từ các biến thể
-      if (product.variants && product.variants.length > 0) {
-        const totalVariantQuantity = product.variants.reduce(
-          (sum, variant) => sum + (variant.quantity || 0),
-          0
-        );
-        return totalVariantQuantity < 10;
-      }
-
-      // Nếu không có biến thể, dùng quantity của sản phẩm gốc
-      return (product.quantity || 0) < 10;
-    });
-
+    // 3. Sản phẩm sắp hết hàng (stock < 10)
+    const lowStockProductsList = products.filter(
+      (product) => product.quantity < 10,
+    );
     const lowStockProducts = lowStockProductsList.length;
 
     // 4. Tổng số coupon
@@ -138,7 +127,7 @@ const DashboardPage = () => {
     // 7. Tổng doanh thu từ đơn hàng đã thanh toán
     const totalRevenue = paidOrders.reduce(
       (sum, order) => sum + (order.total || 0),
-      0
+      0,
     );
 
     // 8. Tổng số blog
@@ -203,7 +192,7 @@ const DashboardPage = () => {
       .filter(
         (order) =>
           order.orderStatus === "Not Processed" ||
-          order.orderStatus === "Processing"
+          order.orderStatus === "Processing",
       )
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 5)
@@ -519,13 +508,13 @@ const DashboardPage = () => {
             Published articles
           </div>
         </div>
-        {/* Card 9:Total Visits */}
+        {/*Card 9: LƯỢT TRUY CẬP */}
         <div className="rounded-lg border bg-white p-5 shadow-sm transition-all hover:shadow dark:border-gray-700 dark:bg-gray-800">
           <div className="flex items-center">
             <div className="rounded-lg bg-green-100 p-3 dark:bg-green-900">
               <FaEye className="h-6 w-6 text-green-600 dark:text-green-300" />
             </div>
-            
+
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Total Visits
@@ -535,8 +524,10 @@ const DashboardPage = () => {
               </p>
             </div>
           </div>
-          <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-            Lifetime views
+          <div className="d-flex flex-column align-items-end">
+            <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+              Lifetime views
+            </div>
           </div>
         </div>
       </div>
@@ -568,13 +559,11 @@ const DashboardPage = () => {
                     <th className="pb-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                       Sold
                     </th>
-                    <th className="pb-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                      Stock
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y dark:divide-gray-700">
                   {dashboardStats.topSaleProducts.length > 0 ? (
+<<<<<<< HEAD
                     dashboardStats.topSaleProducts.map((item, index) => {
                       // LOGIC MỚI: Tính toán tổng số lượng tồn kho (bao gồm cả biến thể)
                       const displayQuantity =
@@ -610,34 +599,46 @@ const DashboardPage = () => {
                                     : item.product.title} */}
                                     {item.product.name}
                                 </div>
+=======
+                    dashboardStats.topSaleProducts.map((item, index) => (
+                      <tr
+                        key={index}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        <td className="py-3">
+                          <div className="flex items-center">
+                            <div className="h-10 w-10 flex-shrink-0">
+                              <img
+                                className="h-10 w-10 rounded-lg object-cover"
+                                src={
+                                  item.product.image_url ||
+                                  "https://via.placeholder.com/40"
+                                }
+                                alt={item.product.name}
+                              />
+                            </div>
+                            <div className="ml-3">
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                {item.product.name.length > 20
+                                  ? `${item.product.name.substring(0, 20)}...`
+                                  : item.product.name}
+>>>>>>> 672d3d6bd672a3ee2f2f70960b2407b6fd1aca56
                               </div>
                             </div>
-                          </td>
-                          <td className="py-3">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {formatPrice(item.product.basePrice)}
-                            </div>
-                          </td>
-                          <td className="py-3">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {formatNumber(item.total_sold)}
-                            </div>
-                          </td>
-                          <td className="py-3">
-                            {/* SỬ DỤNG BIẾN displayQuantity ĐÃ TÍNH Ở TRÊN */}
-                            {displayQuantity > 0 ? (
-                              <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900 dark:text-green-300">
-                                {formatNumber(displayQuantity)}
-                              </span>
-                            ) : (
-                              <span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800 dark:bg-red-900 dark:text-red-300">
-                                Out of stock
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
+                          </div>
+                        </td>
+                        <td className="py-3">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {formatPrice(item.product.price)}
+                          </div>
+                        </td>
+                        <td className="py-3">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {formatNumber(item.total_sold)}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
                   ) : (
                     <tr>
                       <td
@@ -747,7 +748,7 @@ const DashboardPage = () => {
                             )}
                           </td>
                         </tr>
-                      )
+                      ),
                     )
                   ) : (
                     <tr>
