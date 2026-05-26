@@ -281,7 +281,7 @@ const handleSearch = (e) => {
               </div>
 
               <div className="hidden lg:block">
-                <HeaderItem icon={ImBlogger} label="Blogs" to="/blogs" />
+                <HeaderItem icon={ImBlogger} label="Tin công nghệ" to="/blogs" />
               </div>
 
               <div className="hidden md:block">

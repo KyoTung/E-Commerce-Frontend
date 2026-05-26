@@ -40,7 +40,7 @@ const OrderDetail = () => {
 
   // Fetch order details
   useEffect(() => {
-    if (id && currentUser?.token) {
+    if (id && currentUser) {
       dispatch(getOrder(id));
     }
   }, [id, currentUser?.token, dispatch]);

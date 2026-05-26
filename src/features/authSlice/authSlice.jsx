@@ -48,7 +48,7 @@ export const register = createAsyncThunk(
         error.toString();
       return thunkAPI.rejectWithValue({ message });
     }
-  }
+  },
 );
 
 // Thunk: Logout
@@ -69,7 +69,7 @@ export const updatePassword = createAsyncThunk(
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response?.data || error.message);
     }
-  }
+  },
 );
 
 export const forgotPasswordToken = createAsyncThunk(
@@ -80,7 +80,7 @@ export const forgotPasswordToken = createAsyncThunk(
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response?.data || error.message);
     }
-  }
+  },
 );
 
 export const resetPassword = createAsyncThunk(
@@ -91,7 +91,7 @@ export const resetPassword = createAsyncThunk(
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response?.data || error.message);
     }
-  }
+  },
 );
 
 export const authSlice = createSlice({
@@ -108,13 +108,10 @@ export const authSlice = createSlice({
       localStorage.removeItem("customer");
     },
     resetState: (state) => {
-      
-      return initialState; 
-      
+      return initialState;
     },
   },
-  
-  
+
   extraReducers: (builder) => {
     builder
 
@@ -128,6 +125,8 @@ export const authSlice = createSlice({
         state.isSuccess = true;
         state.user = action.payload;
         localStorage.setItem("customer", JSON.stringify(action.payload));
+        toast.success("Đăng nhập thành công!");
+
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
@@ -141,7 +140,7 @@ export const authSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(register.fulfilled, (state) => {
-        state.isLoading = false;  
+        state.isLoading = false;
         state.isSuccess = true;
         toast.success("Đăng ký tài khoản thành công!");
       })
@@ -200,7 +199,7 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         toast.error(
-          action.payload?.message || "Token hết hạn hoặc không hợp lệ"
+          action.payload?.message || "Token hết hạn hoặc không hợp lệ",
         );
       });
   },

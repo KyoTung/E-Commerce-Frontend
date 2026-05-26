@@ -3,11 +3,12 @@ import axiosClient, { setAccessToken, clearAccessToken } from '../../api/axiosCl
 const login = async (userData) => {
   const response = await axiosClient.post('/user/login', userData);
   
-  const { token, ...userInfo } = response.data;
+  const { accessToken, ...userInfo } = response.data;
 
-  if (token) {
-    setAccessToken(token);
+  if (accessToken) {
+    setAccessToken(accessToken);
   }
+
   return userInfo;
 };
 
@@ -16,10 +17,10 @@ const register = async (userData) => {
   return response.data;
 }
 
-const logout = async () => {
-  await axiosClient.post('/user/logout'); 
-
-  clearAccessToken();
+export const logout = async () => {
+  const response = await axiosClient.post('/user/logout');
+  clearAccessToken();   // xóa memory & localStorage
+  return response.data;
 };
 
 const updatePassword = async (passwordData) => {
