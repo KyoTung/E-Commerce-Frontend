@@ -38,23 +38,20 @@ const OrderDetail = () => {
     });
   };
 
-  // Fetch order details
   useEffect(() => {
     if (id && currentUser) {
       dispatch(getOrder(id));
     }
   }, [id, currentUser?.token, dispatch]);
 
-  // Cập nhật tracking number khi order thay đổi
   useEffect(() => {
     if (order?.trackingNumber) {
       setTrackingNumberInput(order.trackingNumber);
     }
   }, [order]);
 
-const handleUpdate = async (field, value) => {
+  const handleUpdate = async (field, value) => {
     try {
-      // Chuẩn bị payload động
       const updatePayload = {
         orderId: id,
         orderData: {
@@ -63,18 +60,45 @@ const handleUpdate = async (field, value) => {
         },
       };
 
-      const result = await dispatch(updateOrder(updatePayload)).unwrap();
+      await dispatch(updateOrder(updatePayload)).unwrap();
       
-      toast.success("Updated successfully");
-      // Tự động refresh data mới nhất sau khi update
+      toast.success("Cập nhật thành công");
       dispatch(getOrder(id));
       
     } catch (err) {
       console.error(err);
-      toast.error(err?.message || "Update failed");
+      toast.error(err?.message || "Cập nhật thất bại");
     }
   };
 
+  // --- LOGIC FRONTEND CHO STATE MACHINE ---
+  const statusTransitions = {
+    "Not Processed": ["Not Processed", "Confirmed", "Cancelled"],
+    "Confirmed": ["Confirmed", "Processing", "Cancelled"],
+    "Processing": ["Processing", "Dispatched", "Cancelled"],
+    "Dispatched": ["Dispatched", "Delivered", "Cancelled", "Returned"],
+    "Delivered": ["Delivered", "Returned"],
+    "Cancelled": ["Cancelled"],
+    "Returned": ["Returned"],
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case "Not Processed": return "Chưa xử lý";
+      case "Confirmed": return "Đã xác nhận";
+      case "Processing": return "Đang xử lý";
+      case "Dispatched": return "Đang giao hàng";
+      case "Delivered": return "Đã giao hàng";
+      case "Cancelled": return "Đã hủy";
+      case "Returned": return "Đã trả hàng";
+      default: return status;
+    }
+  };
+
+  // Lấy danh sách các trạng thái được phép chọn dựa trên trạng thái hiện tại
+  const availableStatuses = order ? (statusTransitions[order.orderStatus] || [order.orderStatus]) : [];
+  const isOrderClosed = order?.orderStatus === "Cancelled" || order?.orderStatus === "Returned";
+  // ----------------------------------------
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -111,7 +135,6 @@ const handleUpdate = async (field, value) => {
     }
   };
 
-  // Tính tổng tiền và tổng số lượng
   const orderSummary = useMemo(() => {
     if (!order?.products) return { totalItems: 0, totalQuantity: 0, subtotal: 0 };
     
@@ -122,12 +145,8 @@ const handleUpdate = async (field, value) => {
     return { totalItems, totalQuantity, subtotal };
   }, [order]);
 
-  // Loading state
-  if (orderLoading || !order) {
-    return <Loading />;
-  }
+  if (orderLoading || !order) return <Loading />;
 
-  // Error handling
   if (orderError) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -154,7 +173,7 @@ const handleUpdate = async (field, value) => {
           ← Quay lại
         </button>
         <button
-          onClick={() => dispatch(getOrder({ orderId: id, token: currentUser.token }))}
+          onClick={() => dispatch(getOrder(id))}
           className="rounded-lg bg-green-500 px-4 py-2 text-white transition-colors hover:bg-green-600"
           disabled={orderLoading}
         >
@@ -177,7 +196,7 @@ const handleUpdate = async (field, value) => {
 
         <div className="grid gap-8 md:grid-cols-3">
           {/* Product List */}
-          <div className="space-y-6">
+          <div className="space-y-6 md:col-span-1 lg:col-span-2">
             <h2 className="text-lg font-semibold">Danh sách sản phẩm</h2>
             <div className="space-y-4">
               {order.products?.length > 0 ? (
@@ -262,153 +281,98 @@ const handleUpdate = async (field, value) => {
             </div>
           </div>
 
-          {/* Customer Information */}
-          <div className="space-y-6 border-l-2 pl-6">
-            <h2 className="text-lg font-semibold">Thông tin khách hàng</h2>
-            <div className="space-y-4">
-              <div className="rounded-lg border p-4">
-                <h3 className="mb-2 font-medium">Thông tin liên hệ</h3>
-                <div className="space-y-1 text-sm text-gray-600">
-                  <p className="flex">
-                    <span className="w-28 text-gray-500">Họ tên:</span>
-                    <span className="font-medium">{order.customerInfo?.name || "Không có"}</span>
-                  </p>
-                  <p className="flex">
-                    <span className="w-28 text-gray-500">Số điện thoại:</span>
-                    <span className="font-medium">{order.customerInfo?.phone || "Không có"}</span>
-                  </p>
-                  <p className="flex">
-                    <span className="w-28 text-gray-500">Mã người dùng:</span>
-                    <span className="font-mono">{order.orderby?.substring(0, 8) || "Không có"}</span>
-                  </p>
+          {/* Customer Information & Management */}
+          <div className="space-y-6 border-l-2 pl-6 md:col-span-1">
+            <h2 className="text-lg font-semibold">Quản lý đơn hàng</h2>
+            
+            {/* Box Trạng thái */}
+            <div className="rounded-lg border p-4 bg-white shadow-sm">
+              <div className="space-y-4">
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-medium text-gray-600">Trạng thái đơn hàng:</span>
+                  <span className={`inline-block w-fit rounded-md px-3 py-1 text-sm text-white ${getStatusColor(order.orderStatus)}`}>
+                    {getStatusText(order.orderStatus)}
+                  </span>
                 </div>
-              </div>
-
-              <div className="rounded-lg border p-4">
-                <h3 className="mb-2 font-medium">Địa chỉ giao hàng</h3>
-                <div className="text-sm text-gray-600">
-                  <p>{order.customerInfo?.address || "Không có địa chỉ"}</p>
-                </div>
-              </div>
-
-              <div className="rounded-lg border p-4">
-                <h3 className="mb-2 font-medium">Phương thức thanh toán</h3>
-                <div className="text-sm">
-                  <p className="font-medium">{getPaymentMethodText(order.paymentMethod)}</p>
-                </div>
-              </div>
-
-              <div className="rounded-lg border p-4">
-                <h3 className="mb-2 font-medium">Tổng thanh toán</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tổng tiền hàng:</span>
-                    <span>{formatPrice(order.total)}</span>
-                  </div>
-                  <div className="flex justify-between border-t pt-2 font-semibold">
-                    <span>Tổng cộng:</span>
-                    <span className="text-green-600">{formatPrice(order.total)}</span>
-                  </div>
+                
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-medium text-gray-600">Trạng thái thanh toán:</span>
+                  <span className={`inline-block w-fit rounded-md px-3 py-1 text-sm text-white ${getPaymentStatusColor(order.paymentStatus)}`}>
+                    {order.paymentStatus === "paid" ? "Đã thanh toán" : 
+                     order.paymentStatus === "not_paid" ? "Chưa thanh toán" : 
+                     order.paymentStatus === "failed" ? "Thất bại" :
+                     order.paymentStatus === "refunded" ? "Đã hoàn tiền" :
+                     order.paymentStatus === "authorized" ? "Đã ủy quyền" : order.paymentStatus}
+                  </span>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Order Management */}
-          <div className="space-y-6 border-l-2 pl-6">
-            <h2 className="text-lg font-semibold">Quản lý đơn hàng</h2>
-            <div className="space-y-4">
-              <div className="rounded-lg border p-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Trạng thái đơn hàng:</span>
-                    <span className={`rounded-md px-3 py-1 text-white ${getStatusColor(order.orderStatus)}`}>
-                      {order.orderStatus === "Not Processed" ? "Chưa xử lý" :
-                       order.orderStatus === "Confirmed" ? "Đã xác nhận" :
-                       order.orderStatus === "Processing" ? "Đang xử lý" :
-                       order.orderStatus === "Dispatched" ? "Đang giao hàng" :
-                       order.orderStatus === "Delivered" ? "Đã giao hàng" :
-                       order.orderStatus === "Cancelled" ? "Đã hủy" :
-                       order.orderStatus === "Returned" ? "Đã trả hàng" : order.orderStatus}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Trạng thái thanh toán:</span>
-                    <span className={`rounded-md px-3 py-1 text-white ${getPaymentStatusColor(order.paymentStatus)}`}>
-                      {order.paymentStatus === "paid" ? "Đã thanh toán" : 
-                       order.paymentStatus === "not_paid" ? "Chưa thanh toán" : 
-                       order.paymentStatus === "failed" ? "Thất bại" :
-                       order.paymentStatus === "refunded" ? "Đã hoàn tiền" :
-                       order.paymentStatus === "authorized" ? "Đã ủy quyền" : order.paymentStatus}
-                    </span>
-                  </div>
-                  
-                  {order.trackingNumber && (
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">Mã vận đơn:</span>
-                      <span className="font-mono">{order.trackingNumber}</span>
-                    </div>
+            {/* Form Cập nhật */}
+            <div className="rounded-lg border p-4 bg-gray-50">
+              <h3 className="mb-3 font-medium text-gray-900">Cập nhật hệ thống</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm text-gray-600">Trạng thái đơn hàng</label>
+                  <select
+                    className={`w-full rounded border p-2 text-sm ${isOrderClosed ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
+                    value={order.orderStatus || ""}
+                    onChange={(e) => handleUpdate("status", e.target.value)}
+                    disabled={orderLoading || isOrderClosed}
+                  >
+                    {availableStatuses.map((status) => (
+                      <option key={status} value={status}>
+                        {getStatusText(status)}
+                      </option>
+                    ))}
+                  </select>
+                  {isOrderClosed && (
+                    <p className="mt-1 text-xs text-red-500">Đơn hàng đã đóng, không thể thay đổi.</p>
                   )}
                 </div>
+
+                <div>
+                  <label className="mb-1 block text-sm text-gray-600">Trạng thái thanh toán</label>
+                  <select
+                    className={`w-full rounded border p-2 text-sm ${isOrderClosed ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
+                    value={order.paymentStatus || ""}
+                    onChange={(e) => handleUpdate("paymentStatus", e.target.value)}
+                    disabled={orderLoading || isOrderClosed}
+                  >
+                    <option value="not_paid">Chưa thanh toán</option>
+                    <option value="paid">Đã thanh toán</option>
+                    <option value="failed">Thất bại</option>
+                    <option value="refunded">Đã hoàn tiền</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Thông tin Khách hàng */}
+            <h2 className="text-lg font-semibold pt-4">Thông tin khách hàng</h2>
+            <div className="space-y-4">
+              <div className="rounded-lg border p-4 text-sm">
+                <div className="space-y-2 text-gray-600">
+                  <p><span className="font-medium text-gray-900">Họ tên:</span> {order.customerInfo?.name}</p>
+                  <p><span className="font-medium text-gray-900">SĐT:</span> {order.customerInfo?.phone}</p>
+                  <p><span className="font-medium text-gray-900">Địa chỉ:</span> {order.customerInfo?.address}</p>
+                </div>
               </div>
 
-              <div className="rounded-lg border p-4">
-                <h3 className="mb-2 font-medium">Cập nhật trạng thái đơn hàng</h3>
-                <select
-                  className="w-full rounded border p-2"
-                  value={order.orderStatus || ""}
-                  onChange={(e) => handleUpdate("status", e.target.value)}
-                  disabled={orderLoading}
-                >
-                  <option value="Not Processed">Chưa xử lý</option>
-                  <option value="Confirmed">Đã xác nhận</option>
-                  <option value="Processing">Đang xử lý</option>
-                  <option value="Dispatched">Đang giao hàng</option>
-                  <option value="Delivered">Đã giao hàng</option>
-                  <option value="Cancelled">Đã hủy</option>
-                  <option value="Returned">Đã trả hàng</option>
-                </select>
-              </div>
-
-              <div className="rounded-lg border p-4">
-                <h3 className="mb-2 font-medium">Cập nhật trạng thái thanh toán</h3>
-                <select
-                  className="w-full rounded border p-2"
-                  value={order.paymentStatus || ""}
-                  onChange={(e) => handleUpdate("paymentStatus", e.target.value)}
-                  disabled={orderLoading}
-                >
-                  <option value="not_paid">Chưa thanh toán</option>
-                  <option value="paid">Đã thanh toán</option>
-                  <option value="failed">Thất bại</option>
-                  <option value="refunded">Đã hoàn tiền</option>
-                  <option value="authorized">Đã ủy quyền</option>
-                </select>
-              </div>
-
-           
-
-              {order.paymentIntent && (
-                <div className="rounded-lg border p-4">
-                  <h3 className="mb-2 font-medium">Thông tin thanh toán</h3>
-                  <div className="space-y-1 text-sm">
-                    <p className="flex justify-between">
-                      <span className="text-gray-600">Số tiền:</span>
-                      <span>{formatPrice(order.paymentIntent?.amount || order.total)}</span>
-                    </p>
-                    <p className="flex justify-between">
-                      <span className="text-gray-600">Tiền tệ:</span>
-                      <span>{order.paymentIntent?.currency || "VND"}</span>
-                    </p>
-                    <p className="flex justify-between">
-                      <span className="text-gray-600">Trạng thái:</span>
-                      <span>{order.paymentIntent?.status || "N/A"}</span>
-                    </p>
+              <div className="rounded-lg border p-4 text-sm">
+                <p className="mb-1 text-gray-600">Phương thức thanh toán:</p>
+                <p className="font-medium">{getPaymentMethodText(order.paymentMethod)}</p>
+                
+                <div className="mt-4 border-t pt-3">
+                  <div className="flex justify-between font-semibold">
+                    <span>Tổng thanh toán:</span>
+                    <span className="text-green-600 text-lg">{formatPrice(order.total)}</span>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
+
           </div>
         </div>
       </div>
