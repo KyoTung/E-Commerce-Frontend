@@ -12,20 +12,20 @@ const _path = "/admin";
 
 export const navbarLinks = [
     {
-        //title: "Dashboard",
+        //title: "Bảng điều khiển",
         links: [
             {
-                label: "Dashboard",
+                label: "Bảng điều khiển",
                 icon: Home,
                 path: _path,
             },
         ],
     },
     {
-        //title: "User",
+        //title: "Người dùng",
         links: [
             {
-                label: "Users",
+                label: "Người dùng",
                 icon: Users,
                 path: `${_path}/users`,
             },
@@ -34,7 +34,7 @@ export const navbarLinks = [
     {
         links: [
             {
-                label: "Categories",
+                label: "Danh mục",
                 icon: BiCategoryAlt,
                 path: `${_path}/categories`,
             },
@@ -43,7 +43,7 @@ export const navbarLinks = [
     {
         links: [
             {
-                label: "Brands",
+                label: "Thương hiệu",
                 icon: BiCategoryAlt,
                 path: `${_path}/brands`,
             },
@@ -52,7 +52,7 @@ export const navbarLinks = [
      {
         links: [
             {
-                label: "Colors",
+                label: "Màu sắc",
                 icon: MdOutlineInvertColors,
                 path: `${_path}/colors`,
             },
@@ -61,7 +61,7 @@ export const navbarLinks = [
     {
         links: [
             {
-                label: "Products",
+                label: "Sản phẩm",
                 icon: Package,
                 path: `${_path}/products`,
             },
@@ -70,7 +70,7 @@ export const navbarLinks = [
     {
         links: [
             {
-                label: "Orders",
+                label: "Đơn hàng",
                 icon: MdOutlineEventNote,
                 path: `${_path}/orders`,
             },
@@ -79,7 +79,7 @@ export const navbarLinks = [
     {
         links: [
             {
-                label: "Coupons",
+                label: "Mã giảm giá",
                 icon: RiCoupon2Line,
                 path: `${_path}/coupons`,
             },
@@ -89,7 +89,7 @@ export const navbarLinks = [
     // {
     //     links: [
     //         {
-    //             label: "Enquiries",
+    //             label: "Liên hệ",
     //             icon: RiQuestionAnswerLine,
     //             path: `${_path}/enquiries`,
     //         },
@@ -98,7 +98,7 @@ export const navbarLinks = [
      {
         links: [
             {
-                label: "Blog categories",
+                label: "Danh mục bài viết",
                 icon: MdOutlineEventNote,
                 path: `${_path}/blog-categories`,
             },
@@ -107,7 +107,7 @@ export const navbarLinks = [
      {
         links: [
             {
-                label: "Blogs",
+                label: "Bài viết",
                 icon: BsFillFileEarmarkPostFill,
                 path: `${_path}/blogs`,
             },
@@ -117,7 +117,7 @@ export const navbarLinks = [
     {
         links: [
             {
-                label: "Back to client page",
+                label: "Về trang khách",
                 icon: LogOut,
                 path: "/",
             },

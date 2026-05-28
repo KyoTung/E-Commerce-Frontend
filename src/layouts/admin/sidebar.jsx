@@ -37,7 +37,7 @@ export const Sidebar = forwardRef(({ collapsed }, ref) => {
                         href="/admin"
                         className="text-lg font-medium text-slate-900 transition-colors dark:text-slate-50"
                     >
-                        Phone Store
+                        NestStore
                     </a>
                 )}
             </div>
