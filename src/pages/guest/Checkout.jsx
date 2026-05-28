@@ -105,7 +105,7 @@ const Checkout = () => {
         phone: data.phone,
         email: data.email,
       },
-      paymentMethod: paymentMethod === "ZaloPay" ? "ZaloPay" : "COD",
+      paymentMethod: paymentMethod === "ZaloPay" ? "ZaloPay" : "cod",
       couponApplied: !!isCouponApplied,
       shippingFee: shippingFee,
       totalPrice: finalAmount,
