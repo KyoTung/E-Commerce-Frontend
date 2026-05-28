@@ -12,6 +12,31 @@ import {
   getAllColor,
 } from "../../../features/adminSlice/color/colorSlice";
 
+// --- ÁNH XẠ MÀU TIẾNG VIỆT ---
+const colorMap = {
+  "đỏ": "red",
+  "xanh lá": "green",
+  "xanh lá cây": "green",
+  "xanh dương": "blue",
+  "xanh nước biển": "blue",
+  "vàng": "yellow",
+  "đen": "black",
+  "trắng": "white",
+  "cam": "orange",
+  "tím": "purple",
+  "hồng": "pink",
+  "xám": "gray",
+  "ghi": "gray",
+  "nâu": "brown",
+};
+
+const getValidColor = (colorTitle) => {
+  if (!colorTitle) return "transparent";
+  const normalizedTitle = colorTitle.trim().toLowerCase();
+  return colorMap[normalizedTitle] || colorTitle;
+};
+// -----------------------------
+
 const Colors = () => {
   const dispatch = useDispatch();
   
@@ -62,10 +87,8 @@ const Colors = () => {
       let resultAction;
 
       if (modalMode === "add") {
-        // --- CREATE ---
         resultAction = await dispatch(createColor({ title: currentColor.title }));
       } else {
-        // --- UPDATE ---
         resultAction = await dispatch(
           updateColor({
             colorId: currentColor.id,
@@ -182,10 +205,10 @@ const Colors = () => {
                           {color.title}
                         </td>
                         <td className="px-6 py-4">
-                          {/* Hiển thị mẫu màu nếu title là mã hex hợp lệ */}
+                          {/* SỬ DỤNG HÀM getValidColor TẠI ĐÂY */}
                           <div
                             className="h-6 w-6 rounded-full border border-gray-200 shadow-sm"
-                            style={{ backgroundColor: color.title }}
+                            style={{ backgroundColor: getValidColor(color.title) }}
                             title={color.title}
                           ></div>
                         </td>
@@ -246,15 +269,14 @@ const Colors = () => {
                       setCurrentColor({ ...currentColor, title: e.target.value })
                     }
                     className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                    placeholder="e.g. Red or #ff0000"
+                    placeholder="VD: Đỏ, Xanh lá hoặc #ff0000"
                     autoFocus
                   />
-                  {/* Color Picker helper */}
                   <input 
                     type="color" 
                     value={currentColor.title.startsWith('#') ? currentColor.title : '#000000'}
                     onChange={(e) => setCurrentColor({ ...currentColor, title: e.target.value })}
-                    className="h-10 w-10 cursor-pointer rounded-lg border border-gray-300 p-1"
+                    className="h-10 w-10 min-w-[40px] cursor-pointer rounded-lg border border-gray-300 p-1"
                     title="Pick a color"
                   />
                 </div>
