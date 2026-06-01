@@ -2,13 +2,17 @@ import productService from "./productService";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 const initialState = {
-  product:{},
+  product: {},
   products: [],
   loading: false,
   error: null,
+  totalProducts: 0,
+  totalPages: 1,
+  currentPage: 1,
 };
 
-export const createProduct = createAsyncThunk("admin/product/create-product",
+export const createProduct = createAsyncThunk(
+  "admin/product/create-product",
   async (productData, thunkAPI) => {
     try {
       const response = await productService.createProduct(productData);
@@ -17,50 +21,68 @@ export const createProduct = createAsyncThunk("admin/product/create-product",
       const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue({ message });
     }
-  });
+  },
+);
 
-export const updateProduct = createAsyncThunk("admin/product/update", async ({ productId, productData  }, thunkAPI) => {
-  try {
-    const response = await productService.updateProduct(productId, productData, );
-    return response;
-  } catch (error) {
-    const message = error.response?.data?.message || error.message;
-    return thunkAPI.rejectWithValue({ message });
-  }
-});
-
- export const getAllProducts = createAsyncThunk(
-  "admin/product/get-all-products",
-  async (_, thunkAPI) => {
+export const updateProduct = createAsyncThunk(
+  "admin/product/update",
+  async ({ productId, productData }, thunkAPI) => {
     try {
-      const response = await productService.getAllProducts();
+      const response = await productService.updateProduct(
+        productId,
+        productData,
+      );
       return response;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue({ message });
     }
-  }
+  },
 );
 
-export const getProduct = createAsyncThunk("admin/product/get-product", async (productId, thunkAPI) => {
-  try {
-    const response = await productService.getProduct(productId);
-    return response;
-  } catch (error) {
-    const message = error.response?.data?.message || error.message;
-    return thunkAPI.rejectWithValue({ message });
-  }
-});
+export const getAllProducts = createAsyncThunk(
+  "admin/product/get-all-products",
+  async ({ page = 1, limit = 10, search = "" } = {}, thunkAPI) => {
+    try {
+      const response = await productService.getAllProductsAdmin(
+        page,
+        limit,
+        search,
+      );
+      return response; // { products, total, totalPages, currentPage }
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message,
+      );
+    }
+  },
+);
 
-export const deleteProduct = createAsyncThunk("admin/product/delete-product", async (productId, thunkAPI) => {
-  try {
-    const response = await productService.deleteProduct(productId);
-    return response;
-  } catch (error) {
-    const message = error.response?.data?.message || error.message;
-    return thunkAPI.rejectWithValue({ message });
-  }
-});
+export const getProduct = createAsyncThunk(
+  "admin/product/get-product",
+  async (productId, thunkAPI) => {
+    try {
+      const response = await productService.getProduct(productId);
+      return response;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue({ message });
+    }
+  },
+);
+
+export const deleteProduct = createAsyncThunk(
+  "admin/product/delete-product",
+  async (productId, thunkAPI) => {
+    try {
+      const response = await productService.deleteProduct(productId);
+      return response;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue({ message });
+    }
+  },
+);
 
 export const productSlice = createSlice({
   name: "product-admin",
@@ -87,7 +109,9 @@ export const productSlice = createSlice({
       })
       .addCase(updateProduct.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.products.findIndex(product => product.id === action.payload.id);
+        const index = state.products.findIndex(
+          (product) => product.id === action.payload.id,
+        );
         if (index !== -1) {
           state.products[index] = action.payload;
         }
@@ -103,15 +127,16 @@ export const productSlice = createSlice({
       })
       .addCase(deleteProduct.fulfilled, (state, action) => {
         state.loading = false;
-        state.products = state.products.filter(product => product.id !== action.payload.id);
+        state.products = state.products.filter(
+          (product) => product.id !== action.payload.id,
+        );
       })
       .addCase(deleteProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Failed to delete product";
       })
 
-
-    .addCase(getProduct.pending, (state) => {
+      .addCase(getProduct.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
@@ -124,20 +149,22 @@ export const productSlice = createSlice({
         state.error = action.payload?.message || "Failed to fetch product";
       })
 
-      .addCase(getAllProducts.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(getAllProducts.fulfilled, (state, action) => {
-        state.loading = false;
-        state.products = action.payload;  
-      })
-      .addCase(getAllProducts.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload?.message || "Failed to fetch products";
-      });
+     .addCase(getAllProducts.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    })
+    .addCase(getAllProducts.fulfilled, (state, action) => {
+      state.loading = false;
+      state.products = action.payload.products;
+      state.totalProducts = action.payload.total;
+      state.totalPages = action.payload.totalPages;
+      state.currentPage = action.payload.currentPage;
+    })
+    .addCase(getAllProducts.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.message || "Failed to fetch products";
+    });
   },
 });
 
 export default productSlice.reducer;
-

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { PencilLine, Trash, Plus, RefreshCw } from "lucide-react"; // Thêm icon
+import { PencilLine, Trash, Plus, RefreshCw } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getAllUser,
@@ -18,7 +18,6 @@ const User = () => {
   const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
-
   const { allUsers, isLoading } = useSelector((state) => state.customer);
 
   useEffect(() => {
@@ -36,7 +35,7 @@ const User = () => {
       hour12: false,
     };
     return new Date(dateString)
-      .toLocaleString("en-GB", options)
+      .toLocaleString("vi-VN", options)
       .replace(",", "");
   };
 
@@ -54,206 +53,174 @@ const User = () => {
   };
 
   const onDelete = async (user) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) {
-      return;
-    }
+    if (!window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) return;
     try {
       const id = user._id || user.id;
       const resultAction = await dispatch(deleteUser(id));
-
       if (deleteUser.fulfilled.match(resultAction)) {
-        toast.success("User deleted successfully");
-        // dispatch(getAllUser()); // KHÔNG CẦN GỌI LẠI
+        toast.success("Xóa người dùng thành công");
+        // Redux sẽ tự cập nhật danh sách (slice đã xử lý)
       } else {
-        const errorMsg =
-          resultAction.payload?.message || "Failed to delete user";
-        toast.error(errorMsg);
+        toast.error(resultAction.payload?.message || "Xóa thất bại");
       }
-    } catch (error) {
-      toast.error("An error occurred");
+    } catch {
+      toast.error("Lỗi hệ thống");
     }
   };
 
   const onBlockUser = async (user) => {
-    if (!window.confirm("Are you sure you want to block this user?")) {
-      return;
-    }
+    if (!window.confirm("Bạn có chắc chắn muốn khóa người dùng này?")) return;
     try {
       const id = user._id || user.id;
       const resultAction = await dispatch(blockUser(id));
-
       if (blockUser.fulfilled.match(resultAction)) {
-        toast.success(resultAction.payload?.message || "User blocked successfully");
-        // dispatch(getAllUser()); // KHÔNG CẦN GỌI LẠI
+        toast.success(resultAction.payload?.message || "Khóa người dùng thành công");
       } else {
-        toast.error(resultAction.payload?.message || "Failed to block user");
+        toast.error(resultAction.payload?.message || "Khóa thất bại");
       }
-    } catch (error) {
-      toast.error("An error occurred");
+    } catch {
+      toast.error("Lỗi hệ thống");
     }
   };
 
   const onUnBlockUser = async (user) => {
-    if (!window.confirm("Are you sure you want to unblock this user?")) {
-      return;
-    }
+    if (!window.confirm("Bạn có chắc chắn muốn mở khóa người dùng này?")) return;
     try {
       const id = user._id || user.id;
       const resultAction = await dispatch(unBlockUser(id));
-
       if (unBlockUser.fulfilled.match(resultAction)) {
-        toast.success(resultAction.payload?.message || "User unblocked successfully");
-        // dispatch(getAllUser()); // KHÔNG CẦN GỌI LẠI
+        toast.success(resultAction.payload?.message || "Mở khóa người dùng thành công");
       } else {
-        toast.error(resultAction.payload?.message || "Failed to unblock user");
+        toast.error(resultAction.payload?.message || "Mở khóa thất bại");
       }
-    } catch (error) {
-      toast.error("An error occurred");
+    } catch {
+      toast.error("Lỗi hệ thống");
     }
   };
 
   return (
-    <div>
+    <div className="p-4 md:p-6">
       <ToastContainer />
-      <h1 className="title mb-6">Users Management</h1>
-      
-      <div className="card">
-        {/* --- TOOLBAR --- */}
-        <div className="card-header flex flex-col md:flex-row items-center gap-4 py-4 px-6 border-b border-gray-100">
-          <div className="flex gap-2 w-full md:w-auto">
-            <Link
-              to="/admin/new-user"
-              className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition w-full md:w-auto"
-            >
-              <Plus size={18} />
-              Add New
-            </Link>
-            <button
-              onClick={() => dispatch(getAllUser())}
-              className="flex items-center justify-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition"
-            >
-              <RefreshCw size={18} />
-              Refresh
-            </button>
-          </div>
-
-          <div className="w-full md:ml-auto md:w-80">
-            <input
-              type="text"
-              value={search}
-              onChange={handleSearchChange}
-              placeholder="Search user..."
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
+      {/* Header */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-2xl font-bold text-gray-800">Quản lý người dùng</h1>
+        <div className="flex gap-2">
+          <Link
+            to="/admin/new-user"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+          >
+            <Plus size={18} /> Thêm người dùng
+          </Link>
+          <button
+            onClick={() => dispatch(getAllUser())}
+            className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition"
+          >
+            <RefreshCw size={18} /> Tải lại
+          </button>
         </div>
+      </div>
 
-        {/* --- TABLE --- */}
+      {/* Ô tìm kiếm */}
+      <div className="mb-4">
+        <input
+          type="text"
+          value={search}
+          onChange={handleSearchChange}
+          placeholder="Tìm kiếm theo tên, email hoặc số điện thoại..."
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 md:w-80"
+        />
+      </div>
+
+      {/* Bảng người dùng */}
+      <div className="overflow-hidden rounded-xl bg-white shadow-sm border border-gray-100">
         {isLoading ? (
-          <div className="p-12">
-            <Loading className="flex items-center justify-center" />
+          <div className="py-20">
+            <Loading />
           </div>
         ) : (
-          <div className="card-body p-0">
-            <div className="relative w-full overflow-x-auto">
-              <table className="w-full text-left text-sm text-gray-500">
-                <thead className="bg-gray-50 text-xs uppercase text-gray-700">
+          <div className="overflow-x-auto">
+            {filteredUsers.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">Không tìm thấy người dùng nào.</div>
+            ) : (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 w-16 text-center">#</th>
-                    <th className="px-6 py-3">Name</th>
-                    <th className="px-6 py-3">Email</th>
-                    <th className="px-6 py-3">Phone</th>
-                    <th className="px-6 py-3">Created At</th>
-                    <th className="px-6 py-3 text-center">Role</th>
-                    <th className="px-6 py-3 text-center">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black-500">#</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black-500">Tên</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black-500">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black-500">Số điện thoại</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black-500">Ngày tạo</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black-500">Vai trò</th>
+                    <th className="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-black-500">Thao tác</th>
                   </tr>
                 </thead>
-
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {filteredUsers.length > 0 ? (
-                    filteredUsers.map((user, index) => (
-                      <tr
-                        key={user._id || user.id}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
-                        <td className="px-6 py-4 text-center text-gray-400">
-                          {index + 1}
-                        </td>
-                        <td className="px-6 py-4 font-medium text-gray-900">
-                          {user.name || user.fullName || user.firstname + " " + user.lastname}
-                        </td>
-                        <td className="px-6 py-4">{user.email}</td>
-                        <td className="px-6 py-4 text-gray-500">
-                          {user.mobile || user.phone || "---"}
-                        </td>
-                        <td className="px-6 py-4 text-gray-500">
-                          {formatDate(user.createdAt || user.created_at)}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <span
-                            className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              user.role === "admin"
-                                ? "bg-purple-100 text-purple-800"
-                                : "bg-blue-100 text-blue-800"
-                            }`}
-                          >
-                            {user.role}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-center gap-3">
-                            {/* Edit */}
-                            <button
-                              onClick={() =>
-                                navigate(`/admin/edit-user/${user._id || user.id}`)
-                              }
-                              className="rounded p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition"
-                              title="Edit"
-                            >
-                              <PencilLine size={18} />
-                            </button>
-
-                            {/* Block / Unblock */}
-                            {user.isBlock ? (
-                              <button
-                                onClick={() => onUnBlockUser(user)}
-                                className="rounded p-1 text-amber-600 hover:bg-amber-50 hover:text-amber-800 transition"
-                                title="Unblock (Click to activate)"
-                              >
-                                <MdLockOutline size={20} />
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => onBlockUser(user)}
-                                className="rounded p-1 text-green-600 hover:bg-green-50 hover:text-green-800 transition"
-                                title="Block (Click to deactivate)"
-                              >
-                                <MdLockOpen size={20} />
-                              </button>
-                            )}
-
-                            {/* Delete */}
-                            <button
-                              onClick={() => onDelete(user)}
-                              className="rounded p-1 text-red-600 hover:bg-red-50 hover:text-red-800 transition"
-                              title="Delete"
-                            >
-                              <Trash size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={7} className="py-12 text-center text-gray-500 italic">
-                        No users found.
+                <tbody className="divide-y divide-gray-100 bg-white">
+                  {filteredUsers.map((user, idx) => (
+                    <tr key={user._id} className="hover:bg-gray-50 transition">
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-400">{idx + 1}</td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+                        {user.name || user.fullName || (user.firstname + " " + user.lastname)}
                       </td>
-                    </tr>
-                  )}
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">{user.email}</td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        {user.mobile || user.phone || "---"}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        {formatDate(user.createdAt || user.created_at)}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm">
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            user.role === "admin"
+                              ? "bg-purple-100 text-purple-800"
+                              : user.role === "user"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
+                        >
+                          {user.role === "admin" ? "Quản trị viên" : user.role === "user" ? "Khách hàng" : "Nhân viên"}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-right">
+                        <div className="flex justify-end gap-3">
+                          <button
+                            onClick={() => navigate(`/admin/edit-user/${user._id}`)}
+                            className="rounded-md p-1.5 text-blue-600 hover:bg-blue-50 transition"
+                            title="Sửa"
+                          >
+                            <PencilLine size={16} />
+                          </button>
+                          {user.isBlock ? (
+                            <button
+                              onClick={() => onUnBlockUser(user)}
+                              className="rounded-md p-1.5 text-amber-600 hover:bg-amber-50 transition"
+                              title="Mở khóa"
+                            >
+                              <MdLockOutline size={18} />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => onBlockUser(user)}
+                              className="rounded-md p-1.5 text-green-600 hover:bg-green-50 transition"
+                              title="Khóa"
+                            >
+                              <MdLockOpen size={18} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => onDelete(user)}
+                            className="rounded-md p-1.5 text-red-600 hover:bg-red-50 transition"
+                            title="Xóa"
+                          >
+                            <Trash size={16} />
+                          </button>
+                        </div>
+                       </td>
+                     </tr>
+                  ))}
                 </tbody>
               </table>
-            </div>
+            )}
           </div>
         )}
       </div>

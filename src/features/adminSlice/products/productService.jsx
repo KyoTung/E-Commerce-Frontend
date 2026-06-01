@@ -11,11 +11,12 @@ const updateProduct = async (productId, productData) => {
   return response.data;
 };
 
-const getAllProducts = async () => {
-  const response = await axiosClient.get('/product');
-  return response.data;
+const getAllProductsAdmin = async (page = 1, limit = 10, search = "") => {
+  const response = await axiosClient.get("/product/admin", {
+    params: { page, limit, search }
+  });
+  return response.data;  // { products, total, totalPages, currentPage }
 };
-
 const getProduct = async (productId) => {
   const response = await axiosClient.get(`/product/${productId}`);
   return response.data;
@@ -29,7 +30,7 @@ const deleteProduct = async (productId) => {
 const productService = {
   createProduct,
   updateProduct,
-  getAllProducts,
+  getAllProductsAdmin,
   getProduct,
   deleteProduct,
 };

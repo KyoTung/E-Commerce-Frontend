@@ -1,32 +1,67 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { PencilLine, Trash, Plus, RefreshCw } from "lucide-react";
+import { PencilLine, Trash, Plus, RefreshCw, Eye, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../../../components/Loading";
-
-import {
-  getAllProducts,
-  deleteProduct,
-} from "../../../features/adminSlice/products/productSlice";
+import { getAllProducts, deleteProduct } from "../../../features/adminSlice/products/productSlice";
 
 const Products = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Redux state
-  const { products, loading } = useSelector((state) => state.productAdmin);
-  
-  // Local state
+  const { products, loading, totalProducts, totalPages, currentPage } = useSelector(
+    (state) => state.productAdmin
+  );
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const itemsPerPage = 10;
 
-  // 1. Fetch Data
+  // Debounce tìm kiếm (500ms)
   useEffect(() => {
-    dispatch(getAllProducts());
-  }, [dispatch]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  // Helper format tiền tệ
+  // Gọi API khi page, itemsPerPage, debouncedSearch thay đổi
+  useEffect(() => {
+    dispatch(
+      getAllProducts({
+        page: currentPage,
+        limit: itemsPerPage,
+        search: debouncedSearch,
+      })
+    );
+  }, [dispatch, currentPage, debouncedSearch]);
+
+  // Reset về trang 1 khi search thay đổi
+  useEffect(() => {
+    if (debouncedSearch !== undefined) {
+      dispatch(
+        getAllProducts({
+          page: 1,
+          limit: itemsPerPage,
+          search: debouncedSearch,
+        })
+      );
+    }
+  }, [debouncedSearch]);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      dispatch(
+        getAllProducts({
+          page: newPage,
+          limit: itemsPerPage,
+          search: debouncedSearch,
+        })
+      );
+    }
+  };
+
   const formatPrice = (price) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -34,154 +69,137 @@ const Products = () => {
     }).format(price);
   };
 
-  // Client-side Search
-  const filteredProducts = products.filter((product) => {
-    const searchTerm = search.toLowerCase();
-    const matchTitle = product.title?.toLowerCase().includes(searchTerm);
-    const matchSku = product.sku?.toLowerCase().includes(searchTerm);
-    return matchTitle || matchSku;
-  });
-
-  //Delete Handler
   const onDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) {
-      return;
-    }
+    if (!window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) return;
     try {
       const resultAction = await dispatch(deleteProduct(id));
-
       if (deleteProduct.fulfilled.match(resultAction)) {
-        toast.success("Product deleted successfully");
-       dispatch(getAllProducts());
+        toast.success("Xóa sản phẩm thành công");
+        dispatch(
+          getAllProducts({
+            page: currentPage,
+            limit: itemsPerPage,
+            search: debouncedSearch,
+          })
+        );
       } else {
-        const errorMsg = resultAction.payload?.message || "Failed to delete product";
-        toast.error(errorMsg);
+        toast.error(resultAction.payload?.message || "Xóa thất bại");
       }
-    } catch (err) {
-      toast.error("An unexpected error occurred");
+    } catch {
+      toast.error("Lỗi hệ thống");
     }
   };
 
+  const handleViewProduct = (productId) => {
+    navigate(`/admin/product-detail/${productId}`);
+  };
+
   return (
-    <div>
+    <div className="p-4 md:p-6">
       <ToastContainer />
-      <h1 className="title mb-6">Products Management</h1>
-      
-      <div className="card">
-        {/* --- TOOLBAR --- */}
-        <div className="card-header flex flex-col md:flex-row items-center gap-4 py-4 px-6 border-b border-gray-100">
-          <div className="flex gap-2 w-full md:w-auto">
-            <Link
-              to="/admin/new-product"
-              className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition w-full md:w-auto"
-            >
-              <Plus size={18} />
-              Add New
-            </Link>
-            <button
-              onClick={() => dispatch(getAllProducts())}
-              className="flex items-center justify-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition"
-            >
-              <RefreshCw size={18} />
-              Refresh
-            </button>
-          </div>
-
-          <div className="w-full md:ml-auto md:w-80">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by Name or SKU..."
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-2xl font-bold text-gray-800">Quản lý sản phẩm</h1>
+        <div className="flex gap-2">
+          <Link
+            to="/admin/new-product"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+          >
+            <Plus size={18} /> Thêm sản phẩm
+          </Link>
+          <button
+            onClick={() =>
+              dispatch(
+                getAllProducts({
+                  page: 1,
+                  limit: itemsPerPage,
+                  search: debouncedSearch,
+                })
+              )
+            }
+            className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition"
+          >
+            <RefreshCw size={18} /> Tải lại
+          </button>
         </div>
+      </div>
 
-        {/* --- TABLE CONTENT --- */}
+      <div className="mb-4 relative w-full md:w-80">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Tìm kiếm theo tên sản phẩm..."
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 pr-10"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            <X size={16} />
+          </button>
+        )}
+      </div>
+
+      <div className="overflow-hidden rounded-xl bg-white shadow-sm border border-gray-100">
         {loading ? (
-          <div className="p-12">
-            <Loading className="flex items-center justify-center" />
-          </div>
+          <div className="py-20"><Loading /></div>
         ) : (
-          <div className="card-body p-0">
-            <div className="relative w-full overflow-x-auto">
-              {filteredProducts.length === 0 ? (
-                <div className="p-8 text-center text-gray-500 italic">
-                  No products found.
-                </div>
+          <>
+            <div className="overflow-x-auto">
+              {products.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">Không tìm thấy sản phẩm nào.</div>
               ) : (
-                <table className="w-full text-left text-sm text-gray-500">
-                  <thead className="bg-gray-50 text-xs uppercase text-gray-700">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 w-16 text-center">#</th>
-                      <th className="px-6 py-3">Product Info</th>
-                      <th className="px-6 py-3">Base Price</th>
-                      <th className="px-6 py-3 text-center">Stock</th>
-                      <th className="px-6 py-3 w-40 text-center">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase">#</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase">Sản phẩm</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase">Giá cơ bản</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase">Tồn kho</th>
+                      <th className="px-6 py-3 text-right text-xs font-bold uppercase">Thao tác</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
-                    {filteredProducts.map((product, index) => (
-                      <tr key={product._id || product.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 text-center text-gray-400">
-                          {index + 1}
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {products.map((product, idx) => (
+                      <tr key={product._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 text-sm text-gray-400">
+                          {(currentPage - 1) * itemsPerPage + idx + 1}
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex gap-4">
-                            <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+                            <div className="h-16 w-16 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
                               {product.images?.[0]?.url ? (
-                                <img
-                                  src={product.images[0].url}
-                                  alt={product.title}
-                                  className="h-full w-full object-cover"
-                                />
+                                <img src={product.images[0].url} alt={product.title} className="h-full w-full object-cover" />
                               ) : (
-                                <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
-                                  No Img
-                                </div>
+                                <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">No Img</div>
                               )}
                             </div>
                             <div className="flex flex-col justify-center">
-                              <p className="font-medium text-gray-900 line-clamp-2 max-w-[200px]" title={product.title}>
+                              <button
+                                onClick={() => handleViewProduct(product._id)}
+                                className="font-medium text-gray-900 hover:text-blue-600 hover:underline text-left"
+                              >
                                 {product.title}
-                              </p>
-                              {product.sku && (
-                                <p className="text-xs text-gray-500">SKU: {product.sku}</p>
-                              )}
+                              </button>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 font-medium text-gray-900">
-                          {formatPrice(product.basePrice || product.price)}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          {/* Logic tính tổng tồn kho từ variants hoặc lấy quantity gốc */}
-                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                             (product.quantity > 0 || product.variants?.length > 0) 
-                             ? "bg-green-100 text-green-700" 
-                             : "bg-red-100 text-red-700"
-                          }`}>
-                            {product.variants?.length > 0
-                              ? product.variants.reduce((total, v) => total + (v.quantity || 0), 0)
-                              : product.quantity || 0
-                            }
+                        <td className="px-6 py-4 font-medium">{formatPrice(product.basePrice)}</td>
+                        <td className="px-6 py-4">
+                          <span className="px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-700">
+                            {product.variants?.reduce((sum, v) => sum + v.quantity, 0) || 0}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-center gap-3">
-                            <button
-                              onClick={() => navigate(`/admin/edit-product/${product._id || product.id}`)}
-                              className="rounded p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition"
-                              title="Edit"
-                            >
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-3">
+                            <button onClick={() => handleViewProduct(product._id)} className="p-1 text-gray-600 hover:bg-gray-100 rounded">
+                              <Eye size={18} />
+                            </button>
+                            <button onClick={() => navigate(`/admin/edit-product/${product._id}`)} className="p-1 text-blue-600 hover:bg-blue-50 rounded">
                               <PencilLine size={18} />
                             </button>
-                            <button
-                              onClick={() => onDelete(product._id || product.id)}
-                              className="rounded p-1 text-red-600 hover:bg-red-50 hover:text-red-800 transition"
-                              title="Delete"
-                            >
+                            <button onClick={() => onDelete(product._id)} className="p-1 text-red-600 hover:bg-red-50 rounded">
                               <Trash size={18} />
                             </button>
                           </div>
@@ -192,7 +210,36 @@ const Products = () => {
                 </table>
               )}
             </div>
-          </div>
+
+            {/* Phân trang */}
+            {totalProducts > 0 && (
+              <div className="flex items-center justify-between border-t px-4 py-3">
+                <div className="text-sm text-gray-700">
+                  Hiển thị {(currentPage - 1) * itemsPerPage + 1} -{" "}
+                  {Math.min(currentPage * itemsPerPage, totalProducts)} trên {totalProducts} sản phẩm
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 border rounded disabled:opacity-50"
+                  >
+                    <ChevronLeft size={16} /> Trước
+                  </button>
+                  <span className="px-3 py-1">
+                    Trang {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 border rounded disabled:opacity-50"
+                  >
+                    Sau <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

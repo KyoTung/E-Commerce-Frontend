@@ -40,6 +40,8 @@ import Enquiries from "../pages/admin/enquiry/users";
 import Blog from "../pages/admin/blogs/Blog";
 import EditBlog from "../pages/admin/blogs/editBlog";
 import NewBlog from "../pages/admin/blogs/newBlog";
+import SaleReport from "../pages/admin/saleReport/saleReport";
+import AdminProductDetail from "../pages/admin/products/adminProductDetail";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginForm /> },
@@ -125,6 +127,10 @@ export const router = createBrowserRouter([
         element: <DashboardPage />,
       },
       {
+        path: "sale-report",
+        element: <SaleReport />,
+      },
+      {
         path: "users",
         element: <User />,
       },
@@ -167,6 +173,10 @@ export const router = createBrowserRouter([
       {
         path: "edit-product/:product_id",
         element: <EditProduct />,
+      },
+      {
+        path: "product-detail/:product_id",
+        element: <AdminProductDetail />,
       },
       {
         path: "orders",

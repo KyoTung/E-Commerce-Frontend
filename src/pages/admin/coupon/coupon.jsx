@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { PencilLine, Trash } from "lucide-react";
-import Axios from "../../../Axios";
+import { PencilLine, Trash, Plus, RefreshCw, X } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
 import Loading from "../../../components/Loading";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useDispatch, useSelector } from "react-redux";
 import {
   deleteCoupon,
   getCoupon,
@@ -17,9 +16,11 @@ const Coupon = () => {
   const dispatch = useDispatch();
   const { coupons, loading } = useSelector((state) => state.couponAdmin);
   const currentUser = useSelector((state) => state.auth.user);
+  const [search, setSearch] = useState("");
   const [isNew, setIsNew] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [editCoupon, setEditCoupon] = useState({
+    id: null,
     name: "",
     expiry: "",
     discount: "",
@@ -35,267 +36,314 @@ const Coupon = () => {
   }, []);
 
   const getCoupons = async () => {
-    dispatch(getAllCoupon({ token: currentUser.token }));
+    dispatch(getAllCoupon({ token: currentUser?.token }));
   };
+
+  const filteredCoupons = search.trim()
+    ? coupons.filter(
+        (coupon) =>
+          coupon.name?.toLowerCase().includes(search.toLowerCase()) ||
+          coupon.discount?.toString().includes(search)
+      )
+    : coupons;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!newCoupon.name.trim() || !newCoupon.discount || !newCoupon.expiry) {
+      toast.warning("Vui lòng nhập đầy đủ thông tin");
+      return;
+    }
     try {
-      console.log("newCoupon", newCoupon);
       const resultAction = await dispatch(
-        createCoupon({ couponData: newCoupon, token: currentUser.token })
+        createCoupon({ couponData: newCoupon, token: currentUser?.token })
       );
       if (createCoupon.fulfilled.match(resultAction)) {
-        toast.success("Discount code added successfully");
+        toast.success("Thêm mã giảm giá thành công");
         setIsNew(false);
+        setNewCoupon({ name: "", expiry: "", discount: "" });
         getCoupons();
+      } else {
+        toast.error(resultAction.payload?.message || "Thêm thất bại");
       }
     } catch (error) {
-      toast.error("Error adding discount code");
+      toast.error("Lỗi hệ thống");
     }
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    if (!editCoupon.name.trim() || !editCoupon.discount || !editCoupon.expiry) {
+      toast.warning("Vui lòng nhập đầy đủ thông tin");
+      return;
+    }
     try {
-      console.log("editCoupon", editCoupon);
       const resultAction = await dispatch(
         updateCoupon({
           couponId: editCoupon.id,
           couponData: editCoupon,
-          token: currentUser.token,
+          token: currentUser?.token,
         })
       );
       if (updateCoupon.fulfilled.match(resultAction)) {
-        toast.success("Discount code updated successfully");
+        toast.success("Cập nhật mã giảm giá thành công");
         setIsEdit(false);
         getCoupons();
+      } else {
+        toast.error(resultAction.payload?.message || "Cập nhật thất bại");
       }
     } catch (error) {
-      toast.error("Error updating discount code");
+      toast.error("Lỗi hệ thống");
     }
   };
 
   const startEdit = (coupon) => {
     setIsEdit(true);
     setEditCoupon({
+      id: coupon._id || coupon.id,
       name: coupon.name || "",
       discount: coupon.discount || "",
       expiry: coupon.expiry || "",
     });
   };
-  
+
   const onDelete = async (couponId) => {
-    if (!window.confirm("Do you want to delete this discount code?")) {
-      return;
-    }
+    if (!window.confirm("Bạn có chắc chắn muốn xóa mã giảm giá này?")) return;
     try {
       const resultAction = await dispatch(
-        deleteCoupon({ couponId: couponId, token: currentUser.token })
+        deleteCoupon({ couponId: couponId, token: currentUser?.token })
       );
       if (deleteCoupon.fulfilled.match(resultAction)) {
-        toast.success("Delete successful");
+        toast.success("Xóa mã giảm giá thành công");
         getCoupons();
+      } else {
+        toast.error(resultAction.payload?.message || "Xóa thất bại");
       }
-    } catch (error) {
-      toast.error("Error deleting discount code");
+    } catch {
+      toast.error("Lỗi hệ thống");
     }
   };
 
   return (
-    <div>
+    <div className="p-4 md:p-6">
       <ToastContainer />
-      <h1 className="title mb-6">Coupons</h1>
-
-      <div className="card">
-        <div className="card-header">
-          <div className="flex">
-            <button
-              type="submit"
-              onClick={() => setIsNew(true)}
-              className="mr-4 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
-            >
-              Add new
-            </button>
-
-            <button
-              onClick={() => getCoupons()}
-              className="rounded bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-700"
-            >
-              Refresh
-            </button>
-          </div>
+      {/* Header */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-2xl font-bold text-gray-800">Quản lý mã giảm giá</h1>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsNew(true)}
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+          >
+            <Plus size={18} /> Thêm mã mới
+          </button>
+          <button
+            onClick={() => getCoupons()}
+            className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition"
+          >
+            <RefreshCw size={18} /> Tải lại
+          </button>
         </div>
+      </div>
+
+      {/* Ô tìm kiếm */}
+      <div className="mb-4">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Tìm kiếm theo tên mã hoặc phần trăm giảm..."
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 md:w-80"
+        />
+      </div>
+
+      {/* Bảng mã giảm giá */}
+      <div className="overflow-hidden rounded-xl bg-white shadow-sm border border-gray-100">
         {loading ? (
-          <Loading className="flex items-center justify-center text-center" />
+          <div className="py-20">
+            <Loading />
+          </div>
         ) : (
-          <div className="card-body p-0">
-            <div className="relative h-[500px] w-full flex-shrink-0 overflow-auto rounded-none [scrollbar-width:_thin]">
-              <table className="table">
-                <thead className="table-header">
-                  <tr className="table-row">
-                    <th className="table-head">#</th>
-                    <th className="table-head">Name</th>
-                    <th className="table-head">Value</th>
-                    <th className="table-head">Start Date</th>
-                    {/* <th className="table-head">End Date</th> */}
-                    <th className="table-head">Action</th>
+          <div className="overflow-x-auto">
+            {filteredCoupons.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">Không tìm thấy mã giảm giá nào.</div>
+            ) : (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black-500">#</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black-500">Tên mã</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black-500">Giảm giá (%)</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-black-500">Ngày hết hạn</th>
+                    <th className="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-black-500">Thao tác</th>
                   </tr>
                 </thead>
-                <tbody className="table-body">
-                  {coupons.map((coupon, index) => (
-                    <tr key={coupon.id} className="table-row">
-                      <td className="table-cell">{index + 1}</td>
-                      <td className="table-cell">{coupon.name}</td>
-                      <td className="table-cell">{coupon.discount} %</td>
-                      <td className="table-cell">{coupon.expiry}</td>
-                      {/* <td className="table-cell">{coupon.end_date}</td> */}
-                      <td className="table-cell">
-                        <div className="flex items-center gap-x-4">
+                <tbody className="divide-y divide-gray-100 bg-white">
+                  {filteredCoupons.map((coupon, idx) => (
+                    <tr key={coupon._id || coupon.id} className="hover:bg-gray-50 transition">
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-400">{idx + 1}</td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{coupon.name}</td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">{coupon.discount}%</td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        {new Date(coupon.expiry).toLocaleDateString("vi-VN")}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-right">
+                        <div className="flex justify-end gap-3">
                           <button
                             onClick={() => startEdit(coupon)}
-                            className="text-blue-500 hover:text-blue-800 dark:text-blue-600 dark:hover:text-blue-800"
+                            className="rounded-md p-1.5 text-blue-600 hover:bg-blue-50 transition"
+                            title="Sửa"
                           >
-                            <PencilLine size={20} />
+                            <PencilLine size={16} />
                           </button>
                           <button
-                            onClick={() => onDelete(coupon?._id || coupon.id)}
-                            className="text-red-500 hover:text-red-800"
+                            onClick={() => onDelete(coupon._id || coupon.id)}
+                            className="rounded-md p-1.5 text-red-600 hover:bg-red-50 transition"
+                            title="Xóa"
                           >
-                            <Trash size={20} />
+                            <Trash size={16} />
                           </button>
                         </div>
-                      </td>
-                    </tr>
+                       </td>
+                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
+            )}
           </div>
         )}
       </div>
-      {/* Edit discount code popup menu */}
+
+      {/* Modal thêm mới */}
       {isNew && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-96 rounded-lg bg-white p-6">
-            <h2 className="mb-4 text-xl font-bold">New Coupon</h2>
-            <form onSubmit={handleSubmit}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b p-5">
+              <h3 className="text-xl font-bold text-gray-800">Thêm mã giảm giá</h3>
+              <button onClick={() => setIsNew(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={22} />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-5">
               <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium">Name</label>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Tên mã <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={newCoupon.name}
-                  onChange={(e) =>
-                    setNewCoupon({ ...newCoupon, name: e.target.value })
-                  }
-                  className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Coupon name"
+                  onChange={(e) => setNewCoupon({ ...newCoupon, name: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="VD: GIAM10, TET2025"
+                  autoFocus
                 />
               </div>
               <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium">
-                  Discount
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Giảm giá (%) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
                   value={newCoupon.discount}
-                  onChange={(e) =>
-                    setNewCoupon({ ...newCoupon, discount: e.target.value })
-                  }
-                  className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Discount value"
+                  onChange={(e) => setNewCoupon({ ...newCoupon, discount: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="VD: 10, 20"
+                  min="0"
+                  max="100"
                 />
               </div>
               <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium">
-                  Expiry date
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Ngày hết hạn <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
                   value={newCoupon.expiry}
-                  onChange={(e) =>
-                    setNewCoupon({ ...newCoupon, expiry: e.target.value })
-                  }
-                  className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Expiry date"
+                  onChange={(e) => setNewCoupon({ ...newCoupon, expiry: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsNew(false)}
-                  className="rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
-                  Cancel
+                  Hủy
                 </button>
                 <button
                   type="submit"
-                  className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+                  className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
                 >
-                  Save Changes
+                  Thêm mã
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* Modal chỉnh sửa */}
       {isEdit && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-96 rounded-lg bg-white p-6">
-            <h2 className="mb-4 text-xl font-bold">Edit Discount Code</h2>
-            <form onSubmit={handleUpdate}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b p-5">
+              <h3 className="text-xl font-bold text-gray-800">Chỉnh sửa mã giảm giá</h3>
+              <button onClick={() => setIsEdit(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={22} />
+              </button>
+            </div>
+            <form onSubmit={handleUpdate} className="p-5">
               <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium">Name</label>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Tên mã <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={editCoupon.name}
-                  onChange={(e) =>
-                    setEditCoupon({ ...editCoupon, name: e.target.value })
-                  }
-                  className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Discount code"
+                  onChange={(e) => setEditCoupon({ ...editCoupon, name: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="VD: GIAM10, TET2025"
+                  autoFocus
                 />
               </div>
               <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium">Value</label>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Giảm giá (%) <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="number"
                   value={editCoupon.discount}
-                  onChange={(e) =>
-                    setEditCoupon({ ...editCoupon, discount: e.target.value })
-                  }
-                  className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Discount value"
+                  onChange={(e) => setEditCoupon({ ...editCoupon, discount: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="VD: 10, 20"
+                  min="0"
+                  max="100"
                 />
               </div>
               <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium">
-                  Start date
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Ngày hết hạn <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
                   value={editCoupon.expiry}
-                  onChange={(e) =>
-                    setEditCoupon({ ...editCoupon, expiry: e.target.value })
-                  }
-                  className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Start date"
+                  onChange={(e) => setEditCoupon({ ...editCoupon, expiry: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
-
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsEdit(false)}
-                  className="rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
-                  Cancel
+                  Hủy
                 </button>
                 <button
                   type="submit"
-                  className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+                  className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
                 >
-                  Save Changes
+                  Lưu thay đổi
                 </button>
               </div>
             </form>

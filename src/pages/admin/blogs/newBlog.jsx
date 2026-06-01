@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useRef, useMemo } from "react"; // Bỏ 'use'
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import JoditEditor from "jodit-react";
 import { useForm } from "react-hook-form";
+import { X, Upload, ArrowLeft } from "lucide-react";
 import { createBlog } from "../../../features/adminSlice/blog/blogSlice";
 import { getAllBlogCategory } from "../../../features/adminSlice/blogCategory/blogCategorySlice";
 import axiosClient from "../../../api/axiosClient";
@@ -40,8 +41,8 @@ const NewBlog = ({ placeholder }) => {
   const config = useMemo(
     () => ({
       readonly: false,
-      placeholder: placeholder || "Start typing...",
-      height: 400, // Thêm chiều cao cho đẹp
+      placeholder: placeholder || "Bắt đầu viết nội dung...",
+      height: 400,
     }),
     [placeholder]
   );
@@ -56,7 +57,6 @@ const NewBlog = ({ placeholder }) => {
 
   const handleAddBlog = async (formData) => {
     if (isSubmitting) return;
-
     setIsSubmitting(true);
 
     try {
@@ -68,23 +68,19 @@ const NewBlog = ({ placeholder }) => {
         description: formData.description,
       };
 
-      console.log("Blog data to create:", blogData);
-
       const resultAction = await dispatch(createBlog(blogData));
 
       if (createBlog.fulfilled.match(resultAction)) {
-        toast.success("Blog created successfully");
+        toast.success("Thêm bài viết thành công");
         setTimeout(() => {
           navigate("/admin/blogs");
         }, 1000);
       } else {
-        const errorMessage =
-          resultAction.payload?.message || "Failed to create blog";
-        toast.error(errorMessage);
+        toast.error(resultAction.payload?.message || "Thêm thất bại");
       }
     } catch (error) {
       console.error("Create blog error:", error);
-      toast.error("An unexpected error occurred");
+      toast.error("Đã xảy ra lỗi");
     } finally {
       setIsSubmitting(false);
     }
@@ -100,13 +96,9 @@ const NewBlog = ({ placeholder }) => {
       const uploadPromises = Array.from(files).map(async (file) => {
         const imageForm = new FormData();
         imageForm.append("images", file);
-
         const response = await axiosClient.put("/blog/upload", imageForm, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         });
-
         const image = response.data[0];
         return {
           url: image.url,
@@ -117,170 +109,167 @@ const NewBlog = ({ placeholder }) => {
 
       const results = await Promise.all(uploadPromises);
       setGallery((prev) => [...prev, ...results]);
-
       e.target.value = null;
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.message || "Failed to upload images");
+      toast.error(err.response?.data?.message || "Tải ảnh thất bại");
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleCanceledImage = (imageToRemove) => {
-    const newGallery = gallery.filter(
-      (img) => img.public_id !== imageToRemove.public_id
-    );
-    setGallery(newGallery);
+    setGallery((prev) => prev.filter((img) => img.public_id !== imageToRemove.public_id));
   };
 
   return (
-    <div>
+    <div className="p-4 md:p-6">
       <ToastContainer />
-      <h1 className="title mb-6">New Blog</h1>
-      <form
-        onSubmit={handleSubmit(handleAddBlog)}
-        className="mx-auto max-w-7xl rounded-lg bg-white p-6 shadow-md"
-      >
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          {/* Left Column */}
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Blog Title *
-              </label>
-              <input
-                type="text"
-                {...register("title", { required: "Blog title is required" })}
-                className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-              {errors.title && (
-                <p className="mt-1 text-sm text-red-500">
-                  {errors.title.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Author *
-              </label>
-              <input
-                type="text"
-                {...register("author", { required: "Author is required" })}
-                className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-              {errors.author && (
-                <p className="mt-1 text-sm text-red-500">
-                  {errors.author.message}
-                </p>
-              )}
-            </div>
-          </div>
+      {/* Header */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-2xl font-bold text-gray-800">Thêm bài viết mới</h1>
+        <button
+          onClick={() => navigate("/admin/blogs")}
+          className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+        >
+          <ArrowLeft size={16} /> Quay lại danh sách
+        </button>
+      </div>
 
-          {/* Right Column */}
-          <div className="space-y-6">
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Blog Images
-              </label>
-              <div className="flex items-center gap-2">
+      {/* Form */}
+      <div className="overflow-hidden rounded-xl bg-white shadow-sm border border-gray-100">
+        <form onSubmit={handleSubmit(handleAddBlog)} className="p-6">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            {/* Left Column */}
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Tiêu đề bài viết <span className="text-red-500">*</span>
+                </label>
                 <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  disabled={isUploading}
-                  className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  type="text"
+                  {...register("title", { required: "Vui lòng nhập tiêu đề" })}
+                  className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="Nhập tiêu đề..."
                 />
-                {isUploading && (
-                  <span className="text-sm text-blue-500">Uploading...</span>
+                {errors.title && (
+                  <p className="mt-1 text-xs text-red-500">{errors.title.message}</p>
                 )}
               </div>
 
-              <div className="flex flex-wrap gap-3 mt-4">
-                {gallery.map((image, imgIndex) => (
-                  <div key={imgIndex} className="relative group">
-                    <img
-                      src={image.url}
-                      className="w-24 h-24 rounded-lg object-cover border border-gray-200"
-                      alt={`Blog img ${imgIndex}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleCanceledImage(image)}
-                      className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md transition-colors"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Tác giả <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  {...register("author", { required: "Vui lòng nhập tên tác giả" })}
+                  className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="VD: Admin, Nguyễn Văn A..."
+                />
+                {errors.author && (
+                  <p className="mt-1 text-xs text-red-500">{errors.author.message}</p>
+                )}
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Category *
-              </label>
-              <select
-                {...register("category", { required: "Category is required" })}
-                className={`mt-1 block w-full rounded-md border ${
-                  errors.category ? "border-red-500" : "border-gray-300"
-                } p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500`}
-              >
-                <option value="">Select Category</option>
-                {blogCategories?.map((category) => (
-                  <option
-                    key={category._id || category.id}
-                    value={category.title}
-                  >
-                    {category.title}
-                  </option>
-                ))}
-              </select>
-              {errors.category && (
-                <p className="mt-1 text-sm text-red-500">
-                  {errors.category.message}
-                </p>
-              )}
+            {/* Right Column */}
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Danh mục <span className="text-red-500">*</span>
+                </label>
+                <select
+                  {...register("category", { required: "Vui lòng chọn danh mục" })}
+                  className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                >
+                  <option value="">Chọn danh mục</option>
+                  {blogCategories?.map((category) => (
+                    <option key={category._id || category.id} value={category.title}>
+                      {category.title}
+                    </option>
+                  ))}
+                </select>
+                {errors.category && (
+                  <p className="mt-1 text-xs text-red-500">{errors.category.message}</p>
+                )}
+              </div>
+
+              {/* Upload ảnh */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Hình ảnh</label>
+                <div className="mt-1 flex items-center gap-2">
+                  <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 transition">
+                    <Upload size={16} />
+                    Chọn ảnh
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      disabled={isUploading}
+                      className="hidden"
+                    />
+                  </label>
+                  {isUploading && <span className="text-sm text-blue-500">Đang tải lên...</span>}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {gallery.map((image, idx) => (
+                    <div key={idx} className="relative group">
+                      <img
+                        src={image.url}
+                        alt={`blog-img-${idx}`}
+                        className="h-20 w-20 rounded-lg border border-gray-200 object-cover shadow-sm transition group-hover:shadow-md"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleCanceledImage(image)}
+                        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white shadow-sm hover:bg-red-700"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-1 text-xs text-gray-400">Hỗ trợ nhiều ảnh (jpg, png, webp)</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Description */}
-        <div className="pb-6 mt-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Content
-          </label>
-          <JoditEditor
-            ref={editor}
-            value={description}
-            config={config}
-            tabIndex={1}
-            onBlur={(newContent) => handleEditorChange(newContent)}
-            onChange={() => {}}
-          />
-        </div>
+          {/* Nội dung */}
+          <div className="mt-8">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Nội dung bài viết</label>
+            <JoditEditor
+              ref={editor}
+              value={description}
+              config={config}
+              tabIndex={1}
+              onBlur={(newContent) => handleEditorChange(newContent)}
+            />
+          </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <button
-            type="button"
-            onClick={() => navigate("/admin/blogs")}
-            className="rounded-lg px-4 py-2 text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors"
-            disabled={isSubmitting || isUploading}
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className={`rounded-lg bg-blue-600 px-6 py-2 text-white font-medium hover:bg-blue-700 transition-colors flex items-center ${
-              isSubmitting || isUploading ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            disabled={isSubmitting || isUploading}
-          >
-            {isSubmitting ? "Saving..." : "Save Blog"}
-          </button>
-        </div>
-      </form>
+          {/* Hành động */}
+          <div className="mt-8 flex justify-end gap-3 border-t pt-6">
+            <button
+              type="button"
+              onClick={() => navigate("/admin/blogs")}
+              className="rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              disabled={isSubmitting || isUploading}
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || isUploading}
+              className={`rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition ${
+                (isSubmitting || isUploading) ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              {isSubmitting ? "Đang lưu..." : "Lưu bài viết"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

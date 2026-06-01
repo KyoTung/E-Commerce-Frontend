@@ -22,6 +22,15 @@ export const navbarLinks = [
         ],
     },
     {
+        links: [
+            {
+                label: "Báo cáo/Thống kê", 
+                icon: ChartColumn, 
+                path: `${_path}/sale-report`, 
+            },
+        ],
+    },
+    {
         //title: "Người dùng",
         links: [
             {

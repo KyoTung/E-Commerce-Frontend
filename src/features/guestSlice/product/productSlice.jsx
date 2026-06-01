@@ -10,7 +10,7 @@ const initialState = {
 
 
  export const getAllProducts = createAsyncThunk(
-  "admin/product/get-all-products",
+  "/product/get-all-products",
   async (params, thunkAPI) => {
     try {
       const response = await productService.getAllProducts(params);

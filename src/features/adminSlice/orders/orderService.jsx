@@ -5,8 +5,8 @@ const updateOrder = async (id, orderData) => {
   return response.data;
 };
 
-const getAllOrder = async () => {
-  const response = await axiosClient.get('/order');
+const getAllOrder = async (page = 1, limit = 10, search = "") => {
+  const response = await axiosClient.get(`/order?page=${page}&limit=${limit}&search=${search}`);
   return response.data;
 };
 

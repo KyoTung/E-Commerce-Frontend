@@ -195,7 +195,10 @@ const ProductDetail = () => {
       currency: "VND",
     }).format(price || 0);
 
-  const handleAddToCart = () => {
+
+
+  // 1. Thêm async/await vào handleAddToCart
+  const handleAddToCart = async () => {
     if (!selectedVariant) {
       toast.warning("Vui lòng chọn Phiên bản và Màu sắc!");
       return false;
@@ -210,16 +213,36 @@ const ProductDetail = () => {
         },
       ],
     };
-    dispatch(addToCart(cartItemData));
-    return true;
-  };
-
-  const handleBuyNow = () => {
-    const added = handleAddToCart();
-    if (added) {
-      // navigate("/cart");
+    
+    try {
+      // Dùng .unwrap() của Redux Toolkit để đợi API chạy xong
+      await dispatch(addToCart(cartItemData)).unwrap(); 
+      
+      // CHUẨN BỊ DỮ LIỆU ĐẦY ĐỦ: Gọi getCart ngay tại đây để cập nhật Redux store hoàn chỉnh
+      await dispatch(getCart()).unwrap();
+      
+      return true; // Trả về true khi mọi thứ đã xong xuôi
+    } catch (error) {
+      console.error(error);
+      return false;
     }
   };
+
+  // 2. Thêm async/await vào handleBuyNow
+  const handleBuyNow = async () => {
+    // Chờ quá trình thêm và cập nhật giỏ hàng hoàn thành
+    const added = await handleAddToCart(); 
+    
+    if (added) {
+      const autoSelectKey = `${product._id}-${selectedVariant.color}-${selectedVariant.storage}`;
+      // Lúc này Redux store đã có dữ liệu hoàn chỉnh, chuyển trang sẽ render chuẩn 100%
+      navigate("/cart", { 
+        state: { autoSelectKey } 
+      });
+    }
+  };
+
+
 
 const onSubmitReview = async (data) => {
     if (!user) {

@@ -66,16 +66,6 @@ export const deleteCart = createAsyncThunk(
   }
 );
 
-export const applyCoupon = createAsyncThunk(
-  "cart/apply-coupon",
-  async (coupon, thunkAPI) => {
-    try {
-      return await cartService.applyCoupon(coupon);
-    } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data || error.message);
-    }
-  }
-);
 
 export const cartSlice = createSlice({
   name: "cart",
@@ -159,21 +149,10 @@ export const cartSlice = createSlice({
         state.cart = null;
         toast.success("Đã xóa toàn bộ giỏ hàng");
       })
-
-      .addCase(applyCoupon.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(applyCoupon.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-
-        state.cart = action.payload;
-        toast.success("Áp dụng mã giảm giá thành công!");
-      })
-      .addCase(applyCoupon.rejected, (state, action) => {
+      .addCase(deleteCart.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
-        toast.error(action.payload?.message || "Mã giảm giá không hợp lệ");
+        toast.error(action.payload?.message || "Xóa giỏ hàng thất bại");
       });
   },
 });

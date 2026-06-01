@@ -44,27 +44,27 @@ const DashboardPage = () => {
   }, []);
 
   const getCoupons = async () => {
-    dispatch(getAllCoupon({ token: currentUser.token }));
+    dispatch(getAllCoupon());
   };
 
   const getBlogs = () => {
     if (currentUser?.token) {
-      dispatch(getAllBlog({ token: currentUser.token }));
+      dispatch(getAllBlog());
     }
   };
 
   const getOrders = () => {
-    if (currentUser?.token) {
-      dispatch(getAllOrder(currentUser.token));
+    if (currentUser?.role === "admin" || currentUser?.role === "manager") {
+      dispatch(getAllOrder());
     }
   };
 
   const getProducts = () => {
-    dispatch(getAllProducts({ token: currentUser?.token }));
+    dispatch(getAllProducts());
   };
 
   const getUsers = () => {
-    dispatch(getAllUser(currentUser.token));
+    dispatch(getAllUser());
   };
 
   // Tính toán các thống kê
