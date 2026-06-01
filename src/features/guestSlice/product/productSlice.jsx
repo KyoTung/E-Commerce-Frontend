@@ -80,6 +80,7 @@ export const productClientSlice = createSlice({
       })
       .addCase(getAllProducts.fulfilled, (state, action) => {
         state.loading = false;
+       
         state.products = action.payload;  
       })
       .addCase(getAllProducts.rejected, (state, action) => {

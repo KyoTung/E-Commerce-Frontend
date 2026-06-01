@@ -26,6 +26,12 @@ const AllProducts = () => {
   const productListRef = useRef(null);
   const isFirstLoad = useRef(true);
 
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [error, setError] = useState(null);
+
+  // AbortController ref
+  const abortControllerRef = useRef(null);
+
   // Redux State
   const {
     products: reduxProducts,
@@ -33,10 +39,10 @@ const AllProducts = () => {
     isError,
   } = useSelector((state) => state.productClient);
   const { brands } = useSelector(
-    (state) => state.brandAdmin || state.brandAdmin
+    (state) => state.brandAdmin || state.brandAdmin,
   );
   const { categories } = useSelector(
-    (state) => state.categoryAdmin || state.categoryAdmin
+    (state) => state.categoryAdmin || state.categoryAdmin,
   );
   const { user } = useSelector((state) => state.auth);
   const { wishlist } = useSelector((state) => state.user);
@@ -65,6 +71,7 @@ const AllProducts = () => {
     { label: "Trên 20 triệu", min: 20000000, max: "" },
   ];
 
+
   // 1. Fetch Brands ban đầu
   useEffect(() => {
     dispatch(getAllBrand());
@@ -83,55 +90,77 @@ const AllProducts = () => {
       title: searchParams.get("title") || "",
       sort: "-createdAt",
     });
-    setPage(1);
-    setHasMore(true);
+    // setPage(1);
+    // setHasMore(true);
   }, [searchParams]);
 
   useEffect(() => {
+
+    // Hủy request cũ nếu có
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     const queryParams = {
       sort: filter.sort,
       page: page,
       limit: LIMIT,
+      ...(filter.brand && { brand: filter.brand }),
+      ...(filter.slugCategory && { slugCategory: filter.slugCategory }),
+      ...(filter.tag && { tags: filter.tag }),
+      ...(filter.minPrice !== "" && {
+        "basePrice[gte]": Number(filter.minPrice),
+      }),
+      ...(filter.maxPrice !== "" && {
+        "basePrice[lte]": Number(filter.maxPrice),
+      }),
+      ...(filter.title && { title: filter.title }),
     };
 
-    if (filter.brand) queryParams.brand = filter.brand;
-    if (filter.slugCategory) queryParams.slugCategory = filter.slugCategory;
-    if (filter.tag) queryParams.tags = filter.tag;
-    if (filter.minPrice !== "")
-      queryParams["basePrice[gte]"] = Number(filter.minPrice);
-    if (filter.maxPrice !== "")
-      queryParams["basePrice[lte]"] = Number(filter.maxPrice);
-    if (filter.title) queryParams.title = filter.title;
+    // Chỉ set loading cho lần đầu, không set khi load thêm
+    if (page === 1) {
+      // isLoading đã có trong slice, không cần set state local
+    } else {
+      setIsLoadingMore(true);
+    }
 
-    dispatch(getAllProducts(queryParams));
+    dispatch(getAllProducts(queryParams))
+
+    
+      .unwrap()
+      .catch((err) => {
+        if (err.name !== "AbortError") {
+          setError(err.message);
+          toast.error("Không thể tải sản phẩm");
+          if (page > 1) setHasMore(false);
+        }
+      })
+      .finally(() => {
+        if (page > 1) setIsLoadingMore(false);
+      });
+
+    return () => controller.abort();
   }, [dispatch, filter, page]);
 
-  useEffect(() => {
-    if (reduxProducts) {
-      if (page === 1) {
-        setLocalProducts(reduxProducts);
-
-        if (isFirstLoad.current) {
-          window.scrollTo(0, 0);
-        } else {
-          if (productListRef.current) {
-            productListRef.current.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            });
-          }
-        }
-      } else {
-        setLocalProducts((prev) => [...prev, ...reduxProducts]);
-      }
-
-      if (reduxProducts.length < LIMIT) {
-        setHasMore(false);
-      } else {
-        setHasMore(true);
-      }
+useEffect(() => {
+  if (reduxProducts) {
+    if (page === 1) {
+      setLocalProducts(reduxProducts);
+    } else {
+      setLocalProducts(prev => {
+        const merged = [...prev, ...reduxProducts];
+        // Loại bỏ trùng lặp dựa trên _id
+        const unique = merged.filter((item, index, self) =>
+          index === self.findIndex((p) => p._id === item._id)
+        );
+        return unique;
+      });
     }
-  }, [reduxProducts, page]);
+    setHasMore(reduxProducts.length === LIMIT);
+  }
+}, [reduxProducts, page]);
 
   // --- HANDLERS ---
 
@@ -163,6 +192,8 @@ const AllProducts = () => {
   const clearFilter = () => {
     setSearchParams({});
     setPage(1);
+    setError(null);
+    setHasMore(true);
   };
 
   const handleCategoryClick = (slug) => {
@@ -229,7 +260,6 @@ const AllProducts = () => {
     });
   };
 
-  
   return (
     <div className="bg-[#f4f6f8] min-h-screen pb-10">
       <div
@@ -448,7 +478,7 @@ const AllProducts = () => {
                   disabled={isLoading}
                   className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-10 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-[#fcebeb] hover:text-[#d70018] hover:border-[#d70018] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? "Đang tải..." : `Xem thêm ${LIMIT} sản phẩm`}
+                  {isLoading ? "Đang tải..." : `Xem thêm sản phẩm`}
                   {!isLoading && <FaChevronDown className="text-xs" />}
                 </button>
               </div>
