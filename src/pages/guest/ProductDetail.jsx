@@ -471,14 +471,7 @@ const onSubmitReview = async (data) => {
                           <span className="text-xs font-bold text-gray-700 truncate w-full">
                             {color}
                           </span>
-                          <span className="text-[10px] text-gray-500 mt-0.5">
-                            {exactVariant
-                              ? formatPrice(exactVariant.price)
-                              : formatPrice(
-                                  product.variants.find(
-                                    (v) => v.color === color
-                                  )?.price
-                                )}
+                          <span className="text-[10px] text-gray-500 mt-0.5">                           
                           </span>
                         </div>
                         {isSelected && (

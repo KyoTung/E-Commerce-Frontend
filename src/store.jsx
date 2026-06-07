@@ -14,6 +14,7 @@ import productClientReducer from "./features/guestSlice/product/productSlice";
 import cartReducer from "./features/guestSlice/cart/cartSlice";
 import orderClientReducer from "./features/guestSlice/order/orderSlice";
 import inventoryReducer from "./features/adminSlice/inventory/inventorySlice";
+import supplierReducer from "./features/adminSlice/supplier/supplierSlice";
 
 export const store = configureStore({
   reducer: {
@@ -33,6 +34,7 @@ export const store = configureStore({
     blogAdmin: blogReducer,
     orderAdmin: orderReducer,
     inventory: inventoryReducer,
+    supplier: supplierReducer,
   },
 });
 

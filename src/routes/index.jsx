@@ -43,6 +43,11 @@ import NewBlog from "../pages/admin/blogs/newBlog";
 import SaleReport from "../pages/admin/saleReport/saleReport";
 import AdminProductDetail from "../pages/admin/products/adminProductDetail";
 import AdminCreateOrder from "../pages/admin/orders/AdminCreateOrder";
+import Supplier from "../pages/admin/supplier/SupplierList";
+import ImportStock from "../pages/admin/inventory/ImportStock";
+import StockOverview from "../pages/admin/inventory/StockOverview";
+import ExportStock from "../pages/admin/inventory/ExportStock";
+import TransactionHistory from "../pages/admin/inventory/TransactionHistory";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginForm /> },
@@ -52,8 +57,8 @@ export const router = createBrowserRouter([
     element: <ForgotPassword />,
   },
   {
-   path: "/login-success",
-   element: <LoginSuccess />,
+    path: "/login-success",
+    element: <LoginSuccess />,
   },
   {
     path: "/",
@@ -99,8 +104,6 @@ export const router = createBrowserRouter([
         path: "/orders",
         element: <OrderHistory />,
       },
-
-     
 
       {
         path: "/blogs",
@@ -191,9 +194,34 @@ export const router = createBrowserRouter([
         element: <OrderDetail />,
       },
 
-       {
-       path:"create-order",
-       element: <AdminCreateOrder />
+      {
+        path: "create-order",
+        element: <AdminCreateOrder />,
+      },
+
+      {
+        path: "suppliers",
+        element: <Supplier />,
+      },
+
+      {
+        path:"inventory/import",
+        element: <ImportStock />,
+      },
+
+      {
+        path:"inventory/export",
+        element: <ExportStock />,
+      },
+
+      {
+        path:"inventory/stock",
+        element: <StockOverview />,
+      },
+
+      {
+        path:"inventory/transactions",
+        element: <TransactionHistory />,
       },
 
       {

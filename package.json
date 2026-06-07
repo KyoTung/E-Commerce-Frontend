@@ -17,6 +17,7 @@
     "antd": "^5.27.3",
     "axios": "^1.11.0",
     "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
     "dompurify": "^3.2.6",
     "jodit-react": "^5.2.19",
     "lucide-react": "^0.542.0",
