@@ -15,10 +15,17 @@ const getOrder = async (orderId) => {
   return response.data;
 };
 
+const adminCreateOrder = async (orderData) => {
+  const response = await axiosClient.post("/order/admin-create", orderData);
+  return response.data;
+};
+
+
 const OrderService = {
   updateOrder,
   getAllOrder,
   getOrder,
+  adminCreateOrder
 };
 
 export default OrderService;

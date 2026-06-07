@@ -1,5 +1,6 @@
 import OrderService from "./orderService";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { ToastContainer, toast } from "react-toastify";
 
 const initialState = {
   orders: [], // mảng orders của trang hiện tại
@@ -50,6 +51,17 @@ export const getOrder = createAsyncThunk(
   },
 );
 
+export const adminCreateOrderThunk = createAsyncThunk(
+  "orderAdmin/createOrder",
+  async (orderData, thunkAPI) => {
+    try {
+      return await OrderService.adminCreateOrder(orderData);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
 export const orderSlice = createSlice({
   name: "order-admin",
   initialState,
@@ -58,6 +70,13 @@ export const orderSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
+
+    resetOrderAdminState: (state) => {
+      state.isLoading = false;
+      state.isSuccess = false;
+      state.error = null;
+    }
+  
   },
   extraReducers: (builder) => {
     builder
@@ -101,9 +120,25 @@ export const orderSlice = createSlice({
         state.loading = false;
         state.error =
           action.payload?.message || "Lấy danh sách đơn hàng thất bại";
+      })
+
+      .addCase(adminCreateOrderThunk.pending, (state) => {
+        state.isLoading = true;
+        state.isSuccess = false;
+        state.error = null;
+      })
+      .addCase(adminCreateOrderThunk.fulfilled, (state) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        toast.success("Tạo đơn hàng thành công");
+      })
+      .addCase(adminCreateOrderThunk.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+        toast.error(action.payload?.message || "Tạo đơn hàng thất bại");
       });
   },
 });
 
-export const { resetOrderState } = orderSlice.actions;
+export const { resetOrderState, resetOrderAdminState } = orderSlice.actions;
 export default orderSlice.reducer;

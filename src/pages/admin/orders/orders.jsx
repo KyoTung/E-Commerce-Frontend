@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { RefreshCw, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { RefreshCw, ChevronLeft, ChevronRight, X, Plus } from "lucide-react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../../../components/Loading";
@@ -121,6 +121,13 @@ const Orders = () => {
       {/* Header */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-800">Quản lý đơn hàng</h1>
+        <div className="flex items-center gap-2">
+          <button
+          onClick={() => navigate("/admin/create-order")}
+          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+        >
+          <Plus size={18} /> Thêm mới
+        </button>
         <button
           onClick={() =>
             dispatch(
@@ -135,6 +142,7 @@ const Orders = () => {
         >
           <RefreshCw size={18} /> Tải lại
         </button>
+        </div>
       </div>
 
       {/* Ô tìm kiếm */}

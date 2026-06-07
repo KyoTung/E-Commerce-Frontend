@@ -29,6 +29,7 @@
     "react-number-format": "^5.4.4",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.8.2",
+    "react-select": "^5.10.2",
     "react-slideshow-image": "^4.3.2",
     "react-toastify": "^11.0.5",
     "recharts": "^3.1.2",

@@ -17,6 +17,7 @@ const getAllProductsAdmin = async (page = 1, limit = 10, search = "") => {
   });
   return response.data;  // { products, total, totalPages, currentPage }
 };
+
 const getProduct = async (productId) => {
   const response = await axiosClient.get(`/product/${productId}`);
   return response.data;

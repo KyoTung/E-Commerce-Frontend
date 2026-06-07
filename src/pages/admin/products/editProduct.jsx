@@ -48,13 +48,13 @@ const EditProduct = ({ placeholder }) => {
   const config = useMemo(
     () => ({
       readonly: false,
-      placeholder: placeholder || "Start typing...",
+      placeholder: placeholder || "Bắt đầu viết mô tả...",
       height: 400,
     }),
     [placeholder]
   );
 
-  // 1. Fetch Data
+  // 1. Lấy dữ liệu
   useEffect(() => {
     dispatch(getAllBrand());
     dispatch(getAllCategory());
@@ -64,7 +64,7 @@ const EditProduct = ({ placeholder }) => {
     }
   }, [product_id, dispatch]);
 
-  // 2. Populate Form Data
+  // 2. Điền dữ liệu vào form
   useEffect(() => {
     if (product && (product._id === product_id || product.id === product_id)) {
       reset({
@@ -75,7 +75,7 @@ const EditProduct = ({ placeholder }) => {
         brand: product.brand,
         category: product.category,
         tags: product.tags ? product.tags.join(", ") : "",
-        // Specs
+        // Thông số kỹ thuật
         screen: product.specifications?.screen,
         processor: product.specifications?.processor,
         storage: product.specifications?.storage,
@@ -88,12 +88,12 @@ const EditProduct = ({ placeholder }) => {
         design: product.specifications?.design,
       });
 
-      // Populate Images
+      // Ảnh chính
       if (product.images) {
         setGallery(product.images);
       }
 
-      // Populate Variants
+      // Phân loại
       if (product.variants && product.variants.length > 0) {
         setVariants(product.variants);
       } else {
@@ -108,7 +108,7 @@ const EditProduct = ({ placeholder }) => {
     setValue("description", newContent);
   };
 
-  // --- HELPER: Upload Images ---
+  // Helper upload ảnh
   const uploadImagesHelper = async (files) => {
     const uploadPromises = Array.from(files).map(async (file) => {
       const imageForm = new FormData();
@@ -130,7 +130,7 @@ const EditProduct = ({ placeholder }) => {
     return await Promise.all(uploadPromises);
   };
 
-  // 3. Handle Main Images
+  // Xử lý ảnh chính
   const handleFileChange = async (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -141,7 +141,7 @@ const EditProduct = ({ placeholder }) => {
       setGallery((prev) => [...prev, ...results]);
       e.target.value = null;
     } catch (err) {
-      toast.error("Failed to upload images");
+      toast.error("Tải ảnh thất bại");
     } finally {
       setIsUploading(false);
     }
@@ -157,13 +157,13 @@ const EditProduct = ({ placeholder }) => {
       setGallery((prev) =>
         prev.filter((img) => img.public_id !== image.public_id)
       );
-      toast.success("Image deleted");
+      toast.success("Đã xoá ảnh");
     } catch (error) {
-      toast.error("Failed to delete image");
+      toast.error("Xoá ảnh thất bại");
     }
   };
 
-  // 4. Handle Variants
+  // Xử lý phân loại (variants)
   const handleVariantChange = (index, field, value) => {
     const updatedVariants = [...variants];
     updatedVariants[index][field] = value;
@@ -178,7 +178,7 @@ const EditProduct = ({ placeholder }) => {
       !lastVariant.price ||
       !lastVariant.quantity
     ) {
-      toast.warning("Please complete the current variant first");
+      toast.warning("Vui lòng nhập đầy đủ thông tin cho phân loại hiện tại");
       return;
     }
     setVariants([
@@ -198,7 +198,7 @@ const EditProduct = ({ placeholder }) => {
       const updatedVariants = variants.filter((_, i) => i !== index);
       setVariants(updatedVariants);
     } else {
-      toast.error("At least one variant is required");
+      toast.error("Cần ít nhất một phân loại");
     }
   };
 
@@ -217,7 +217,7 @@ const EditProduct = ({ placeholder }) => {
       setVariants(updatedVariants);
       e.target.value = null;
     } catch (err) {
-      toast.error("Failed to upload variant images");
+      toast.error("Tải ảnh phân loại thất bại");
     } finally {
       setIsUploading(false);
     }
@@ -231,7 +231,7 @@ const EditProduct = ({ placeholder }) => {
     setVariants(updatedVariants);
   };
 
-  // 5. Submit Update
+  // Submit cập nhật sản phẩm
   const handleUpdateProduct = async (formData) => {
     if (isSubmitting) return;
 
@@ -239,7 +239,7 @@ const EditProduct = ({ placeholder }) => {
       (v) => !v.color || !v.storage || !v.price || !v.quantity
     );
     if (invalidVariants.length > 0) {
-      toast.error("Please complete all variant information");
+      toast.error("Vui lòng điền đầy đủ thông tin cho tất cả các phân loại");
       return;
     }
 
@@ -285,16 +285,16 @@ const EditProduct = ({ placeholder }) => {
       );
 
       if (updateProduct.fulfilled.match(resultAction)) {
-        toast.success("Product updated successfully");
+        toast.success("Cập nhật sản phẩm thành công");
         setTimeout(() => navigate("/admin/products"), 1000);
       } else {
         const errorMessage =
-          resultAction.payload?.message || "Failed to update product";
+          resultAction.payload?.message || "Cập nhật sản phẩm thất bại";
         toast.error(errorMessage);
       }
     } catch (error) {
       console.error(error);
-      toast.error("An unexpected error occurred");
+      toast.error("Lỗi không xác định");
     } finally {
       setIsSubmitting(false);
     }
@@ -310,7 +310,7 @@ const EditProduct = ({ placeholder }) => {
         >
           <IoArrowBackCircleOutline size={32} />
         </button>
-        <h1 className="title mb-0">Edit Product</h1>
+        <h1 className="title mb-0">Chỉnh sửa sản phẩm</h1>
       </div>
 
       <form
@@ -318,20 +318,18 @@ const EditProduct = ({ placeholder }) => {
         className="mx-auto max-w-7xl rounded-lg bg-white p-6 shadow-md"
       >
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          {/* Left Column */}
+          {/* Cột trái */}
           <div className="space-y-6">
             <div className="border-b pb-6">
-              <h2 className="mb-4 text-xl font-semibold">
-                General Information
-              </h2>
+              <h2 className="mb-4 text-xl font-semibold">Thông tin chung</h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Product Title *
+                    Tên sản phẩm *
                   </label>
                   <input
                     type="text"
-                    {...register("title", { required: "Required" })}
+                    {...register("title", { required: "Bắt buộc" })}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   />
                   {errors.title && (
@@ -353,19 +351,19 @@ const EditProduct = ({ placeholder }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Base Price *
+                    Giá cơ bản *
                   </label>
                   <input
                     type="number"
-                    {...register("basePrice", { required: "Required" })}
+                    {...register("basePrice", { required: "Bắt buộc" })}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   />
                 </div>
 
-                {/* Main Images */}
+                {/* Ảnh sản phẩm chính */}
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700">
-                    Product Images
+                    Ảnh sản phẩm
                   </label>
                   <div className="flex items-center gap-2">
                     <input
@@ -377,9 +375,7 @@ const EditProduct = ({ placeholder }) => {
                       className="mt-1 block w-full text-sm text-gray-500"
                     />
                     {isUploading && (
-                      <span className="text-sm text-blue-500">
-                        Uploading...
-                      </span>
+                      <span className="text-sm text-blue-500">Đang tải...</span>
                     )}
                   </div>
 
@@ -389,7 +385,7 @@ const EditProduct = ({ placeholder }) => {
                         <img
                           src={image.url}
                           className="w-20 h-20 rounded object-cover border"
-                          alt={`Product ${index}`}
+                          alt={`Sản phẩm ${index}`}
                         />
                         <button
                           type="button"
@@ -405,7 +401,7 @@ const EditProduct = ({ placeholder }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Tags
+                    Thẻ tags
                   </label>
                   <input
                     {...register("tags")}
@@ -415,19 +411,19 @@ const EditProduct = ({ placeholder }) => {
               </div>
             </div>
 
-            {/* Relations */}
+            {/* Liên kết */}
             <div className="border-b pb-6">
-              <h2 className="mb-4 text-xl font-semibold">Relations</h2>
+              <h2 className="mb-4 text-xl font-semibold">Liên kết</h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Brand *
+                    Thương hiệu *
                   </label>
                   <select
-                    {...register("brand", { required: "Required" })}
+                    {...register("brand", { required: "Bắt buộc" })}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   >
-                    <option value="">Select Brand</option>
+                    <option value="">Chọn thương hiệu</option>
                     {brands.map((b) => (
                       <option key={b._id || b.id} value={b.title}>
                         {b.title}
@@ -437,13 +433,13 @@ const EditProduct = ({ placeholder }) => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Category *
+                    Danh mục *
                   </label>
                   <select
-                    {...register("category", { required: "Required" })}
+                    {...register("category", { required: "Bắt buộc" })}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   >
-                    <option value="">Select Category</option>
+                    <option value="">Chọn danh mục</option>
                     {categories.map((c) => (
                       <option key={c._id || c.id} value={c.title}>
                         {c.title}
@@ -454,30 +450,32 @@ const EditProduct = ({ placeholder }) => {
               </div>
             </div>
 
-            {/* Variants */}
+            {/* Phiên bản */}
             <div className="border-b pb-6">
-              <h2 className="mb-4 text-xl font-semibold">Variants</h2>
+              <h2 className="mb-4 text-xl font-semibold">Phiên bản</h2>
               {variants.map((variant, index) => (
                 <div
                   key={index}
                   className="variant-item border-b pb-4 mb-4 border-gray-200"
                 >
                   <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-md font-medium">Variant {index + 1}</h3>
+                    <h3 className="text-md font-medium">
+                      Phiên bản {index + 1}
+                    </h3>
                     {variants.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeVariant(index)}
                         className="text-red-600 hover:text-red-800 text-sm"
                       >
-                        Remove
+                        Xoá
                       </button>
                     )}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs text-gray-600">
-                        Color
+                        Màu sắc
                       </label>
                       <select
                         value={variant.color}
@@ -486,7 +484,7 @@ const EditProduct = ({ placeholder }) => {
                         }
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       >
-                        <option value="">Select</option>
+                        <option value="">Chọn màu</option>
                         {colors.map((c, i) => (
                           <option key={i} value={c.title}>
                             {c.title}
@@ -496,7 +494,7 @@ const EditProduct = ({ placeholder }) => {
                     </div>
                     <div>
                       <label className="block text-xs text-gray-600">
-                        Storage
+                        Dung lượng
                       </label>
                       <select
                         value={variant.storage}
@@ -505,7 +503,7 @@ const EditProduct = ({ placeholder }) => {
                         }
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       >
-                        <option value="">Select</option>
+                        <option value="">Chọn dung lượng</option>
                         {["64GB", "128GB", "256GB", "512GB", "1TB"].map((s) => (
                           <option key={s} value={s}>
                             {s}
@@ -515,7 +513,7 @@ const EditProduct = ({ placeholder }) => {
                     </div>
                     <div>
                       <label className="block text-xs text-gray-600">
-                        Price
+                        Giá
                       </label>
                       <input
                         type="number"
@@ -528,7 +526,7 @@ const EditProduct = ({ placeholder }) => {
                     </div>
                     <div>
                       <label className="block text-xs text-gray-600">
-                        Quantity
+                        Số lượng
                       </label>
                       <input
                         type="number"
@@ -541,10 +539,10 @@ const EditProduct = ({ placeholder }) => {
                     </div>
                   </div>
 
-                  {/* Variant Images */}
+                  {/* Ảnh cho phân loại */}
                   <div className="mt-3">
                     <label className="block text-xs text-gray-600 mb-1">
-                      Variant Images
+                      Ảnh phân loại
                     </label>
                     <input
                       type="file"
@@ -580,43 +578,112 @@ const EditProduct = ({ placeholder }) => {
                 onClick={addVariant}
                 className="mt-2 text-sm text-blue-600 hover:text-blue-800"
               >
-                + Add Variant
+                + Thêm phân loại
               </button>
             </div>
           </div>
 
-          {/* Right Column: Specs & Desc */}
+          {/* Cột phải: Thông số kỹ thuật & Mô tả */}
           <div className="space-y-6">
             <div className="border-b pb-6">
-              <h2 className="mb-4 text-xl font-semibold">Specifications</h2>
+              <h2 className="mb-4 text-xl font-semibold">Thông số kỹ thuật</h2>
               <div className="grid grid-cols-1 gap-4">
-                {[
-                  "screen",
-                  "os",
-                  "frontCamera",
-                  "rearCamera",
-                  "processor",
-                  "ram",
-                  "storage",
-                  "battery",
-                  "sim",
-                  "design",
-                ].map((field) => (
-                  <div key={field}>
-                    <label className="block text-sm font-medium text-gray-700 capitalize">
-                      {field.replace(/([A-Z])/g, " $1").trim()}
-                    </label>
-                    <input
-                      {...register(field)}
-                      className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                    />
-                  </div>
-                ))}
+                {/* Danh sách các trường thông số, hiển thị bằng tiếng Việt */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Màn hình
+                  </label>
+                  <input
+                    {...register("screen")}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Hệ điều hành
+                  </label>
+                  <input
+                    {...register("os")}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Camera trước
+                  </label>
+                  <input
+                    {...register("frontCamera")}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Camera sau
+                  </label>
+                  <input
+                    {...register("rearCamera")}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    CPU
+                  </label>
+                  <input
+                    {...register("processor")}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    RAM
+                  </label>
+                  <input
+                    {...register("ram")}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    ROM
+                  </label>
+                  <input
+                    {...register("storage")}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Pin & Sạc
+                  </label>
+                  <input
+                    {...register("battery")}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    SIM
+                  </label>
+                  <input
+                    {...register("sim")}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Thiết kế
+                  </label>
+                  <input
+                    {...register("design")}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                  />
+                </div>
               </div>
             </div>
 
             <div className="pb-6">
-              <h2 className="mb-4 text-xl font-semibold">Description</h2>
+              <h2 className="mb-4 text-xl font-semibold">Mô tả sản phẩm</h2>
               <JoditEditor
                 ref={editor}
                 value={description}
@@ -633,7 +700,7 @@ const EditProduct = ({ placeholder }) => {
                 className="rounded-lg px-4 py-2 text-gray-700 border border-gray-300 hover:bg-gray-50"
                 disabled={isSubmitting}
               >
-                Cancel
+                Huỷ bỏ
               </button>
               <button
                 type="submit"
@@ -644,7 +711,7 @@ const EditProduct = ({ placeholder }) => {
                 }`}
                 disabled={isSubmitting || isUploading}
               >
-                {isSubmitting ? "Updating..." : "Update Product"}
+                {isSubmitting ? "Đang cập nhật..." : "Cập nhật sản phẩm"}
               </button>
             </div>
           </div>

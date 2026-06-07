@@ -18,7 +18,8 @@ const BlogCategory = () => {
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const { blogCategories, loading } = useSelector(
+
+  const { blogCategories = [], loading } = useSelector(
     (state) => state.blogCategoryAdmin
   );
 

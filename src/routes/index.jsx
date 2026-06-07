@@ -42,6 +42,7 @@ import EditBlog from "../pages/admin/blogs/editBlog";
 import NewBlog from "../pages/admin/blogs/newBlog";
 import SaleReport from "../pages/admin/saleReport/saleReport";
 import AdminProductDetail from "../pages/admin/products/adminProductDetail";
+import AdminCreateOrder from "../pages/admin/orders/AdminCreateOrder";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginForm /> },
@@ -98,6 +99,9 @@ export const router = createBrowserRouter([
         path: "/orders",
         element: <OrderHistory />,
       },
+
+     
+
       {
         path: "/blogs",
         element: <BlogPage />,
@@ -186,6 +190,12 @@ export const router = createBrowserRouter([
         path: "order-detail/:id",
         element: <OrderDetail />,
       },
+
+       {
+       path:"create-order",
+       element: <AdminCreateOrder />
+      },
+
       {
         path: "blogs",
         element: <Blog />,

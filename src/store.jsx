@@ -13,6 +13,7 @@ import orderReducer from "./features/adminSlice/orders/orderSlice";
 import productClientReducer from "./features/guestSlice/product/productSlice";
 import cartReducer from "./features/guestSlice/cart/cartSlice";
 import orderClientReducer from "./features/guestSlice/order/orderSlice";
+import inventoryReducer from "./features/adminSlice/inventory/inventorySlice";
 
 export const store = configureStore({
   reducer: {
@@ -31,5 +32,7 @@ export const store = configureStore({
     blogCategoryAdmin: blogCategoryReducer,
     blogAdmin: blogReducer,
     orderAdmin: orderReducer,
+    inventory: inventoryReducer,
   },
 });
+

@@ -45,7 +45,7 @@ const NewProduct = ({ placeholder }) => {
   const config = useMemo(
     () => ({
       readonly: false,
-      placeholder: placeholder || "Start typing...",
+      placeholder: placeholder || "Bắt đầu viết mô tả...",
       height: 400,
     }),
     [placeholder]
@@ -95,7 +95,7 @@ const NewProduct = ({ placeholder }) => {
       setGallery((prev) => [...prev, ...results]);
       e.target.value = null;
     } catch (err) {
-      toast.error("Failed to upload images");
+      toast.error("Tải ảnh thất bại");
     } finally {
       setIsUploading(false);
     }
@@ -123,7 +123,7 @@ const NewProduct = ({ placeholder }) => {
       !lastVariant.price ||
       !lastVariant.quantity
     ) {
-      toast.warning("Please complete the current variant first");
+      toast.warning("Vui lòng nhập đầy đủ thông tin cho phân loại hiện tại");
       return;
     }
 
@@ -144,11 +144,11 @@ const NewProduct = ({ placeholder }) => {
       const updatedVariants = variants.filter((_, i) => i !== index);
       setVariants(updatedVariants);
     } else {
-      toast.error("At least one variant is required");
+      toast.error("Cần ít nhất một phân loại");
     }
   };
 
-  // Handle Variant Images
+  // Xử lý upload ảnh cho từng phân loại
   const handleVariantImageChange = async (e, variantIndex) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -156,7 +156,6 @@ const NewProduct = ({ placeholder }) => {
     setIsUploading(true);
     try {
       const uploadedImages = await uploadImagesHelper(files);
-
       const updatedVariants = [...variants];
       updatedVariants[variantIndex].images = [
         ...updatedVariants[variantIndex].images,
@@ -165,12 +164,13 @@ const NewProduct = ({ placeholder }) => {
       setVariants(updatedVariants);
       e.target.value = null;
     } catch (err) {
-      toast.error("Failed to upload variant images");
+      toast.error("Tải ảnh phân loại thất bại");
     } finally {
       setIsUploading(false);
     }
   };
 
+  // Xoá ảnh của phân loại
   const removeVariantImage = (variantIndex, imageIndex) => {
     const updatedVariants = [...variants];
     updatedVariants[variantIndex].images = updatedVariants[
@@ -179,17 +179,17 @@ const NewProduct = ({ placeholder }) => {
     setVariants(updatedVariants);
   };
 
-  // 4. SUBMIT FORM
+  // Submit form
   const handleAddProduct = async (formData) => {
     if (isSubmitting) return;
 
-    // Validate Variants
+    // Kiểm tra các phân loại đã đầy đủ chưa
     const invalidVariants = variants.filter(
       (v) => !v.color || !v.storage || !v.price || !v.quantity
     );
 
     if (invalidVariants.length > 0) {
-      toast.error("Please complete all variant information");
+      toast.error("Vui lòng điền đầy đủ thông tin cho tất cả các phân loại");
       return;
     }
 
@@ -227,20 +227,19 @@ const NewProduct = ({ placeholder }) => {
         },
       };
 
-      console.log("Submitting:", productData);
       const resultAction = await dispatch(createProduct(productData));
 
       if (createProduct.fulfilled.match(resultAction)) {
-        toast.success("Product created successfully");
+        toast.success("Thêm sản phẩm thành công");
         setTimeout(() => navigate("/admin/products"), 1000);
       } else {
         const errorMessage =
-          resultAction.payload?.message || "Failed to create product";
+          resultAction.payload?.message || "Thêm sản phẩm thất bại";
         toast.error(errorMessage);
       }
     } catch (error) {
       console.error(error);
-      toast.error("An unexpected error occurred");
+      toast.error("Lỗi không xác định");
     } finally {
       setIsSubmitting(false);
     }
@@ -249,28 +248,26 @@ const NewProduct = ({ placeholder }) => {
   return (
     <div>
       <ToastContainer />
-      <h1 className="title mb-6">New Product</h1>
+      <h1 className="title mb-6">Thêm sản phẩm mới</h1>
       <form
         onSubmit={handleSubmit(handleAddProduct)}
         className="mx-auto max-w-7xl rounded-lg bg-white p-6 shadow-md"
       >
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          {/* Left Column */}
+          {/* Cột trái */}
           <div className="space-y-6">
-            {/* General Information */}
+            {/* Thông tin chung */}
             <div className="border-b pb-6">
-              <h2 className="mb-4 text-xl font-semibold">
-                General Information
-              </h2>
+              <h2 className="mb-4 text-xl font-semibold">Thông tin chung</h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Product Title *
+                    Tên sản phẩm *
                   </label>
                   <input
                     type="text"
                     {...register("title", {
-                      required: "Product title is required",
+                      required: "Tên sản phẩm là bắt buộc",
                     })}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   />
@@ -287,19 +284,19 @@ const NewProduct = ({ placeholder }) => {
                   </label>
                   <input
                     {...register("slug")}
-                    placeholder="Auto-generated from title"
+                    placeholder="Tự động tạo từ tên sản phẩm"
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Base Price *
+                    Giá cơ bản *
                   </label>
                   <input
                     type="number"
                     {...register("basePrice", {
-                      required: "Base price is required",
+                      required: "Giá cơ bản là bắt buộc",
                     })}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   />
@@ -310,10 +307,10 @@ const NewProduct = ({ placeholder }) => {
                   )}
                 </div>
 
-                {/* Main Images Upload */}
+                {/* Ảnh sản phẩm chính */}
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700">
-                    Product Images
+                    Ảnh sản phẩm
                   </label>
                   <div className="flex items-center gap-2">
                     <input
@@ -325,9 +322,7 @@ const NewProduct = ({ placeholder }) => {
                       disabled={isUploading}
                     />
                     {isUploading && (
-                      <span className="text-sm text-blue-500">
-                        Uploading...
-                      </span>
+                      <span className="text-sm text-blue-500">Đang tải...</span>
                     )}
                   </div>
 
@@ -337,7 +332,7 @@ const NewProduct = ({ placeholder }) => {
                         <img
                           src={image.url}
                           className="w-20 h-20 rounded object-cover border"
-                          alt={`Product ${imgIndex}`}
+                          alt={`Sản phẩm ${imgIndex}`}
                         />
                         <button
                           type="button"
@@ -353,30 +348,30 @@ const NewProduct = ({ placeholder }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Tags
+                    Thẻ tags
                   </label>
                   <input
                     {...register("tags")}
-                    placeholder="Separate tags with commas"
+                    placeholder="Phân cách bằng dấu phẩy"
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Relations */}
+            {/* Liên kết thương hiệu, danh mục */}
             <div className="border-b pb-6">
-              <h2 className="mb-4 text-xl font-semibold">Relations</h2>
+              <h2 className="mb-4 text-xl font-semibold">Liên kết</h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Brand *
+                    Thương hiệu *
                   </label>
                   <select
-                    {...register("brand", { required: "Brand is required" })}
+                    {...register("brand", { required: "Thương hiệu là bắt buộc" })}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   >
-                    <option value="">Select Brand</option>
+                    <option value="">Chọn thương hiệu</option>
                     {brands.map((brand) => (
                       <option key={brand._id || brand.id} value={brand.title}>
                         {brand.title}
@@ -392,15 +387,15 @@ const NewProduct = ({ placeholder }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Category *
+                    Danh mục *
                   </label>
                   <select
                     {...register("category", {
-                      required: "Category is required",
+                      required: "Danh mục là bắt buộc",
                     })}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   >
-                    <option value="">Select Category</option>
+                    <option value="">Chọn danh mục</option>
                     {categories.map((category) => (
                       <option
                         key={category._id || category.id}
@@ -419,9 +414,9 @@ const NewProduct = ({ placeholder }) => {
               </div>
             </div>
 
-            {/* Variants Section */}
+           
             <div className="border-b pb-6">
-              <h2 className="mb-4 text-xl font-semibold">Variants</h2>
+              <h2 className="mb-4 text-xl font-semibold">Phiên bản</h2>
               {variants.map((variant, index) => (
                 <div
                   key={index}
@@ -429,7 +424,7 @@ const NewProduct = ({ placeholder }) => {
                 >
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="text-md font-medium text-gray-800">
-                      Variant {index + 1}
+                      Phiên bản {index + 1}
                     </h3>
                     {variants.length > 1 && (
                       <button
@@ -437,16 +432,16 @@ const NewProduct = ({ placeholder }) => {
                         onClick={() => removeVariant(index)}
                         className="text-red-600 hover:text-red-800 text-sm font-medium"
                       >
-                        Remove
+                        Xoá
                       </button>
                     )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    {/* Variant Color */}
+                    {/* Màu sắc */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600">
-                        Color *
+                        Màu sắc *
                       </label>
                       <select
                         value={variant.color}
@@ -455,7 +450,7 @@ const NewProduct = ({ placeholder }) => {
                         }
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       >
-                        <option value="">Select Color</option>
+                        <option value="">Chọn màu</option>
                         {colors.map((color, i) => (
                           <option key={i} value={color.title}>
                             {color.title}
@@ -463,10 +458,10 @@ const NewProduct = ({ placeholder }) => {
                         ))}
                       </select>
                     </div>
-                    {/* Variant Storage */}
+                    {/* Dung lượng */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600">
-                        Storage *
+                        Dung lượng *
                       </label>
                       <select
                         value={variant.storage}
@@ -475,7 +470,7 @@ const NewProduct = ({ placeholder }) => {
                         }
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       >
-                        <option value="">Select Storage</option>
+                        <option value="">Chọn dung lượng</option>
                         {["64GB", "128GB", "256GB", "512GB", "1TB"].map((s) => (
                           <option key={s} value={s}>
                             {s}
@@ -483,10 +478,10 @@ const NewProduct = ({ placeholder }) => {
                         ))}
                       </select>
                     </div>
-                    {/* Variant Price */}
+                    {/* Giá phân loại */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600">
-                        Price *
+                        Giá *
                       </label>
                       <input
                         type="number"
@@ -497,10 +492,10 @@ const NewProduct = ({ placeholder }) => {
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       />
                     </div>
-                    {/* Variant Quantity */}
+                    {/* Số lượng tồn kho */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600">
-                        Quantity *
+                        Số lượng *
                       </label>
                       <input
                         type="number"
@@ -513,10 +508,10 @@ const NewProduct = ({ placeholder }) => {
                     </div>
                   </div>
 
-                  {/* Variant Images */}
+                  {/* Ảnh cho phân loại (có xoá) */}
                   <div className="mt-3">
                     <label className="block text-xs font-medium text-gray-600 mb-1">
-                      Variant Images
+                      Ảnh phân loại
                     </label>
                     <input
                       type="file"
@@ -552,15 +547,15 @@ const NewProduct = ({ placeholder }) => {
                 onClick={addVariant}
                 className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
               >
-                + Add Another Variant
+                + Thêm phân loại khác
               </button>
             </div>
           </div>
 
-          {/* Right Column: Specs & Desc */}
+          {/* Cột phải: Thông số kỹ thuật & Mô tả */}
           <div className="space-y-6">
             <div className="border-b pb-6">
-              <h2 className="mb-4 text-xl font-semibold">Specifications</h2>
+              <h2 className="mb-4 text-xl font-semibold">Thông số kỹ thuật</h2>
               <div className="grid grid-cols-1 gap-4">
                 {[
                   "screen",
@@ -573,23 +568,59 @@ const NewProduct = ({ placeholder }) => {
                   "battery",
                   "sim",
                   "design",
-                ].map((field) => (
-                  <div key={field}>
-                    <label className="block text-sm font-medium text-gray-700 capitalize">
-                      {field.replace(/([A-Z])/g, " $1").trim()}{" "}
-                      {/* Convert camelCase to Space */}
-                    </label>
-                    <input
-                      {...register(field)}
-                      className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                    />
-                  </div>
-                ))}
+                ].map((field) => {
+                  let label = field;
+                  switch (field) {
+                    case "screen":
+                      label = "Màn hình";
+                      break;
+                    case "os":
+                      label = "Hệ điều hành";
+                      break;
+                    case "frontCamera":
+                      label = "Camera trước";
+                      break;
+                    case "rearCamera":
+                      label = "Camera sau";
+                      break;
+                    case "processor":
+                      label = "CPU";
+                      break;
+                    case "ram":
+                      label = "RAM";
+                      break;
+                    case "storage":
+                      label = "ROM";
+                      break;
+                    case "battery":
+                      label = "Pin & Sạc";
+                      break;
+                    case "sim":
+                      label = "SIM";
+                      break;
+                    case "design":
+                      label = "Thiết kế";
+                      break;
+                    default:
+                      label = field;
+                  }
+                  return (
+                    <div key={field}>
+                      <label className="block text-sm font-medium text-gray-700 capitalize">
+                        {label}
+                      </label>
+                      <input
+                        {...register(field)}
+                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
             <div className="pb-6">
-              <h2 className="mb-4 text-xl font-semibold">Description</h2>
+              <h2 className="mb-4 text-xl font-semibold">Mô tả sản phẩm</h2>
               <JoditEditor
                 ref={editor}
                 value={description}
@@ -606,7 +637,7 @@ const NewProduct = ({ placeholder }) => {
                 className="rounded-lg px-4 py-2 text-gray-700 border border-gray-300 hover:bg-gray-50"
                 disabled={isSubmitting}
               >
-                Cancel
+                Huỷ bỏ
               </button>
               <button
                 type="submit"
@@ -617,7 +648,7 @@ const NewProduct = ({ placeholder }) => {
                 }`}
                 disabled={isSubmitting || isUploading}
               >
-                {isSubmitting ? "Saving..." : "Save Product"}
+                {isSubmitting ? "Đang lưu..." : "Lưu sản phẩm"}
               </button>
             </div>
           </div>

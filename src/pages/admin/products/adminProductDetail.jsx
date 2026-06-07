@@ -11,7 +11,8 @@ import Loading from "../../../components/Loading";
 import { getProduct } from "../../../features/adminSlice/products/productSlice"; 
 
 const AdminProductDetail = () => {
-  const { id } = useParams();
+  const { product_id } = useParams();
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -24,10 +25,10 @@ const AdminProductDetail = () => {
 
   // Fetch dữ liệu khi load trang
   useEffect(() => {
-    if (id) {
-      dispatch(getProduct(id));
-    }
-  }, [id, dispatch]);
+  if (product_id) {
+    dispatch(getProduct(product_id));
+  }
+}, [product_id, dispatch]);
 
   // Set ảnh mặc định khi có dữ liệu product
   useEffect(() => {
@@ -126,7 +127,7 @@ const AdminProductDetail = () => {
             
             <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden rounded-lg mb-4 bg-gray-50 border border-gray-100 p-2">
               <img
-                src={selectedImage || "https://via.placeholder.com/500"}
+                src={selectedImage || undefined}
                 alt={product.title}
                 className="h-full w-full object-contain transition-transform duration-500"
               />
@@ -199,7 +200,7 @@ const AdminProductDetail = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <FiBox className="text-blue-500" /> Kho hàng & Phiên bản (Variants)
+                <FiBox className="text-blue-500" /> Kho hàng & Phiên bản (Versions)
               </h2>
               <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">
                 {product.variants?.length || 0} Phân loại
@@ -264,7 +265,7 @@ const AdminProductDetail = () => {
                   {Object.entries(specs).map(([key, value], idx) => (
                     <div 
                       key={key} 
-                      className={`flex p-4 border-b border-gray-100 ${idx % 2 !== 0 && window.innerWidth >= 640 ? 'sm:border-l' : ''}`}
+                      className={`flex p-4 border-b border-gray-100 ${idx % 2 !== 0 ? 'sm:border-l' : ''}`}
                     >
                       <div className="w-1/3 font-semibold text-gray-600">{specLabels[key] || key}</div>
                       <div className="w-2/3 text-gray-800 pr-2">{value}</div>
