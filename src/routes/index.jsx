@@ -22,7 +22,8 @@ import Wishlist from "../pages/guest/Wishlist";
 import LoginSuccess from "../pages/authen/LoginSuccess";
 
 import AdminLayout from "../layouts/admin/layout";
-import DashboardPage from "../pages/admin/dashboard/page";
+import Dashboard from "../pages/admin/dashboard/Dashboard";
+import ReportsPage from "../pages/admin/dashboard/ReportsPage"
 import User from "../pages/admin/user/users";
 import EditUser from "../pages/admin/user/editUser";
 import NewUser from "../pages/admin/user/newUser";
@@ -40,7 +41,6 @@ import Enquiries from "../pages/admin/enquiry/users";
 import Blog from "../pages/admin/blogs/Blog";
 import EditBlog from "../pages/admin/blogs/editBlog";
 import NewBlog from "../pages/admin/blogs/newBlog";
-import SaleReport from "../pages/admin/saleReport/saleReport";
 import AdminProductDetail from "../pages/admin/products/adminProductDetail";
 import AdminCreateOrder from "../pages/admin/orders/AdminCreateOrder";
 import Supplier from "../pages/admin/supplier/SupplierList";
@@ -131,11 +131,11 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <DashboardPage />,
+        element: <Dashboard />,
       },
       {
         path: "sale-report",
-        element: <SaleReport />,
+        element: <ReportsPage />,
       },
       {
         path: "users",
