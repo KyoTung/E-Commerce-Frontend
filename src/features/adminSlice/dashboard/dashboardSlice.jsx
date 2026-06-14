@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import dashboardService from "./dashboardService";
 
-// Async thunks sử dụng service
+
 export const fetchOverview = createAsyncThunk(
   "dashboard/fetchOverview",
   async ({ period, startDate, endDate } = {}, thunkAPI) => {
@@ -58,6 +58,30 @@ export const fetchLowStock = createAsyncThunk(
   }
 );
 
+export const fetchRevenueByBrand = createAsyncThunk(
+  'dashboard/fetchRevenueByBrand',
+  async ({ startDate, endDate } = {}, thunkAPI) => {
+    try {
+      const response = await dashboardService.getRevenueByBrand({ startDate, endDate });
+      return response;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const fetchRevenueByCategory = createAsyncThunk(
+  'dashboard/fetchRevenueByCategory',
+  async ({ startDate, endDate } = {}, thunkAPI) => {
+    try {
+      const response = await dashboardService.getRevenueByCategory({ startDate, endDate });
+      return response;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
 const initialState = {
   overview: {
     totalRevenue: 0,
@@ -70,6 +94,8 @@ const initialState = {
   revenueChart: { data: [], period: "day", dateFormat: "YYYY-MM-DD" },
   topProducts: [],
   lowStockItems: [],
+   brandData: [],      
+  categoryData: [],
   loading: false,
   error: null,
 };
@@ -129,6 +155,29 @@ const dashboardSlice = createSlice({
         state.lowStockItems = action.payload;
       })
       .addCase(fetchLowStock.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(fetchRevenueByBrand.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchRevenueByBrand.fulfilled, (state, action) => {
+        state.loading = false;
+        state.brandData = action.payload;
+      })
+      .addCase(fetchRevenueByBrand.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchRevenueByCategory.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchRevenueByCategory.fulfilled, (state, action) => {
+        state.loading = false;
+        state.categoryData = action.payload;
+      })
+      .addCase(fetchRevenueByCategory.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

@@ -16,6 +16,9 @@ import orderClientReducer from "./features/guestSlice/order/orderSlice";
 import inventoryReducer from "./features/adminSlice/inventory/inventorySlice";
 import supplierReducer from "./features/adminSlice/supplier/supplierSlice";
 import dashboardRducer from "./features/adminSlice/dashboard/dashboardSlice"
+import blogReducerClient from "./features/guestSlice/blog/blogSlice"
+import blogCategoryReducerClient from "./features/guestSlice/blogCategory/blogCategorySlice";
+import bannerReducer from './features/adminSlice/banner/bannerSlice';
 
 export const store = configureStore({
   reducer: {
@@ -24,7 +27,11 @@ export const store = configureStore({
     productClient: productClientReducer,
     cart: cartReducer,
     orderClient: orderClientReducer,
+    blog: blogReducerClient,
+    blogCategory: blogCategoryReducerClient,
 
+
+    ///---Admin store-----////
     customer: customerReducer,
     categoryAdmin: categoryReducer,
     brandAdmin: brandReducer,
@@ -36,7 +43,8 @@ export const store = configureStore({
     orderAdmin: orderReducer,
     inventory: inventoryReducer,
     supplier: supplierReducer,
-    dashboard: dashboardRducer
+    dashboard: dashboardRducer,
+    banner: bannerReducer,
   },
 });
 

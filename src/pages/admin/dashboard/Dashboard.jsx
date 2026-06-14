@@ -41,10 +41,11 @@ import Loading from "../../../components/Loading";
 const Dashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { overview, revenueChart, topProducts, lowStockItems, loading } = useSelector(
-    (state) => state.dashboard
+  const { overview, revenueChart, topProducts, lowStockItems, loading } =
+    useSelector((state) => state.dashboard);
+  const { orders, loading: orderLoading } = useSelector(
+    (state) => state.orderAdmin,
   );
-  const { orders, loading: orderLoading } = useSelector((state) => state.orderAdmin);
   const { products } = useSelector((state) => state.productAdmin);
   const [period, setPeriod] = useState("week");
   const [visitCount, setVisitCount] = useState(0);
@@ -52,7 +53,12 @@ const Dashboard = () => {
   // Lấy thêm đơn hàng và sản phẩm nếu cần (đã có trong dashboard slice, nhưng orderAdmin có thể chưa có)
   useEffect(() => {
     dispatch(fetchOverview({ period }));
-    dispatch(fetchRevenueChart({ period, range: period === "week" ? 7 : period === "month" ? 30 : 12 }));
+    dispatch(
+      fetchRevenueChart({
+        period,
+        range: period === "week" ? 7 : period === "month" ? 30 : 12,
+      }),
+    );
     dispatch(fetchTopProducts({ limit: 5, by: "quantity", period }));
     dispatch(fetchLowStock(5));
     dispatch(getAllOrder({ page: 1, limit: 100, search: "" }));
@@ -64,9 +70,23 @@ const Dashboard = () => {
     fetchStats();
   }, [dispatch, period]);
 
+  useEffect(() => {
+    if (period === "week") {
+      dispatch(fetchRevenueChart({ period: "day", range: 7 }));
+    } else if (period === "month") {
+      dispatch(fetchRevenueChart({ period: "month", range: null })); // không dùng range
+    } else if (period === "year") {
+      dispatch(fetchRevenueChart({ period: "year", range: null }));
+    }
+  }, [dispatch, period]);
+
   const formatCurrency = (value) =>
-    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value || 0);
-  const formatNumber = (value) => new Intl.NumberFormat("vi-VN").format(value || 0);
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(value || 0);
+  const formatNumber = (value) =>
+    new Intl.NumberFormat("vi-VN").format(value || 0);
 
   // Tính tổng tồn kho từ variants
   const getTotalQuantity = (product) => {
@@ -81,22 +101,43 @@ const Dashboard = () => {
     if (!orders) return 0;
     const paidOrders = orders.filter((o) => o.paymentStatus === "paid");
     return paidOrders.reduce((total, order) => {
-      return total + order.products.reduce((sum, item) => sum + (item.count || 0), 0);
+      return (
+        total + order.products.reduce((sum, item) => sum + (item.count || 0), 0)
+      );
     }, 0);
   }, [orders]);
 
   // Thống kê trạng thái đơn hàng
   const getOrderStats = React.useMemo(() => {
-    const stats = { notProcessed: 0, processing: 0, shipped: 0, delivered: 0, cancelled: 0 };
+    const stats = {
+      notProcessed: 0,
+      processing: 0,
+      shipped: 0,
+      delivered: 0,
+      cancelled: 0,
+    };
     if (orders && orders.length) {
       orders.forEach((order) => {
         switch (order.orderStatus) {
-          case "Not Processed": stats.notProcessed++; break;
-          case "Processing": stats.processing++; break;
-          case "Shipped": case "Dispatched": stats.shipped++; break;
-          case "Delivered": case "Completed": stats.delivered++; break;
-          case "Cancelled": stats.cancelled++; break;
-          default: break;
+          case "Not Processed":
+            stats.notProcessed++;
+            break;
+          case "Processing":
+            stats.processing++;
+            break;
+          case "Shipped":
+          case "Dispatched":
+            stats.shipped++;
+            break;
+          case "Delivered":
+          case "Completed":
+            stats.delivered++;
+            break;
+          case "Cancelled":
+            stats.cancelled++;
+            break;
+          default:
+            break;
         }
       });
     }
@@ -113,7 +154,7 @@ const Dashboard = () => {
     { name: "Đã hủy", value: getOrderStats.cancelled, color: "#ef4444" },
     { name: "Đang giao", value: getOrderStats.shipped, color: "#3b82f6" },
     { name: "Chưa xử lý", value: getOrderStats.notProcessed, color: "#9ca3af" },
-  ].filter(item => item.value > 0);
+  ].filter((item) => item.value > 0);
 
   // Đơn hàng gần đây (5 mới nhất)
   const recentOrders = React.useMemo(() => {
@@ -134,7 +175,10 @@ const Dashboard = () => {
   const pendingOrders = React.useMemo(() => {
     if (!orders) return [];
     return orders
-      .filter((o) => o.orderStatus === "Not Processed" || o.orderStatus === "Processing")
+      .filter(
+        (o) =>
+          o.orderStatus === "Not Processed" || o.orderStatus === "Processing",
+      )
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 5)
       .map((order) => ({
@@ -153,11 +197,34 @@ const Dashboard = () => {
     return value.toLocaleString();
   };
 
-  const chartData = (revenueChart.data || []).map((item) => ({
-    name: item._id,
+const chartData = (revenueChart.data || []).map((item) => {
+  const id = String(item._id);
+  let displayName = id;
+
+  // Kiểm tra định dạng của id để quyết định cách hiển thị
+  if (id.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    // Dạng YYYY-MM-DD (ngày)
+    const [, month, day] = id.split('-');
+    displayName = `${day}/${month}`;
+  } else if (id.match(/^\d{4}-\d{2}$/)) {
+    // Dạng YYYY-MM (tháng)
+    const [year, month] = id.split('-');
+    displayName = `Tháng ${parseInt(month)}/${year}`;
+  } else if (id.match(/^\d{4}$/)) {
+    // Dạng YYYY (năm)
+    displayName = `Năm ${id}`;
+  } else if (id.match(/^\d{4}-\d{2}$/) && period === "week") {
+    // Trường hợp lỡ dùng period="week" mà id là năm-tuần (dự phòng)
+    const [year, week] = id.split('-');
+    displayName = `Tuần ${week}/${year}`;
+  }
+
+  return {
+    name: displayName,
     doanhThu: item.revenue || 0,
     soDon: item.orders || 0,
-  }));
+  };
+});
 
   const getStatusBadge = (status) => {
     const map = {
@@ -169,8 +236,25 @@ const Dashboard = () => {
       Cancelled: "bg-red-100 text-red-800",
     };
     const className = map[status] || "bg-gray-100 text-gray-800";
-    return <span className={`px-2 py-1 rounded-full text-xs font-medium ${className}`}>{status}</span>;
+    return (
+      <span
+        className={`px-2 py-1 rounded-full text-xs font-medium ${className}`}
+      >
+        {status}
+      </span>
+    );
   };
+
+  const handlePeriodChange = (newPeriod) => {
+  setPeriod(newPeriod);
+  if (newPeriod === 'week') {
+    dispatch(fetchRevenueChart({ period: 'day', range: 7 }));
+  } else if (newPeriod === 'month') {
+    dispatch(fetchRevenueChart({ period: 'month' }));
+  } else {
+    dispatch(fetchRevenueChart({ period: 'year' }));
+  }
+};
 
   return (
     <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
@@ -182,34 +266,68 @@ const Dashboard = () => {
 
       {/* Cards hàng 1 - KPI chính */}
       {loading && !overview.totalRevenue ? (
-        <div className="h-40 flex justify-center"><Loading /></div>
+        <div className="h-40 flex justify-center">
+          <Loading />
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
           <div className="bg-white rounded-xl shadow-sm border p-5">
             <div className="flex justify-between items-start">
-              <div><p className="text-sm text-gray-500">Tổng doanh thu</p><p className="text-2xl font-bold">{formatCurrency(overview.totalRevenue)}</p></div>
-              <div className="p-2 bg-green-100 rounded-lg"><DollarSign className="text-green-600" size={22} /></div>
+              <div>
+                <p className="text-sm text-gray-500">Tổng doanh thu</p>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(overview.totalRevenue)}
+                </p>
+              </div>
+              <div className="p-2 bg-green-100 rounded-lg">
+                <DollarSign className="text-green-600" size={22} />
+              </div>
             </div>
-            <div className="mt-3 text-xs text-gray-500">+12.5% so với tuần trước</div>
+            <div className="mt-3 text-xs text-gray-500">
+              +12.5% so với tuần trước
+            </div>
           </div>
           <div className="bg-white rounded-xl shadow-sm border p-5">
             <div className="flex justify-between items-start">
-              <div><p className="text-sm text-gray-500">Tổng đơn hàng</p><p className="text-2xl font-bold">{formatNumber(overview.totalOrders)}</p></div>
-              <div className="p-2 bg-blue-100 rounded-lg"><ShoppingBag className="text-blue-600" size={22} /></div>
+              <div>
+                <p className="text-sm text-gray-500">Tổng đơn hàng</p>
+                <p className="text-2xl font-bold">
+                  {formatNumber(overview.totalOrders)}
+                </p>
+              </div>
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <ShoppingBag className="text-blue-600" size={22} />
+              </div>
             </div>
-            <div className="mt-3 text-xs text-gray-500">+8.2% so với tuần trước</div>
+            <div className="mt-3 text-xs text-gray-500">
+              +8.2% so với tuần trước
+            </div>
           </div>
           <div className="bg-white rounded-xl shadow-sm border p-5">
             <div className="flex justify-between items-start">
-              <div><p className="text-sm text-gray-500">Sản phẩm đã bán</p><p className="text-2xl font-bold">{formatNumber(totalSoldProducts)}</p></div>
-              <div className="p-2 bg-indigo-100 rounded-lg"><TrendingUp className="text-indigo-600" size={22} /></div>
+              <div>
+                <p className="text-sm text-gray-500">Sản phẩm đã bán</p>
+                <p className="text-2xl font-bold">
+                  {formatNumber(totalSoldProducts)}
+                </p>
+              </div>
+              <div className="p-2 bg-indigo-100 rounded-lg">
+                <TrendingUp className="text-indigo-600" size={22} />
+              </div>
             </div>
-            <div className="mt-3 text-xs text-gray-500">Tổng số lượng bán ra</div>
+            <div className="mt-3 text-xs text-gray-500">
+              Tổng số lượng bán ra
+            </div>
           </div>
           <div className="bg-white rounded-xl shadow-sm border p-5">
             <div className="flex justify-between items-start">
-              <div><p className="text-sm text-gray-500">Lượt truy cập</p><p className="text-2xl font-bold">{formatNumber(visitCount)}</p></div>
-              <div className="p-2 bg-purple-100 rounded-lg"><FaEyeIcon className="text-purple-600" size={22} /></div>
+              <div>
+                <p className="text-sm text-gray-500">Lượt truy cập</p>
+                <p className="text-2xl font-bold">{formatNumber(visitCount)}</p>
+              </div>
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <FaEyeIcon className="text-purple-600" size={22} />
+              </div>
             </div>
             <div className="mt-3 text-xs text-gray-500">Toàn bộ thời gian</div>
           </div>
@@ -220,29 +338,64 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
         <div className="bg-white rounded-xl shadow-sm border p-5">
           <div className="flex justify-between items-start">
-            <div><p className="text-sm text-gray-500">Khách hàng mới</p><p className="text-2xl font-bold">{formatNumber(overview.newCustomers)}</p></div>
-            <div className="p-2 bg-pink-100 rounded-lg"><Users className="text-pink-600" size={22} /></div>
+            <div>
+              <p className="text-sm text-gray-500">Khách hàng mới</p>
+              <p className="text-2xl font-bold">
+                {formatNumber(overview.newCustomers)}
+              </p>
+            </div>
+            <div className="p-2 bg-pink-100 rounded-lg">
+              <Users className="text-pink-600" size={22} />
+            </div>
           </div>
-          <div className="mt-3 text-xs text-red-500">-3.4% so với tuần trước</div>
+          <div className="mt-3 text-xs text-red-500">
+            -3.4% so với tuần trước
+          </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-5">
           <div className="flex justify-between items-start">
-            <div><p className="text-sm text-gray-500">Sản phẩm tồn kho thấp</p><p className="text-2xl font-bold">{formatNumber(overview.lowStockCount)}</p></div>
-            <div className="p-2 bg-yellow-100 rounded-lg"><AlertTriangle className="text-yellow-600" size={22} /></div>
+            <div>
+              <p className="text-sm text-gray-500">Sản phẩm tồn kho thấp</p>
+              <p className="text-2xl font-bold">
+                {formatNumber(overview.lowStockCount)}
+              </p>
+            </div>
+            <div className="p-2 bg-yellow-100 rounded-lg">
+              <AlertTriangle className="text-yellow-600" size={22} />
+            </div>
           </div>
           <div className="mt-3 text-xs text-yellow-600">Cần nhập hàng</div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-5">
           <div className="flex justify-between items-start">
-            <div><p className="text-sm text-gray-500">Giá trị đơn TB</p><p className="text-2xl font-bold">{formatCurrency(overview.averageOrderValue)}</p></div>
-            <div className="p-2 bg-emerald-100 rounded-lg"><TrendingUp className="text-emerald-600" size={22} /></div>
+            <div>
+              <p className="text-sm text-gray-500">Giá trị đơn TB</p>
+              <p className="text-2xl font-bold">
+                {formatCurrency(overview.averageOrderValue)}
+              </p>
+            </div>
+            <div className="p-2 bg-emerald-100 rounded-lg">
+              <TrendingUp className="text-emerald-600" size={22} />
+            </div>
           </div>
           <div className="mt-3 text-xs text-gray-500">AOV</div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-5">
           <div className="flex justify-between items-start">
-            <div><p className="text-sm text-gray-500">Tỷ lệ hoàn thành</p><p className="text-2xl font-bold">{overview.totalOrders ? Math.round((getOrderStats.delivered / overview.totalOrders) * 100) : 0}%</p></div>
-            <div className="p-2 bg-teal-100 rounded-lg"><CheckCircle className="text-teal-600" size={22} /></div>
+            <div>
+              <p className="text-sm text-gray-500">Tỷ lệ hoàn thành</p>
+              <p className="text-2xl font-bold">
+                {overview.totalOrders
+                  ? Math.round(
+                      (getOrderStats.delivered / overview.totalOrders) * 100,
+                    )
+                  : 0}
+                %
+              </p>
+            </div>
+            <div className="p-2 bg-teal-100 rounded-lg">
+              <CheckCircle className="text-teal-600" size={22} />
+            </div>
           </div>
           <div className="mt-3 text-xs text-gray-500">Đơn đã giao / Tổng</div>
         </div>
@@ -254,9 +407,24 @@ const Dashboard = () => {
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-bold">Biến động doanh thu</h3>
             <div className="flex gap-2">
-              <button onClick={() => setPeriod("week")} className={`px-3 py-1 text-xs rounded-md ${period === "week" ? "bg-[#d70018] text-white" : "bg-gray-100"}`}>7 ngày</button>
-              <button onClick={() => setPeriod("month")} className={`px-3 py-1 text-xs rounded-md ${period === "month" ? "bg-[#d70018] text-white" : "bg-gray-100"}`}>30 ngày</button>
-              <button onClick={() => setPeriod("year")} className={`px-3 py-1 text-xs rounded-md ${period === "year" ? "bg-[#d70018] text-white" : "bg-gray-100"}`}>12 tháng</button>
+              <button
+                onClick={() => handlePeriodChange("week")}
+                className={`px-3 py-1 text-xs rounded-md ${period === "week" ? "bg-[#d70018] text-white" : "bg-gray-100"}`}
+              >
+                7 ngày
+              </button>
+              <button
+                onClick={() => handlePeriodChange("month")}
+                className={`px-3 py-1 text-xs rounded-md ${period === "month" ? "bg-[#d70018] text-white" : "bg-gray-100"}`}
+              >
+                Tháng
+              </button>
+              <button
+                onClick={() => handlePeriodChange("year")}
+                className={`px-3 py-1 text-xs rounded-md ${period === "year" ? "bg-[#d70018] text-white" : "bg-gray-100"}`}
+              >
+                Năm
+              </button>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={300}>
@@ -266,7 +434,13 @@ const Dashboard = () => {
               <YAxis tickFormatter={formatYAxis} />
               <Tooltip formatter={(v) => formatCurrency(v)} />
               <Legend />
-              <Line type="monotone" dataKey="doanhThu" name="Doanh thu" stroke="#d70018" strokeWidth={2} />
+              <Line
+                type="monotone"
+                dataKey="doanhThu"
+                name="Doanh thu"
+                stroke="#d70018"
+                strokeWidth={2}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -275,16 +449,38 @@ const Dashboard = () => {
           {orderStatusData.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
-                <Pie data={orderStatusData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}>
-                  {orderStatusData.map((entry, idx) => <Cell key={idx} fill={entry.color} />)}
+                <Pie
+                  data={orderStatusData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={80}
+                  dataKey="value"
+                  label={({ name, percent }) =>
+                    `${name}: ${(percent * 100).toFixed(0)}%`
+                  }
+                >
+                  {orderStatusData.map((entry, idx) => (
+                    <Cell key={idx} fill={entry.color} />
+                  ))}
                 </Pie>
                 <Tooltip formatter={(v) => formatNumber(v)} />
               </PieChart>
             </ResponsiveContainer>
-          ) : <div className="text-center py-10 text-gray-500">Chưa có dữ liệu</div>}
+          ) : (
+            <div className="text-center py-10 text-gray-500">
+              Chưa có dữ liệu
+            </div>
+          )}
           <div className="flex flex-wrap justify-center gap-3 mt-2">
             {orderStatusData.map((item) => (
-              <div key={item.name} className="flex items-center gap-1 text-xs"><div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} /><span>{item.name}</span></div>
+              <div key={item.name} className="flex items-center gap-1 text-xs">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: item.color }}
+                />
+                <span>{item.name}</span>
+              </div>
             ))}
           </div>
         </div>
@@ -293,26 +489,78 @@ const Dashboard = () => {
       {/* Bảng đơn hàng gần đây và chờ xử lý */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white rounded-xl shadow-sm border p-5">
-          <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold">Đơn hàng gần đây</h3><button onClick={() => navigate("/admin/orders")} className="text-sm text-red-600 hover:underline">Xem tất cả</button></div>
-          {orderLoading ? <Loading /> : recentOrders.length === 0 ? <div className="text-center py-8 text-gray-400">Chưa có đơn hàng</div> : (
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold">Đơn hàng gần đây</h3>
+            <button
+              onClick={() => navigate("/admin/orders")}
+              className="text-sm text-red-600 hover:underline"
+            >
+              Xem tất cả
+            </button>
+          </div>
+          {orderLoading ? (
+            <Loading />
+          ) : recentOrders.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              Chưa có đơn hàng
+            </div>
+          ) : (
             <div className="space-y-3">
-              {recentOrders.map(order => (
-                <div key={order.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <div><div className="font-medium">#{order.id.slice(-6)} - {order.customer}</div><div className="text-xs text-gray-500">{order.date}</div></div>
-                  <div className="text-right"><div className="font-bold text-red-600">{formatCurrency(order.amount)}</div>{getStatusBadge(order.status)}</div>
+              {recentOrders.map((order) => (
+                <div
+                  key={order.id}
+                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                >
+                  <div>
+                    <div className="font-medium">
+                      #{order.id.slice(-6)} - {order.customer}
+                    </div>
+                    <div className="text-xs text-gray-500">{order.date}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-red-600">
+                      {formatCurrency(order.amount)}
+                    </div>
+                    {getStatusBadge(order.status)}
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-5">
-          <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold">Đơn hàng chờ xử lý</h3><span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Cần xử lý</span></div>
-          {pendingOrders.length === 0 ? <div className="text-center py-8 text-green-600">✅ Không có đơn chờ xử lý</div> : (
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold">Đơn hàng chờ xử lý</h3>
+            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+              Cần xử lý
+            </span>
+          </div>
+          {pendingOrders.length === 0 ? (
+            <div className="text-center py-8 text-green-600">
+              ✅ Không có đơn chờ xử lý
+            </div>
+          ) : (
             <div className="space-y-3">
-              {pendingOrders.map(order => (
-                <div key={order.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <div><div className="font-medium">#{order.id.slice(-6)} - {order.customer}</div><div className="text-xs text-gray-500">{order.date} - {order.paymentMethod === "cod" ? "COD" : "Chuyển khoản"}</div></div>
-                  <div className="text-right"><div className="font-bold text-red-600">{formatCurrency(order.amount)}</div>{getStatusBadge(order.status)}</div>
+              {pendingOrders.map((order) => (
+                <div
+                  key={order.id}
+                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                >
+                  <div>
+                    <div className="font-medium">
+                      #{order.id.slice(-6)} - {order.customer}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {order.date} -{" "}
+                      {order.paymentMethod === "cod" ? "COD" : "Chuyển khoản"}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-red-600">
+                      {formatCurrency(order.amount)}
+                    </div>
+                    {getStatusBadge(order.status)}
+                  </div>
                 </div>
               ))}
             </div>
@@ -326,25 +574,83 @@ const Dashboard = () => {
           <h3 className="text-lg font-bold mb-4">Top sản phẩm bán chạy</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full">
-              <thead className="bg-gray-50 text-xs uppercase"><tr><th className="p-2 text-left">Sản phẩm</th><th className="p-2 text-center">Đã bán</th><th className="p-2 text-right">Doanh thu</th></tr></thead>
+              <thead className="bg-gray-50 text-xs uppercase">
+                <tr>
+                  <th className="p-2 text-left">Sản phẩm</th>
+                  <th className="p-2 text-left">Phiên bản</th>
+                  <th className="p-2 text-center">Đã bán</th>
+                  <th className="p-2 text-right">Doanh thu</th>
+                </tr>
+              </thead>
               <tbody>
-                {topProductsList.slice(0,5).map((item, idx) => (
-                  <tr key={idx} className="border-t"><td className="p-2 flex items-center gap-2"><img src={item._id?.image} className="w-8 h-8 object-contain border rounded" /><span className="text-sm">{item._id?.title}</span></td><td className="p-2 text-center font-semibold">{item.totalQuantity}</td><td className="p-2 text-right text-red-600">{formatCurrency(item.totalRevenue)}</td></tr>
+                {topProductsList.slice(0, 5).map((item, idx) => (
+                  <tr key={idx} className="border-t">
+                    <td className="p-2 flex items-center gap-2">
+                      <img
+                        src={item._id?.image}
+                        className="w-8 h-8 object-contain border rounded"
+                      />
+                      <span className="text-sm">{item._id?.title}</span>
+                    </td>
+                    <td className="p-2 text-center ">
+                      {item._id?.storage}/{item._id?.color}
+                    </td>
+                    <td className="p-2 text-center font-semibold">
+                      {item.totalQuantity}
+                    </td>
+                    <td className="p-2 text-right text-red-600">
+                      {formatCurrency(item.totalRevenue)}
+                    </td>
+                  </tr>
                 ))}
-                {topProductsList.length === 0 && <tr><td colSpan="3" className="text-center py-4 text-gray-400">Chưa có dữ liệu</td></tr>}
+                {topProductsList.length === 0 && (
+                  <tr>
+                    <td colSpan="3" className="text-center py-4 text-gray-400">
+                      Chưa có dữ liệu
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-5">
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">⚠️ Sản phẩm tồn kho thấp</h3>
-          {lowStockItems.length === 0 ? <div className="text-center py-6 text-green-600">✅ Không có sản phẩm nào dưới ngưỡng</div> : (
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+            ⚠️ Sản phẩm tồn kho thấp
+          </h3>
+          {lowStockItems.length === 0 ? (
+            <div className="text-center py-6 text-green-600">
+              ✅ Không có sản phẩm nào dưới ngưỡng
+            </div>
+          ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full">
-                <thead className="bg-gray-50"><tr><th className="p-2 text-left">Sản phẩm</th><th className="p-2 text-left">Phân loại</th><th className="p-2 text-center">Tồn</th></tr></thead>
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="p-2 text-left">Sản phẩm</th>
+                    <th className="p-2 text-left">Phân loại</th>
+                    <th className="p-2 text-center">Tồn</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {lowStockItems.map((item, idx) => (
-                    <tr key={idx} className="border-t"><td className="p-2 flex items-center gap-2"><img src={item.image} className="w-8 h-8 object-contain border rounded" /><span>{item.productTitle}</span></td><td className="p-2">{item.color} - {item.storage}</td><td className="p-2 text-center"><span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs">{item.quantity}</span></td></tr>
+                    <tr key={idx} className="border-t">
+                      <td className="p-2 flex items-center gap-2">
+                        <img
+                          src={item.image}
+                          className="w-8 h-8 object-contain border rounded"
+                        />
+                        <span>{item.productTitle}</span>
+                      </td>
+                      <td className="p-2">
+                        {item.color} - {item.storage}
+                      </td>
+                      <td className="p-2 text-center">
+                        <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs">
+                          {item.quantity}
+                        </span>
+                      </td>
+                    </tr>
                   ))}
                 </tbody>
               </table>
@@ -355,13 +661,32 @@ const Dashboard = () => {
 
       {/* Footer Order Status Overview */}
       <div className="bg-white rounded-xl shadow-sm border p-5">
-        <h3 className="text-lg font-bold mb-4">Tổng quan trạng thái đơn hàng</h3>
+        <h3 className="text-lg font-bold mb-4">
+          Tổng quan trạng thái đơn hàng
+        </h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="border rounded-lg p-3 text-center"><div className="text-sm text-gray-500">Chưa xử lý</div><div className="text-2xl font-bold">{getOrderStats.notProcessed}</div></div>
-          <div className="border rounded-lg p-3 text-center"><div className="text-sm text-gray-500">Đang xử lý</div><div className="text-2xl font-bold">{getOrderStats.processing}</div></div>
-          <div className="border rounded-lg p-3 text-center"><div className="text-sm text-gray-500">Đang giao</div><div className="text-2xl font-bold">{getOrderStats.shipped}</div></div>
-          <div className="border rounded-lg p-3 text-center"><div className="text-sm text-gray-500">Đã giao</div><div className="text-2xl font-bold">{getOrderStats.delivered}</div></div>
-          <div className="border rounded-lg p-3 text-center"><div className="text-sm text-gray-500">Đã hủy</div><div className="text-2xl font-bold">{getOrderStats.cancelled}</div></div>
+          <div className="border rounded-lg p-3 text-center">
+            <div className="text-sm text-gray-500">Chưa xử lý</div>
+            <div className="text-2xl font-bold">
+              {getOrderStats.notProcessed}
+            </div>
+          </div>
+          <div className="border rounded-lg p-3 text-center">
+            <div className="text-sm text-gray-500">Đang xử lý</div>
+            <div className="text-2xl font-bold">{getOrderStats.processing}</div>
+          </div>
+          <div className="border rounded-lg p-3 text-center">
+            <div className="text-sm text-gray-500">Đang giao</div>
+            <div className="text-2xl font-bold">{getOrderStats.shipped}</div>
+          </div>
+          <div className="border rounded-lg p-3 text-center">
+            <div className="text-sm text-gray-500">Đã giao</div>
+            <div className="text-2xl font-bold">{getOrderStats.delivered}</div>
+          </div>
+          <div className="border rounded-lg p-3 text-center">
+            <div className="text-sm text-gray-500">Đã hủy</div>
+            <div className="text-2xl font-bold">{getOrderStats.cancelled}</div>
+          </div>
         </div>
       </div>
     </div>

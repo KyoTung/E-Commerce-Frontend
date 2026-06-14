@@ -15,7 +15,7 @@ const Blog = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { blogs, loading } = useSelector((state) => state.blogAdmin);
+  const { blogs = [], loading } = useSelector((state) => state.blogAdmin) || {};
 
   useEffect(() => {
     dispatch(getAllBlog());
@@ -37,13 +37,21 @@ const Blog = () => {
     }
   };
 
-  const filteredBlogs = blogs.filter((blog) => {
-    const searchTerm = search.toLowerCase();
-    const titleMatch = blog.title?.toLowerCase().includes(searchTerm);
-    const authorMatch = blog.author?.toLowerCase().includes(searchTerm);
-    const catMatch = blog.category?.toLowerCase().includes(searchTerm);
-    return titleMatch || authorMatch || catMatch;
-  });
+  // const filteredBlogs = blogs.filter((blog) => {
+  //   const searchTerm = search.toLowerCase();
+  //   const titleMatch = blog.title?.toLowerCase().includes(searchTerm);
+  //   const authorMatch = blog.author?.toLowerCase().includes(searchTerm);
+  //   const catMatch = blog.category?.toLowerCase().includes(searchTerm);
+  //   return titleMatch || authorMatch || catMatch;
+  // });
+
+  const filteredBlogs = (blogs || []).filter((blog) => {
+  const searchTerm = search.toLowerCase();
+  const titleMatch = blog.title?.toLowerCase().includes(searchTerm);
+  const authorMatch = blog.author?.toLowerCase().includes(searchTerm);
+  const catMatch = blog.category?.toLowerCase().includes(searchTerm);
+  return titleMatch || authorMatch || catMatch;
+});
 
   return (
     <div className="p-4 md:p-6">

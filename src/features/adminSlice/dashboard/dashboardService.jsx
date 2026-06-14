@@ -19,12 +19,22 @@ const getLowStock = async (threshold) => {
   const response = await axiosClient.get("/stats/low-stock", { params: { threshold } });
   return response.data;
 };
+const getRevenueByBrand = async (params) => {
+  const response = await axiosClient.get('/stats/revenue-by-brand', { params });
+  return response.data;
+};
 
+const getRevenueByCategory = async (params) => {
+  const response = await axiosClient.get('/stats/revenue-by-category', { params });
+  return response.data;
+};
 const dashboardService = {
   getOverview,
   getRevenueChart,
   getTopProducts,
   getLowStock,
+  getRevenueByBrand,
+  getRevenueByCategory
 };
 
 export default dashboardService;

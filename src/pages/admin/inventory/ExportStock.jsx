@@ -7,7 +7,7 @@ import Select from "react-select";
 
 import { getAllProducts } from "../../../features/adminSlice/products/productSlice";
 import { getSuppliers } from "../../../features/adminSlice/supplier/supplierSlice";
-import { createExport } from "../../../features/adminSlice/inventory/inventorySlice";
+import { createExport, clearExportSuccess} from "../../../features/adminSlice/inventory/inventorySlice";
 import Loading from "../../../components/Loading";
 
 const ExportStock = () => {
@@ -38,8 +38,9 @@ const ExportStock = () => {
     if (exportSuccess) {
       toast.success("Xuất kho thành công!");
       navigate("/admin/inventory/transactions");
+      dispatch(clearExportSuccess());
     }
-  }, [exportSuccess, navigate]);
+  }, [exportSuccess, navigate, dispatch]);
 
   const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price || 0);
@@ -75,10 +76,12 @@ const ExportStock = () => {
     const newCount = Number(quantity);
     if (newCount <= 0) return toast.error("Số lượng phải lớn hơn 0");
 
-    // Kiểm tra tồn kho đủ để xuất
     if (newCount > variantData.quantity) {
       return toast.error(`Tồn kho chỉ còn ${variantData.quantity} sản phẩm!`);
     }
+
+    // Lấy giá bán hiện tại của variant (có thể dùng làm giá xuất)
+    const exportPrice = variantData.price;
 
     const existingIndex = orderItems.findIndex(
       (item) =>
@@ -106,6 +109,7 @@ const ExportStock = () => {
           storage: variantData.storage,
           quantity: newCount,
           maxQuantity: variantData.quantity,
+          price: exportPrice,   // ✅ thêm giá xuất (có thể dùng để tính totalValue)
         },
       ]);
     }
@@ -139,6 +143,7 @@ const ExportStock = () => {
   };
 
   const itemsTotal = orderItems.reduce((sum, item) => sum + item.quantity, 0);
+  const totalExportValue = orderItems.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -152,16 +157,18 @@ const ExportStock = () => {
 
     const payload = {
       exportType,
-      supplierId: exportType === "return_to_supplier" ? selectedSupplier?.value : undefined,
+      supplier: exportType === "return_to_supplier" ? selectedSupplier?.value : undefined, // ✅ sửa supplierId -> supplier
       items: orderItems.map((item) => ({
-        productId: item.product,
+        product: item.product,           // ✅ sửa productId -> product
         color: item.color,
         storage: item.storage,
         quantity: item.quantity,
+        price: item.price,               // ✅ thêm price
       })),
       note,
     };
 
+    console.log("🚀 Export payload:", payload);
     await dispatch(createExport(payload));
   };
 
@@ -304,6 +311,8 @@ const ExportStock = () => {
                 <th className="px-4 py-3">Sản phẩm</th>
                 <th className="px-4 py-3">Phân loại</th>
                 <th className="px-4 py-3 text-center">SL</th>
+                <th className="px-4 py-3 text-right">Đơn giá</th>
+                <th className="px-4 py-3 text-right">Thành tiền</th>
                 <th className="px-4 py-3 text-center w-12"></th>
               </tr>
             </thead>
@@ -335,6 +344,10 @@ const ExportStock = () => {
                         </button>
                       </div>
                     </td>
+                    <td className="px-4 py-3 text-right font-medium">{formatPrice(item.price)}</td>
+                    <td className="px-4 py-3 text-right font-medium text-[#d70018]">
+                      {formatPrice(item.price * item.quantity)}
+                    </td>
                     <td className="px-4 py-3 text-center">
                       <button type="button" onClick={() => removeItem(idx)} className="text-red-500 hover:bg-red-50 p-1.5 rounded">
                         <Trash size={16} />
@@ -344,7 +357,7 @@ const ExportStock = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="text-center py-8 text-gray-400">Chưa có sản phẩm nào</td>
+                  <td colSpan="6" className="text-center py-8 text-gray-400">Chưa có sản phẩm nào</td>
                 </tr>
               )}
             </tbody>
@@ -369,6 +382,10 @@ const ExportStock = () => {
               <div className="flex justify-between">
                 <span>Tổng số lượng xuất:</span>
                 <span className="font-bold">{itemsTotal}</span>
+              </div>
+              <div className="flex justify-between border-t pt-2">
+                <span>Tổng giá trị xuất:</span>
+                <span className="font-bold text-red-600">{formatPrice(totalExportValue)}</span>
               </div>
             </div>
             <button

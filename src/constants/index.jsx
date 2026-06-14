@@ -10,10 +10,11 @@ import {
   UserPlus,
   Users,
   LogOut,
-  Building2,        // icon cho nhà cung cấp
-  PackageMinus,     // icon cho xuất kho
-  Warehouse,        // icon cho tồn kho
-  History,          // icon cho lịch sử giao dịch
+  Building2,        
+  PackageMinus,     
+  Warehouse,        
+  History,
+  Image          
 } from "lucide-react";
 import ProfileImage from "../assets/profile-image.jpg";
 import ProductImage from "../assets/product-image.jpg";
@@ -26,170 +27,12 @@ import { RiCoupon2Line } from "react-icons/ri";
 
 const _path = "/admin";
 
-// export const navbarLinks = [
-//     {
-//         links: [
-//             {
-//                 label: "Bảng điều khiển",
-//                 icon: Home,
-//                 path: _path,
-//             },
-//         ],
-//     },
-//     {
-//         links: [
-//             {
-//                 label: "Báo cáo/Thống kê",
-//                 icon: ChartColumn,
-//                 path: `${_path}/sale-report`,
-//             },
-//         ],
-//     },
-//     {
-//         links: [
-//             {
-//                 label: "Người dùng",
-//                 icon: Users,
-//                 path: `${_path}/users`,
-//             },
-//         ],
-//     },
-//     {
-//         links: [
-//             {
-//                 label: "Danh mục",
-//                 icon: BiCategoryAlt,
-//                 path: `${_path}/categories`,
-//             },
-//         ],
-//     },
-//     {
-//         links: [
-//             {
-//                 label: "Thương hiệu",
-//                 icon: BiCategoryAlt,
-//                 path: `${_path}/brands`,
-//             },
-//         ],
-//     },
-//     {
-//         links: [
-//             {
-//                 label: "Màu sắc",
-//                 icon: MdOutlineInvertColors,
-//                 path: `${_path}/colors`,
-//             },
-//         ],
-//     },
-//     {
-//         links: [
-//             {
-//                 label: "Sản phẩm",
-//                 icon: Package,
-//                 path: `${_path}/products`,
-//             },
-//         ],
-//     },
-//     {
-//         links: [
-//             {
-//                 label: "Đơn hàng",
-//                 icon: MdOutlineEventNote,
-//                 path: `${_path}/orders`,
-//             },
-//         ],
-//     },
-//     // ==================== QUẢN LÝ KHO ====================
-//     {
-//         links: [
-//             {
-//                 label: "Nhà cung cấp",
-//                 icon: Building2,
-//                 path: `${_path}/suppliers`,
-//             },
-//         ],
-//     },
-//     {
-//         links: [
-//             {
-//                 label: "Nhập kho",
-//                 icon: PackagePlus,
-//                 path: `${_path}/inventory/import`,
-//             },
-//         ],
-//     },
-//     {
-//         links: [
-//             {
-//                 label: "Xuất kho",
-//                 icon: PackageMinus,
-//                 path: `${_path}/inventory/export`,
-//             },
-//         ],
-//     },
-//     {
-//         links: [
-//             {
-//                 label: "Tồn kho",
-//                 icon: Warehouse,
-//                 path: `${_path}/inventory/stock`,
-//             },
-//         ],
-//     },
-//     {
-//         links: [
-//             {
-//                 label: "Lịch sử giao dịch",
-//                 icon: History,
-//                 path: `${_path}/inventory/transactions`,
-//             },
-//         ],
-//     },
-//     // ====================================================
-//     {
-//         links: [
-//             {
-//                 label: "Mã giảm giá",
-//                 icon: RiCoupon2Line,
-//                 path: `${_path}/coupons`,
-//             },
-//         ],
-//     },
-//     {
-//         links: [
-//             {
-//                 label: "Danh mục bài viết",
-//                 icon: MdOutlineEventNote,
-//                 path: `${_path}/blog-categories`,
-//             },
-//         ],
-//     },
-//     {
-//         links: [
-//             {
-//                 label: "Bài viết",
-//                 icon: BsFillFileEarmarkPostFill,
-//                 path: `${_path}/blogs`,
-//             },
-//         ],
-//     },
-//     {
-//         links: [
-//             {
-//                 label: "Về trang khách",
-//                 icon: LogOut,
-//                 path: "/",
-//             },
-//         ],
-//     },
-// ];
-
 export const navbarLinks = [
   // 1. Tổng quan
   {
     title: "Tổng quan",
     links: [
-      { label: "Bảng điều khiển", icon: Home, path: _path },
+      { label: "Dashboard", icon: Home, path: _path },
       { label: "Báo cáo/Thống kê", icon: ChartColumn, path: `${_path}/sale-report` },
     ],
   },
@@ -240,6 +83,7 @@ export const navbarLinks = [
     links: [
       { label: "Danh mục bài viết", icon: MdOutlineEventNote, path: `${_path}/blog-categories` },
       { label: "Bài viết", icon: BsFillFileEarmarkPostFill, path: `${_path}/blogs` },
+      { label: "Banner", icon: Image, path: "/admin/banner" },
     ],
   },
 

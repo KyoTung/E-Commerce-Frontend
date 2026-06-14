@@ -48,6 +48,7 @@ import ImportStock from "../pages/admin/inventory/ImportStock";
 import StockOverview from "../pages/admin/inventory/StockOverview";
 import ExportStock from "../pages/admin/inventory/ExportStock";
 import TransactionHistory from "../pages/admin/inventory/TransactionHistory";
+import BannerManager from "../pages/admin/banner/BannerManager";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginForm /> },
@@ -110,7 +111,7 @@ export const router = createBrowserRouter([
         element: <BlogPage />,
       },
       {
-        path: "/blog-detail",
+        path: "/blog-detail/:id",
         element: <BlogDetail />,
       },
       {
@@ -240,6 +241,11 @@ export const router = createBrowserRouter([
         path: "enquiries",
         element: <Enquiries />,
       },
+      {
+       path:"banner",
+       element:<BannerManager/>
+      },
+
       {
         path: "settings",
         element: <h1 className="title">Settings</h1>,
