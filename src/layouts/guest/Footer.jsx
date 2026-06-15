@@ -108,7 +108,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/warranty-policy"
+                  to="/policy"
                   className="text-gray-600 hover:text-[#d70018] hover:underline"
                 >
                   Chính sách bảo hành
@@ -116,7 +116,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/return-policy"
+                  to="/policy"
                   className="text-gray-600 hover:text-[#d70018] hover:underline"
                 >
                   Chính sách đổi trả
@@ -124,7 +124,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/privacy-policy"
+                  to="/policy"
                   className="text-gray-600 hover:text-[#d70018] hover:underline"
                 >
                   Chính sách bảo mật thanh toán
@@ -132,7 +132,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/shipping-policy"
+                  to="/policy"
                   className="text-gray-600 hover:text-[#d70018] hover:underline"
                 >
                   Chính sách vận chuyển
@@ -149,7 +149,7 @@ const Footer = () => {
             <ul className="space-y-2">
               <li>
                 <Link
-                  to="/customers"
+                  to="/comingsoon"
                   className="text-gray-600 hover:text-[#d70018] hover:underline"
                 >
                   Khách hàng doanh nghiệp (B2B)
@@ -157,7 +157,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/installment"
+                  to="/comingsoon"
                   className="text-gray-600 hover:text-[#d70018] hover:underline"
                 >
                   Ưu đãi thanh toán
@@ -165,7 +165,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/rules"
+                  to="/comingsoon"
                   className="text-gray-600 hover:text-[#d70018] hover:underline"
                 >
                   Quy chế hoạt động
@@ -173,7 +173,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/store-list"
+                  to="/comingsoon"
                   className="text-gray-600 hover:text-[#d70018] hover:underline"
                 >
                   Danh sách cửa hàng
@@ -181,7 +181,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/contact"
+                  to="/comingsoon"
                   className="text-gray-600 hover:text-[#d70018] hover:underline"
                 >
                   Liên hệ hợp tác
@@ -197,13 +197,13 @@ const Footer = () => {
             </h3>
             <div className="flex gap-3 mb-6">
               <a
-                href="#"
+                href="https://www.facebook.com/ga.tung.507?locale=vi_VN"
                 className="h-8 w-8 flex items-center justify-center rounded bg-[#3b5998] text-white hover:opacity-90"
               >
                 <FaFacebookF />
               </a>
               <a
-                href="#"
+                href="https://youtu.be/lTRiuFIWV54?si=H8uePr3dry2yh8uq"
                 className="h-8 w-8 flex items-center justify-center rounded bg-[#FF0000] text-white hover:opacity-90"
               >
                 <FaYoutube />

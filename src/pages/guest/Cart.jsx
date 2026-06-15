@@ -120,6 +120,7 @@ const handleToggleSelect = (item) => {
     };
 
     await dispatch(updateCartItem(payload));
+    
     dispatch(getCart());
   };
 

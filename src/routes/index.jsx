@@ -20,6 +20,9 @@ import ForgotPassword from "../pages/guest/ForgotPassword";
 import AllProducts from "../pages/guest/AllProducts";
 import Wishlist from "../pages/guest/Wishlist";
 import LoginSuccess from "../pages/authen/LoginSuccess";
+import RecruitmentPage from "../pages/guest/RecruitmentPage"
+import PolicyPage from "../pages/guest/PolicyPage";
+import ComingSoonPage from "../pages/guest/ComingSoonPage";
 
 import AdminLayout from "../layouts/admin/layout";
 import Dashboard from "../pages/admin/dashboard/Dashboard";
@@ -118,6 +121,22 @@ export const router = createBrowserRouter([
         path: "/change-password",
         element: <ChangePassword />,
       },
+      {
+        path: "/about",
+        element: <About />,
+      },
+      {
+        path:"/recruitment",
+        element: <RecruitmentPage/>
+      },
+      {
+        path:"/policy",
+        element:<PolicyPage/>
+      },
+      {
+        path:"/comingsoon",
+        element:<ComingSoonPage/>
+      }
     ],
   },
 
