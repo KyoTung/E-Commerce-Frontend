@@ -2,11 +2,18 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 
 // Icons
 import { LiaCartPlusSolid } from "react-icons/lia";
-import { FaStar, FaTimes, FaCheck, FaChevronDown, FaChevronUp, FaHeart } from "react-icons/fa";
+import {
+  FaStar,
+  FaTimes,
+  FaCheck,
+  FaChevronDown,
+  FaChevronUp,
+  FaHeart,
+} from "react-icons/fa";
 import { IoTimeOutline } from "react-icons/io5";
 import { FiHeart, FiMessageSquare, FiCpu, FiPlusCircle } from "react-icons/fi";
 
@@ -19,6 +26,7 @@ import {
 import { addToCart, getCart } from "../../features/guestSlice/cart/cartSlice";
 import { getWishlist } from "../../features/guestSlice/user/userSlice";
 import { addwishList } from "../../features/guestSlice/product/productSlice";
+import { getUser } from "../../features/guestSlice/user/userSlice";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -31,12 +39,14 @@ const ProductDetail = () => {
 
   // 1. Redux State
   const { product, isLoading, isError } = useSelector(
-    (state) => state.productClient
+    (state) => state.productClient,
   );
   const { user } = useSelector((state) => state.auth);
   // Lấy wishlist từ userSlice (bổ sung an toàn tránh undefined)
   const userState = useSelector((state) => state.user);
   const wishlist = userState?.wishlist || [];
+
+  const { user: userProfile } = useSelector((state) => state.user);
 
   // 2. Local State
   const [selectedImage, setSelectedImage] = useState("");
@@ -69,6 +79,11 @@ const ProductDetail = () => {
       dispatch(getProduct(id));
     }
   }, [id, dispatch]);
+
+  useEffect(() => {
+    dispatch(getUser(user._id || user.id));
+  }, [dispatch]);
+
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -150,7 +165,7 @@ const ProductDetail = () => {
       const bodyRect = document.body.getBoundingClientRect().top;
       const elementRect = elementRef.current.getBoundingClientRect().top;
       const elementPosition = elementRect - bodyRect;
-      
+
       window.scrollTo({
         top: elementPosition - offset,
         behavior: "smooth",
@@ -161,7 +176,7 @@ const ProductDetail = () => {
   // --- HELPER FUNCTIONS ---
   const checkVariantExists = (storage, color) => {
     return product.variants.find(
-      (v) => v.storage === storage && v.color === color
+      (v) => v.storage === storage && v.color === color,
     );
   };
 
@@ -195,14 +210,22 @@ const ProductDetail = () => {
       currency: "VND",
     }).format(price || 0);
 
-
-
+ 
   // 1. Thêm async/await vào handleAddToCart
   const handleAddToCart = async () => {
     if (!selectedVariant) {
       toast.warning("Vui lòng chọn Phiên bản và Màu sắc!");
       return false;
     }
+    if (!user) {
+      toast.warning("Vui lòng đăng nhập!");
+      return false;
+    }
+    if (userProfile?.isBlock === true) {
+      toast.warning("Tài khoản đã bị khóa. Vui lòng liên hệ bộ phận CSKH để mở khóa");
+      return false;
+    }
+
     const cartItemData = {
       cart: [
         {
@@ -213,14 +236,14 @@ const ProductDetail = () => {
         },
       ],
     };
-    
+
     try {
       // Dùng .unwrap() của Redux Toolkit để đợi API chạy xong
-      await dispatch(addToCart(cartItemData)).unwrap(); 
-      
+      await dispatch(addToCart(cartItemData)).unwrap();
+
       // CHUẨN BỊ DỮ LIỆU ĐẦY ĐỦ: Gọi getCart ngay tại đây để cập nhật Redux store hoàn chỉnh
       await dispatch(getCart()).unwrap();
-      
+
       return true; // Trả về true khi mọi thứ đã xong xuôi
     } catch (error) {
       console.error(error);
@@ -231,26 +254,24 @@ const ProductDetail = () => {
   // 2. Thêm async/await vào handleBuyNow
   const handleBuyNow = async () => {
     // Chờ quá trình thêm và cập nhật giỏ hàng hoàn thành
-    const added = await handleAddToCart(); 
-    
+    const added = await handleAddToCart();
+
     if (added) {
       const autoSelectKey = `${product._id}-${selectedVariant.color}-${selectedVariant.storage}`;
       // Lúc này Redux store đã có dữ liệu hoàn chỉnh, chuyển trang sẽ render chuẩn 100%
-      navigate("/cart", { 
-        state: { autoSelectKey } 
+      navigate("/cart", {
+        state: { autoSelectKey },
       });
     }
   };
 
-
-
-const onSubmitReview = async (data) => {
+  const onSubmitReview = async (data) => {
     if (!user) {
       toast.info("Vui lòng đăng nhập để đánh giá");
       navigate("/login", { state: { from: `/product/${id}` } });
       return;
     }
-    
+
     const commentData = {
       star: data.rating,
       comment: data.comment,
@@ -259,18 +280,21 @@ const onSubmitReview = async (data) => {
 
     try {
       const result = await dispatch(commentProduct({ data: commentData }));
-      
+
       // Thành công
       if (commentProduct.fulfilled.match(result)) {
         toast.success("Cảm ơn bạn đã đánh giá sản phẩm!");
         dispatch(getProduct(id)); // Lấy lại dữ liệu mới nhất
         setIsReviewModalOpen(false);
         reset();
-      } 
+      }
       // Lỗi từ phía API Backend
       else if (commentProduct.rejected.match(result)) {
         // Tùy thuộc vào cách bạn setup rejectWithValue ở backend, result.payload có thể chứa message lỗi
-        const errorMessage = result.payload?.message || result.error?.message || "Không thể gửi đánh giá, vui lòng thử lại!";
+        const errorMessage =
+          result.payload?.message ||
+          result.error?.message ||
+          "Không thể gửi đánh giá, vui lòng thử lại!";
         toast.error(errorMessage);
       }
     } catch (error) {
@@ -296,19 +320,23 @@ const onSubmitReview = async (data) => {
 
   return (
     <div className="bg-gray-50 min-h-screen py-6">
+      <ToastContainer />
       <div className="container mx-auto px-4 max-w-[1200px]">
         {/* Title Header & Tools */}
         <div className="border-b border-gray-200 pb-4 mb-4">
           <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
             {product.title}
             <span className="text-sm font-normal text-gray-500 mt-1">
-              ({product.variants?.length > 0 ? "Nhiều phiên bản" : "Tiêu chuẩn"})
+              ({product.variants?.length > 0 ? "Nhiều phiên bản" : "Tiêu chuẩn"}
+              )
             </span>
           </h1>
-          
+
           <div className="flex items-center gap-2 mt-2">
             <div className="flex text-yellow-400 text-sm">
-              <span className="font-bold text-gray-800 mr-1.5">{Math.floor(product.totalRating || 5)}</span>
+              <span className="font-bold text-gray-800 mr-1.5">
+                {Math.floor(product.totalRating || 5)}
+              </span>
               {[...Array(5)].map((_, i) => (
                 <FaStar
                   key={i}
@@ -320,7 +348,10 @@ const onSubmitReview = async (data) => {
                 />
               ))}
             </div>
-            <span className="text-sm text-gray-500 cursor-pointer hover:text-blue-500" onClick={() => scrollToSection(reviewsRef)}>
+            <span
+              className="text-sm text-gray-500 cursor-pointer hover:text-blue-500"
+              onClick={() => scrollToSection(reviewsRef)}
+            >
               ({product.rating?.length || 0} đánh giá)
             </span>
           </div>
@@ -328,7 +359,7 @@ const onSubmitReview = async (data) => {
           {/* New Tools Row */}
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-3 text-[14px] text-[#2f80ed]">
             {/* Nút Yêu thích có render logic Icon đỏ/thường */}
-            <button 
+            <button
               onClick={() => addToWish(product._id)}
               className="flex items-center gap-1.5 hover:text-blue-700 transition-colors"
             >
@@ -340,9 +371,9 @@ const onSubmitReview = async (data) => {
               {isLiked ? "Đã thích" : "Yêu thích"}
             </button>
             <span className="text-gray-300">|</span>
-            
+
             {/* Scroll đến phần Đánh giá/Hỏi đáp */}
-            <button 
+            <button
               onClick={() => scrollToSection(reviewsRef)}
               className="flex items-center gap-1.5 hover:text-blue-700 transition-colors"
             >
@@ -351,7 +382,7 @@ const onSubmitReview = async (data) => {
             <span className="text-gray-300">|</span>
 
             {/* Scroll đến phần Thông số */}
-            <button 
+            <button
               onClick={() => scrollToSection(specsRef)}
               className="flex items-center gap-1.5 hover:text-blue-700 transition-colors"
             >
@@ -366,10 +397,8 @@ const onSubmitReview = async (data) => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-         {/* Left Column: Images */}
+          {/* Left Column: Images */}
           <div className="lg:col-span-7 bg-white rounded-xl shadow-sm p-3 sm:p-4 border border-gray-100 flex flex-col">
-            
-
             <div className="relative w-full aspect-video flex items-center justify-center overflow-hidden rounded-lg mb-4 bg-white">
               <img
                 src={selectedImage || "https://via.placeholder.com/500"}
@@ -377,7 +406,7 @@ const onSubmitReview = async (data) => {
                 className="h-full w-full object-contain  transition-transform duration-500"
               />
             </div>
-            
+
             {/* Thumbnails */}
             {product.images && product.images.length > 0 && (
               <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 custom-scrollbar items-center">
@@ -433,7 +462,8 @@ const onSubmitReview = async (data) => {
                         <span className="leading-tight">{storage}</span>
                         <span className="block text-[10px] font-normal text-gray-500 mt-0.5">
                           {formatPrice(
-                            product.variants.find((v) => v.storage === storage)?.price
+                            product.variants.find((v) => v.storage === storage)
+                              ?.price,
                           )}
                         </span>
                       </button>
@@ -454,7 +484,7 @@ const onSubmitReview = async (data) => {
                     const isSelected = selectedVariant?.color === color;
                     const exactVariant = checkVariantExists(
                       selectedVariant?.storage,
-                      color
+                      color,
                     );
 
                     return (
@@ -471,8 +501,7 @@ const onSubmitReview = async (data) => {
                           <span className="text-xs font-bold text-gray-700 truncate w-full">
                             {color}
                           </span>
-                          <span className="text-[10px] text-gray-500 mt-0.5">                           
-                          </span>
+                          <span className="text-[10px] text-gray-500 mt-0.5"></span>
                         </div>
                         {isSelected && (
                           <div className="absolute top-0 right-0">
@@ -517,7 +546,10 @@ const onSubmitReview = async (data) => {
                 className="w-full sm:w-1/2 border-2 border-[#d70018] text-[#d70018] bg-white py-3 px-2 rounded-xl shadow-sm hover:bg-red-50 transition-all flex flex-col items-center justify-center group"
               >
                 <div className="flex items-center gap-2">
-                  <LiaCartPlusSolid size={26} className="group-hover:scale-110 transition-transform" />
+                  <LiaCartPlusSolid
+                    size={26}
+                    className="group-hover:scale-110 transition-transform"
+                  />
                   <span className="text-[15px] font-bold">Thêm vào giỏ</span>
                 </div>
               </button>
@@ -527,21 +559,25 @@ const onSubmitReview = async (data) => {
                 className="w-full sm:w-1/2 bg-[#d70018] text-white py-3 px-2 rounded-xl shadow-sm hover:bg-[#c50015] hover:shadow-md transition-all flex items-center justify-center group"
               >
                 <div className="flex flex-col items-center">
-                  <span className="text-[15px] font-bold uppercase">Mua ngay</span>
+                  <span className="text-[15px] font-bold uppercase">
+                    Mua ngay
+                  </span>
                   <span className="text-[11px] font-normal text-red-100 mt-0.5 text-center">
                     Giao tận nơi hoặc nhận tại siêu thị
                   </span>
                 </div>
               </button>
             </div>
-            
           </div>
         </div>
-        
+
         {/* Phần nội dung dưới: Thông số & Mô tả */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
           {/* Thông số kỹ thuật (Gắn REF vào đây) */}
-          <div ref={specsRef} className="lg:col-span-5 space-y-4 order-2 lg:order-1">
+          <div
+            ref={specsRef}
+            className="lg:col-span-5 space-y-4 order-2 lg:order-1"
+          >
             <div className="rounded-xl border border-gray-100 overflow-hidden bg-white shadow-sm">
               <h3 className="bg-gray-50 p-3 font-bold text-gray-700 uppercase text-sm sm:text-base border-b border-gray-100">
                 Thông số kỹ thuật
@@ -563,8 +599,12 @@ const onSubmitReview = async (data) => {
                     key={idx}
                     className={`flex p-3 ${idx % 2 !== 0 ? "bg-gray-50/50" : ""}`}
                   >
-                    <span className="w-1/3 text-gray-500 font-medium">{item.l}</span>
-                    <span className="w-2/3 text-gray-800">{item.v || "Đang cập nhật"}</span>
+                    <span className="w-1/3 text-gray-500 font-medium">
+                      {item.l}
+                    </span>
+                    <span className="w-2/3 text-gray-800">
+                      {item.v || "Đang cập nhật"}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -577,13 +617,13 @@ const onSubmitReview = async (data) => {
               <h3 className="bg-gray-50 p-3 rounded-t-xl font-bold text-gray-700 uppercase text-sm sm:text-base border-b border-gray-100">
                 Đặc điểm nổi bật
               </h3>
-              
+
               <div className="relative">
-                <div 
+                <div
                   className={`p-4 sm:p-5 overflow-hidden transition-all duration-500 ease-in-out ${
-                    isExpanded 
-                      ? "max-h-[5000px]" 
-                      : "max-h-[300px] sm:max-h-[400px] lg:max-h-[500px]" 
+                    isExpanded
+                      ? "max-h-[5000px]"
+                      : "max-h-[300px] sm:max-h-[400px] lg:max-h-[500px]"
                   }`}
                 >
                   <div
@@ -591,7 +631,7 @@ const onSubmitReview = async (data) => {
                     dangerouslySetInnerHTML={{ __html: product.description }}
                   />
                 </div>
-                
+
                 {!isExpanded && (
                   <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-white/0 pointer-events-none"></div>
                 )}
@@ -603,9 +643,13 @@ const onSubmitReview = async (data) => {
                   className="flex items-center gap-2 px-6 py-2 bg-white border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 hover:shadow-sm transition-all text-sm font-semibold w-full sm:w-auto justify-center"
                 >
                   {isExpanded ? (
-                    <>Thu gọn <FaChevronUp size={12} /></>
+                    <>
+                      Thu gọn <FaChevronUp size={12} />
+                    </>
                   ) : (
-                    <>Xem thêm <FaChevronDown size={12} /></>
+                    <>
+                      Xem thêm <FaChevronDown size={12} />
+                    </>
                   )}
                 </button>
               </div>
@@ -614,7 +658,10 @@ const onSubmitReview = async (data) => {
         </div>
 
         {/* --- REVIEW SECTION (Gắn REF vào đây) --- */}
-        <div ref={reviewsRef} className="bg-white rounded-xl shadow-sm border border-gray-100 mt-6 p-4 sm:p-6 mb-10">
+        <div
+          ref={reviewsRef}
+          className="bg-white rounded-xl shadow-sm border border-gray-100 mt-6 p-4 sm:p-6 mb-10"
+        >
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
             <div>
               <h2 className="text-lg font-bold text-gray-800">
@@ -655,7 +702,9 @@ const onSubmitReview = async (data) => {
                             <FaStar
                               key={i}
                               className={
-                                i < comment.star ? "fill-current" : "text-gray-300"
+                                i < comment.star
+                                  ? "fill-current"
+                                  : "text-gray-300"
                               }
                             />
                           ))}
@@ -663,7 +712,7 @@ const onSubmitReview = async (data) => {
                         <span className="text-[10px] text-gray-400 flex items-center gap-1">
                           <IoTimeOutline />{" "}
                           {new Date(comment.createdAt).toLocaleDateString(
-                            "vi-VN"
+                            "vi-VN",
                           )}
                         </span>
                       </div>
@@ -676,8 +725,8 @@ const onSubmitReview = async (data) => {
               ))
             ) : (
               <div className="text-center py-8 text-gray-500 text-sm">
-                Chưa có đánh giá nào. Hãy là người đầu tiên đặt câu hỏi hoặc đánh giá sản phẩm
-                này!
+                Chưa có đánh giá nào. Hãy là người đầu tiên đặt câu hỏi hoặc
+                đánh giá sản phẩm này!
               </div>
             )}
           </div>
@@ -723,10 +772,10 @@ const onSubmitReview = async (data) => {
                   {currentRating === 5
                     ? "Tuyệt vời"
                     : currentRating === 4
-                    ? "Hài lòng"
-                    : currentRating === 3
-                    ? "Bình thường"
-                    : "Tệ"}
+                      ? "Hài lòng"
+                      : currentRating === 3
+                        ? "Bình thường"
+                        : "Tệ"}
                 </p>
               </div>
 

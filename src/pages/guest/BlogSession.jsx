@@ -1,4 +1,4 @@
-// src/components/guest/BlogsSection.jsx
+
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaCalendarAlt, FaUser, FaArrowRight } from "react-icons/fa";
@@ -44,7 +44,8 @@ const BlogsSection = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {latestBlogs.map((post) => (
-            <div
+            <Link to={`/blog-detail/${post._id}`}>
+                <div
               key={post._id}
               className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 group"
             >
@@ -102,6 +103,7 @@ const BlogsSection = () => {
                 </div>
               </div>
             </div>
+            </Link>
           ))}
         </div>
 

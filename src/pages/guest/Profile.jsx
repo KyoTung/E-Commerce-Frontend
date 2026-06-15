@@ -9,7 +9,7 @@ import {
   FiLogOut,
   FiCamera,
 } from "react-icons/fi";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 
 import { updateInfor, getUser } from "../../features/guestSlice/user/userSlice";
 import { logout } from "../../features/authSlice/authSlice";
@@ -20,7 +20,11 @@ const Profile = () => {
 
   const { user: authUser } = useSelector((state) => state.auth);
 
-  const { user: userProfile, isLoading } = useSelector((state) => state.user);
+  const {
+    user: userProfile,
+    isLoading,
+    isSuccess,
+  } = useSelector((state) => state.user);
 
   const {
     register,
@@ -43,7 +47,7 @@ const Profile = () => {
         "fullName",
         userProfile.fullName ||
           userProfile.firstname + " " + userProfile.lastname ||
-          ""
+          "",
       );
       setValue("email", userProfile.email || "");
       setValue("phone", userProfile.phone || userProfile.mobile || "");
@@ -55,8 +59,9 @@ const Profile = () => {
     const { email, ...updateData } = data;
 
     dispatch(
-      updateInfor({ userData: updateData, id: authUser._id || authUser.id })
+      updateInfor({ userData: updateData, id: authUser._id || authUser.id }),
     );
+    dispatch(getUser(authUser._id || authUser.id));
   };
 
   const handleLogout = () => {
@@ -66,6 +71,7 @@ const Profile = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <ToastContainer />
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -131,109 +137,114 @@ const Profile = () => {
               Quản lý thông tin hồ sơ để bảo mật tài khoản
             </p>
 
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <div className="grid grid-cols-1 gap-6">
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Họ và tên
-                  </label>
-                  <input
-                    type="text"
-                    {...register("fullName", {
-                      required: "Vui lòng nhập họ và tên",
-                    })}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-[#d70018] focus:ring-1 focus:ring-[#d70018] outline-none transition"
-                    placeholder="Nguyễn Văn A"
-                  />
-                  {errors.fullName && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.fullName.message}
+            {userProfile?.isBlock === true ? (
+              <p className="text-xl text-red-500 mb-6">
+                Tài khoản đã bị khóa, vui lòng liên hệ quản trị viên hoặc bộ
+                phận CSKH để mở khóa
+              </p>
+            ) : (
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <div className="grid grid-cols-1 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Họ và tên
+                    </label>
+                    <input
+                      type="text"
+                      {...register("fullName", {
+                        required: "Vui lòng nhập họ và tên",
+                      })}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-[#d70018] focus:ring-1 focus:ring-[#d70018] outline-none transition"
+                      placeholder="Nguyễn Văn A"
+                    />
+                    {errors.fullName && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.fullName.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Email (Read Only) */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      {...register("email")}
+                      readOnly
+                      className="w-full rounded-lg border border-gray-300 bg-gray-100 px-4 py-2.5 text-gray-500 cursor-not-allowed"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-1">
+                      *Email không thể thay đổi
                     </p>
-                  )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Số điện thoại
+                    </label>
+                    <input
+                      type="tel"
+                      {...register("phone", {
+                        required: "Vui lòng nhập SĐT",
+                        pattern: {
+                          value: /(84|0[3|5|7|8|9])+([0-9]{8})\b/,
+                          message: "Số điện thoại không hợp lệ",
+                        },
+                      })}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-[#d70018] focus:ring-1 focus:ring-[#d70018] outline-none transition"
+                      placeholder="0912345678"
+                    />
+                    {errors.phone && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.phone.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Địa chỉ */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Địa chỉ giao hàng
+                    </label>
+                    <input
+                      type="text"
+                      {...register("address", {
+                        required: "Vui lòng nhập địa chỉ",
+                      })}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-[#d70018] focus:ring-1 focus:ring-[#d70018] outline-none transition"
+                      placeholder="Số nhà, tên đường, phường/xã..."
+                    />
+                    {errors.address && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.address.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
-                {/* Email (Read Only) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    {...register("email")}
-                    readOnly
-                    className="w-full rounded-lg border border-gray-300 bg-gray-100 px-4 py-2.5 text-gray-500 cursor-not-allowed"
-                  />
-                  <p className="text-[10px] text-gray-400 mt-1">
-                    *Email không thể thay đổi
-                  </p>
+                {/* Action Buttons */}
+                <div className="mt-8 flex items-center justify-end gap-4">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/")}
+                    className="rounded-lg px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 transition"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className={`rounded-lg bg-[#d70018] px-8 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#b30014] transition-all ${
+                      isLoading ? "opacity-70 cursor-wait" : ""
+                    }`}
+                  >
+                    {isLoading ? "Đang lưu..." : "Lưu thay đổi"}
+                  </button>
                 </div>
-
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Số điện thoại
-                  </label>
-                  <input
-                    type="tel"
-                    {...register("phone", {
-                      required: "Vui lòng nhập SĐT",
-                      pattern: {
-                        value: /(84|0[3|5|7|8|9])+([0-9]{8})\b/,
-                        message: "Số điện thoại không hợp lệ",
-                      },
-                    })}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-[#d70018] focus:ring-1 focus:ring-[#d70018] outline-none transition"
-                    placeholder="0912345678"
-                  />
-                  {errors.phone && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.phone.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Địa chỉ */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Địa chỉ giao hàng
-                  </label>
-                  <input
-                    type="text"
-                    {...register("address", {
-                      required: "Vui lòng nhập địa chỉ",
-                    })}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-[#d70018] focus:ring-1 focus:ring-[#d70018] outline-none transition"
-                    placeholder="Số nhà, tên đường, phường/xã..."
-                  />
-                  {errors.address && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.address.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="mt-8 flex items-center justify-end gap-4">
-                <button
-                  type="button"
-                  onClick={() => navigate("/")}
-                  className="rounded-lg px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 transition"
-                >
-                  Hủy bỏ
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className={`rounded-lg bg-[#d70018] px-8 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#b30014] transition-all ${
-                    isLoading ? "opacity-70 cursor-wait" : ""
-                  }`}
-                >
-                  {isLoading ? "Đang lưu..." : "Lưu thay đổi"}
-                </button>
-              </div>
-            </form>
+              </form>
+            )}
           </div>
         </div>
       </div>

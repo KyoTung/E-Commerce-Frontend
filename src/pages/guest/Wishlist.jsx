@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { FaTrash, FaHeart } from "react-icons/fa";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 
 
 import { getWishlist } from "../../features/guestSlice/user/userSlice"; 
@@ -42,6 +42,7 @@ const Wishlist = () => {
 
   return (
     <div className="bg-[#f5f5f7] min-h-screen py-8">
+      <ToastContainer/>
       <div className="mx-auto max-w-[1200px] px-4">
         
         <h1 className="text-2xl font-bold text-gray-800 mb-6 uppercase border-b pb-4 border-gray-300">

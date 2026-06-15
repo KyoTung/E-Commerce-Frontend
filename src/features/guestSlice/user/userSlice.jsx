@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import userService from "./userService";
+import {toast} from "react-toastify";
 
 const getUserFromLocalstorage = () => {
   const user = localStorage.getItem("user_info");
@@ -82,13 +83,15 @@ export const userSlice = createSlice({
       state.isSuccess = true;
       state.user = action.payload;
       localStorage.setItem("user_info", JSON.stringify(action.payload));
+      toast.success("Cập nhật thông tin thành công")
     });
     builder.addCase(updateInfor.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
       state.message =
-        action.payload?.message;
+      action.payload?.message;
+      toast.error("Cập nhật thông tin thất bại")
     });
 
     builder

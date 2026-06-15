@@ -104,14 +104,14 @@ export const cartSlice = createSlice({
         state.isSuccess = true;
         state.isError = false;
         state.cart = action.payload;
-        
+        toast.success("Thêm sản phẩm vào giỏ hàng thành công")
       })
       .addCase(addToCart.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.isSuccess = false;
         state.message = action.payload?.message;
-       
+       toast.error("Thêm sản phẩm vào giỏ hàng thất bại")
       })
 
       // --- DELETE ITEM ---
@@ -122,12 +122,12 @@ export const cartSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.cart = action.payload;
-       
+       toast.success("Xóa sản phẩm khỏi giỏ hàng thành công")
       })
       .addCase(deleteCartItem.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
-        
+        toast.error("Xóa sản phẩm khỏi giỏ hàng thất bại")
       })
       .addCase(updateCartItem.pending, (state) => {
         state.isLoading = true;
@@ -136,23 +136,23 @@ export const cartSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.cart = action.payload;
+         toast.success("Cập nhật giỏ hàng thành công")
       })
       .addCase(updateCartItem.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
-        
+         toast.error("Cập nhật giỏ hàng thất bại")
       })
 
       .addCase(deleteCart.fulfilled, (state) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.cart = null;
-        
+        state.cart = null;  
       })
       .addCase(deleteCart.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
-       
+        toast.error("Xóa giỏ hàng thất bại")
       });
   },
 });

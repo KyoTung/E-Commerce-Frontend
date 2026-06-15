@@ -154,6 +154,7 @@ export const authSlice = createSlice({
         state.user = null;
         state.isSuccess = false;
         localStorage.removeItem("customer");
+        
       })
 
       // --- UPDATE PASSWORD ---

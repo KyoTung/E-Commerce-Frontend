@@ -41,6 +41,7 @@ export const getAccessToken = () => accessToken;
 export const clearAccessToken = () => {
   accessToken = null;
   localStorage.removeItem("customer");
+  localStorage.removeItem("user_info");
   if (store) store.dispatch({ type: "auth/reset" });
 };
 

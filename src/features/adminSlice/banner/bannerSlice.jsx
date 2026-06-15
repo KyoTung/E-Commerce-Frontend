@@ -1,72 +1,83 @@
-
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import bannerService from './bannerService';
-import { toast } from 'react-toastify';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import bannerService from "./bannerService";
+import { toast } from "react-toastify";
 
 export const fetchBanners = createAsyncThunk(
-  'banner/fetchAll',
+  "banner/fetchAll",
   async (params, thunkAPI) => {
     try {
       return await bannerService.getBanners(params);
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message,
+      );
     }
-  }
+  },
 );
 
 export const createBannerThunk = createAsyncThunk(
-  'banner/create',
+  "banner/create",
   async (data, thunkAPI) => {
     try {
       return await bannerService.createBanner(data);
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message,
+      );
     }
-  }
+  },
 );
 
 export const updateBannerThunk = createAsyncThunk(
-  'banner/update',
+  "banner/update",
   async ({ id, data }, thunkAPI) => {
     try {
       return await bannerService.updateBanner(id, data);
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message,
+      );
     }
-  }
+  },
 );
 
 export const deleteBannerThunk = createAsyncThunk(
-  'banner/delete',
+  "banner/delete",
   async (id, thunkAPI) => {
     try {
       return await bannerService.deleteBanner(id);
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message,
+      );
     }
-  }
+  },
 );
 
 export const uploadBannerImageThunk = createAsyncThunk(
-  'banner/uploadImage',
+  "banner/uploadImage",
   async ({ id, file }, thunkAPI) => {
     try {
       return await bannerService.uploadBannerImage(id, file);
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message,
+      );
     }
-  }
+  },
 );
 
 export const deleteBannerImageThunk = createAsyncThunk(
-  'banner/deleteImage',
+  "banner/deleteImage",
   async (id, thunkAPI) => {
     try {
       return await bannerService.deleteBannerImage(id);
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message,
+      );
     }
-  }
+  },
 );
 
 const initialState = {
@@ -79,12 +90,14 @@ const initialState = {
 };
 
 const bannerSlice = createSlice({
-  name: 'banner',
+  name: "banner",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchBanners.pending, (state) => { state.loading = true; })
+      .addCase(fetchBanners.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(fetchBanners.fulfilled, (state, action) => {
         state.loading = false;
         state.banners = action.payload.banners;
@@ -97,24 +110,20 @@ const bannerSlice = createSlice({
         state.error = action.payload;
         toast.error(action.payload);
       })
-      .addCase(createBannerThunk.fulfilled, (state, action) => {
-        toast.success('Tạo banner thành công');
-      })
-      .addCase(updateBannerThunk.fulfilled, (state, action) => {
-        toast.success('Cập nhật banner thành công');
-      })
-      .addCase(deleteBannerThunk.fulfilled, (state, action) => {
-        toast.success('Xóa banner thành công');
-      })
+      .addCase(createBannerThunk.fulfilled, (state, action) => {})
+      .addCase(updateBannerThunk.fulfilled, (state, action) => {})
+      .addCase(deleteBannerThunk.fulfilled, (state, action) => {})
       .addCase(uploadBannerImageThunk.fulfilled, (state, action) => {
-        const index = state.banners.findIndex(b => b._id === action.payload._id);
+        const index = state.banners.findIndex(
+          (b) => b._id === action.payload._id,
+        );
         if (index !== -1) state.banners[index] = action.payload;
-        toast.success('Upload ảnh thành công');
       })
       .addCase(deleteBannerImageThunk.fulfilled, (state, action) => {
-        const index = state.banners.findIndex(b => b._id === action.payload.banner._id);
+        const index = state.banners.findIndex(
+          (b) => b._id === action.payload.banner._id,
+        );
         if (index !== -1) state.banners[index] = action.payload.banner;
-        toast.success('Xóa ảnh thành công');
       });
   },
 });

@@ -214,6 +214,7 @@ const BlogPage = () => {
           <div className="lg:w-2/4">
             <div className="grid grid-cols-1 gap-6">
               {blogs.map((post) => (
+               <Link to={`/blog-detail/${post._id}`}>
                 <article
                   key={post._id}
                   className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group"
@@ -267,6 +268,7 @@ const BlogPage = () => {
                     </div>
                   </div>
                 </article>
+               </Link>
               ))}
             </div>
 

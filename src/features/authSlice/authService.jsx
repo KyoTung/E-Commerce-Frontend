@@ -20,6 +20,7 @@ const register = async (userData) => {
 export const logout = async () => {
   const response = await axiosClient.post('/user/logout');
   clearAccessToken();   // xóa memory & localStorage
+  
   return response.data;
 };
 

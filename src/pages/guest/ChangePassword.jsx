@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { FiUser, FiShoppingBag, FiLock, FiLogOut } from "react-icons/fi";
+import { toast, ToastContainer } from "react-toastify";
 
 import { updatePassword } from "../../features/authSlice/authSlice";
 import { logout } from "../../features/authSlice/authSlice";
@@ -20,6 +21,10 @@ const ChangePassword = () => {
    
     await dispatch(updatePassword({ password: data.password }));
     reset(); 
+    setTimeout(() =>{
+      dispatch(logout());
+    navigate("/");
+    }, 1500)
   };
 
   const handleLogout = () => {
@@ -29,6 +34,7 @@ const ChangePassword = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <ToastContainer/>
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         
        

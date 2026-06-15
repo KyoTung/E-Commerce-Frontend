@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
 import { FiUser, FiShoppingBag, FiLock, FiLogOut, FiBox, FiClock, FiChevronRight, FiSearch, FiXCircle } from "react-icons/fi"; // Thêm icon FiXCircle
 
 // Import Actions & Helpers
@@ -60,6 +61,7 @@ const OrderHistory = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
+      <ToastContainer/>
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           
