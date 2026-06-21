@@ -50,7 +50,7 @@ const Dashboard = () => {
   const [period, setPeriod] = useState("week");
   const [visitCount, setVisitCount] = useState(0);
 
-  // Lấy thêm đơn hàng và sản phẩm nếu cần (đã có trong dashboard slice, nhưng orderAdmin có thể chưa có)
+  // Lấy thêm đơn hàng và sản phẩm nếu cần
   useEffect(() => {
     dispatch(fetchOverview({ period }));
     dispatch(
@@ -74,7 +74,7 @@ const Dashboard = () => {
     if (period === "week") {
       dispatch(fetchRevenueChart({ period: "day", range: 7 }));
     } else if (period === "month") {
-      dispatch(fetchRevenueChart({ period: "month", range: null })); // không dùng range
+      dispatch(fetchRevenueChart({ period: "month", range: null }));
     } else if (period === "year") {
       dispatch(fetchRevenueChart({ period: "year", range: null }));
     }
@@ -85,6 +85,7 @@ const Dashboard = () => {
       style: "currency",
       currency: "VND",
     }).format(value || 0);
+
   const formatNumber = (value) =>
     new Intl.NumberFormat("vi-VN").format(value || 0);
 
@@ -99,7 +100,9 @@ const Dashboard = () => {
   // Tổng số sản phẩm đã bán (tính từ đơn hàng đã thanh toán)
   const totalSoldProducts = React.useMemo(() => {
     if (!orders) return 0;
-    const paidOrders = orders.filter((o) => o.paymentStatus === "paid");
+    const paidOrders = orders.filter(
+      (o) => o.paymentStatus === "paid" || o.paymentStatus === "Paid",
+    );
     return paidOrders.reduce((total, order) => {
       return (
         total + order.products.reduce((sum, item) => sum + (item.count || 0), 0)
@@ -107,7 +110,7 @@ const Dashboard = () => {
     }, 0);
   }, [orders]);
 
-  // Thống kê trạng thái đơn hàng
+  // Thống kê trạng thái đơn hàng (Bao gồm chuẩn hóa chữ hoa/thường)
   const getOrderStats = React.useMemo(() => {
     const stats = {
       notProcessed: 0,
@@ -118,22 +121,23 @@ const Dashboard = () => {
     };
     if (orders && orders.length) {
       orders.forEach((order) => {
-        switch (order.orderStatus) {
-          case "Not Processed":
+        const status = order.orderStatus?.toLowerCase();
+        switch (status) {
+          case "not processed":
             stats.notProcessed++;
             break;
-          case "Processing":
+          case "processing":
             stats.processing++;
             break;
-          case "Shipped":
-          case "Dispatched":
+          case "shipped":
+          case "dispatched":
             stats.shipped++;
             break;
-          case "Delivered":
-          case "Completed":
+          case "delivered":
+          case "completed":
             stats.delivered++;
             break;
-          case "Cancelled":
+          case "cancelled":
             stats.cancelled++;
             break;
           default:
@@ -144,10 +148,10 @@ const Dashboard = () => {
     return stats;
   }, [orders]);
 
-  // Top sản phẩm bán chạy (lấy từ dashboard slice)
+  // Top sản phẩm bán chạy
   const topProductsList = topProducts || [];
 
-  // Dữ liệu pie chart cho phân bổ đơn (có thể cải tiến từ API)
+  // Dữ liệu biểu đồ hình tròn cho phân bổ đơn
   const orderStatusData = [
     { name: "Hoàn thành", value: getOrderStats.delivered, color: "#22c55e" },
     { name: "Đang xử lý", value: getOrderStats.processing, color: "#f59e0b" },
@@ -164,30 +168,34 @@ const Dashboard = () => {
       .slice(0, 5)
       .map((order) => ({
         id: order._id,
-        customer: order.customerInfo?.name || "Khách",
+        customer: order.customerInfo?.name || "Khách vãng lai",
         amount: order.total,
         status: order.orderStatus,
         date: new Date(order.createdAt).toLocaleDateString("vi-VN"),
       }));
   }, [orders]);
 
-  // Đơn hàng chờ xử lý (pending)
+  // Đơn hàng chờ xử lý
   const pendingOrders = React.useMemo(() => {
     if (!orders) return [];
     return orders
       .filter(
         (o) =>
-          o.orderStatus === "Not Processed" || o.orderStatus === "Processing",
+          o.orderStatus?.toLowerCase() === "not processed" ||
+          o.orderStatus?.toLowerCase() === "processing",
       )
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 5)
       .map((order) => ({
         id: order._id,
-        customer: order.customerInfo?.name || "Khách",
+        customer: order.customerInfo?.name || "Khách vãng lai",
         amount: order.total,
         status: order.orderStatus,
         date: new Date(order.createdAt).toLocaleDateString("vi-VN"),
-        paymentMethod: order.paymentMethod,
+        paymentMethod:
+          order.paymentMethod === "cod"
+            ? "Thanh toán khi nhận hàng (COD)"
+            : "Chuyển khoản ngân hàng",
       }));
   }, [orders]);
 
@@ -197,74 +205,87 @@ const Dashboard = () => {
     return value.toLocaleString();
   };
 
-const chartData = (revenueChart.data || []).map((item) => {
-  const id = String(item._id);
-  let displayName = id;
+  const chartData = (revenueChart.data || []).map((item) => {
+    const id = String(item._id);
+    let displayName = id;
 
-  // Kiểm tra định dạng của id để quyết định cách hiển thị
-  if (id.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    // Dạng YYYY-MM-DD (ngày)
-    const [, month, day] = id.split('-');
-    displayName = `${day}/${month}`;
-  } else if (id.match(/^\d{4}-\d{2}$/)) {
-    // Dạng YYYY-MM (tháng)
-    const [year, month] = id.split('-');
-    displayName = `Tháng ${parseInt(month)}/${year}`;
-  } else if (id.match(/^\d{4}$/)) {
-    // Dạng YYYY (năm)
-    displayName = `Năm ${id}`;
-  } else if (id.match(/^\d{4}-\d{2}$/) && period === "week") {
-    // Trường hợp lỡ dùng period="week" mà id là năm-tuần (dự phòng)
-    const [year, week] = id.split('-');
-    displayName = `Tuần ${week}/${year}`;
-  }
+    if (id.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [, month, day] = id.split("-");
+      displayName = `${day}/${month}`;
+    } else if (id.match(/^\d{4}-\d{2}$/)) {
+      const [year, month] = id.split("-");
+      displayName = `Tháng ${parseInt(month)}/${year}`;
+    } else if (id.match(/^\d{4}$/)) {
+      displayName = `Năm ${id}`;
+    } else if (id.match(/^\d{4}-\d{2}$/) && period === "week") {
+      const [year, week] = id.split("-");
+      displayName = `Tuần ${week}/${year}`;
+    }
 
-  return {
-    name: displayName,
-    doanhThu: item.revenue || 0,
-    soDon: item.orders || 0,
-  };
-});
+    return {
+      name: displayName,
+      doanhThu: item.revenue || 0,
+      soDon: item.orders || 0,
+    };
+  });
 
+  // Chuyển đổi nhãn trạng thái Tiếng Việt trực quan
   const getStatusBadge = (status) => {
     const map = {
-      "Not Processed": "bg-gray-100 text-gray-800",
-      Processing: "bg-yellow-100 text-yellow-800",
-      Shipped: "bg-blue-100 text-blue-800",
-      Delivered: "bg-green-100 text-green-800",
-      Completed: "bg-teal-100 text-teal-800",
-      Cancelled: "bg-red-100 text-red-800",
+      "Not Processed": {
+        text: "Chưa xử lý",
+        class: "bg-gray-100 text-gray-800",
+      },
+      Processing: {
+        text: "Đang xử lý",
+        class: "bg-yellow-100 text-yellow-800",
+      },
+      Confirmed: {
+        text: "Đã xác nhận",
+        class: "bg-blue-100 text-blue-800",
+      },
+      Shipped: { text: "Đang giao", class: "bg-blue-100 text-blue-800" },
+      Dispatched: { text: "Đang giao", class: "bg-blue-100 text-blue-800" },
+      Delivered: { text: "Đã giao hàng", class: "bg-green-100 text-green-800" },
+      Completed: { text: "Hoàn thành", class: "bg-teal-100 text-teal-800" },
+      Cancelled: { text: "Đã hủy", class: "bg-red-100 text-red-800" },
     };
-    const className = map[status] || "bg-gray-100 text-gray-800";
+
+    const config = map[status] || {
+      text: status,
+      class: "bg-gray-100 text-gray-800",
+    };
     return (
       <span
-        className={`px-2 py-1 rounded-full text-xs font-medium ${className}`}
+        className={`px-2 py-1 rounded-full text-xs font-medium ${config.class}`}
       >
-        {status}
+        {config.text}
       </span>
     );
   };
 
   const handlePeriodChange = (newPeriod) => {
-  setPeriod(newPeriod);
-  if (newPeriod === 'week') {
-    dispatch(fetchRevenueChart({ period: 'day', range: 7 }));
-  } else if (newPeriod === 'month') {
-    dispatch(fetchRevenueChart({ period: 'month' }));
-  } else {
-    dispatch(fetchRevenueChart({ period: 'year' }));
-  }
-};
+    setPeriod(newPeriod);
+    if (newPeriod === "week") {
+      dispatch(fetchRevenueChart({ period: "day", range: 7 }));
+    } else if (newPeriod === "month") {
+      dispatch(fetchRevenueChart({ period: "month" }));
+    } else {
+      dispatch(fetchRevenueChart({ period: "year" }));
+    }
+  };
 
   return (
     <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
+      {/* Tiêu đề điều hướng */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-        <div className="text-sm text-gray-500 mt-1">Home / Dashboard</div>
+        <h1 className="text-2xl font-bold text-gray-800">Bảng điều khiển</h1>
+        <div className="text-sm text-gray-500 mt-1">
+          Trang chủ / Tổng quan thống kê
+        </div>
       </div>
 
-      {/* Cards hàng 1 - KPI chính */}
+      {/* KPI Hàng 1 */}
       {loading && !overview.totalRevenue ? (
         <div className="h-40 flex justify-center">
           <Loading />
@@ -316,7 +337,7 @@ const chartData = (revenueChart.data || []).map((item) => {
               </div>
             </div>
             <div className="mt-3 text-xs text-gray-500">
-              Tổng số lượng bán ra
+              Tổng số lượng sản phẩm tiêu thụ
             </div>
           </div>
           <div className="bg-white rounded-xl shadow-sm border p-5">
@@ -334,7 +355,7 @@ const chartData = (revenueChart.data || []).map((item) => {
         </div>
       )}
 
-      {/* Cards hàng 2 - bổ sung */}
+      {/* KPI Hàng 2 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
         <div className="bg-white rounded-xl shadow-sm border p-5">
           <div className="flex justify-between items-start">
@@ -364,12 +385,14 @@ const chartData = (revenueChart.data || []).map((item) => {
               <AlertTriangle className="text-yellow-600" size={22} />
             </div>
           </div>
-          <div className="mt-3 text-xs text-yellow-600">Cần nhập hàng</div>
+          <div className="mt-3 text-xs text-yellow-600">
+            Cần kế hoạch nhập hàng
+          </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-5">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm text-gray-500">Giá trị đơn TB</p>
+              <p className="text-sm text-gray-500">Giá trị đơn trung bình</p>
               <p className="text-2xl font-bold">
                 {formatCurrency(overview.averageOrderValue)}
               </p>
@@ -378,12 +401,12 @@ const chartData = (revenueChart.data || []).map((item) => {
               <TrendingUp className="text-emerald-600" size={22} />
             </div>
           </div>
-          <div className="mt-3 text-xs text-gray-500">AOV</div>
+          <div className="mt-3 text-xs text-gray-500">Giá trị AOV</div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-5">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm text-gray-500">Tỷ lệ hoàn thành</p>
+              <p className="text-sm text-gray-500">Tỷ lệ hoàn thành đơn</p>
               <p className="text-2xl font-bold">
                 {overview.totalOrders
                   ? Math.round(
@@ -397,11 +420,13 @@ const chartData = (revenueChart.data || []).map((item) => {
               <CheckCircle className="text-teal-600" size={22} />
             </div>
           </div>
-          <div className="mt-3 text-xs text-gray-500">Đơn đã giao / Tổng</div>
+          <div className="mt-3 text-xs text-gray-500">
+            Đơn thành công / Tổng số đơn
+          </div>
         </div>
       </div>
 
-      {/* Biểu đồ doanh thu + Pie chart */}
+      {/* Biểu đồ Doanh thu & Hình tròn */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border p-5">
           <div className="flex justify-between items-center mb-4">
@@ -409,21 +434,21 @@ const chartData = (revenueChart.data || []).map((item) => {
             <div className="flex gap-2">
               <button
                 onClick={() => handlePeriodChange("week")}
-                className={`px-3 py-1 text-xs rounded-md ${period === "week" ? "bg-[#d70018] text-white" : "bg-gray-100"}`}
+                className={`px-3 py-1 text-xs rounded-md font-semibold transition ${period === "week" ? "bg-[#d70018] text-white" : "bg-gray-100 text-gray-600"}`}
               >
-                7 ngày
+                7 ngày qua
               </button>
               <button
                 onClick={() => handlePeriodChange("month")}
-                className={`px-3 py-1 text-xs rounded-md ${period === "month" ? "bg-[#d70018] text-white" : "bg-gray-100"}`}
+                className={`px-3 py-1 text-xs rounded-md font-semibold transition ${period === "month" ? "bg-[#d70018] text-white" : "bg-gray-100 text-gray-600"}`}
               >
-                Tháng
+                Theo tháng
               </button>
               <button
                 onClick={() => handlePeriodChange("year")}
-                className={`px-3 py-1 text-xs rounded-md ${period === "year" ? "bg-[#d70018] text-white" : "bg-gray-100"}`}
+                className={`px-3 py-1 text-xs rounded-md font-semibold transition ${period === "year" ? "bg-[#d70018] text-white" : "bg-gray-100 text-gray-600"}`}
               >
-                Năm
+                Theo năm
               </button>
             </div>
           </div>
@@ -437,7 +462,7 @@ const chartData = (revenueChart.data || []).map((item) => {
               <Line
                 type="monotone"
                 dataKey="doanhThu"
-                name="Doanh thu"
+                name="Doanh thu bán hàng"
                 stroke="#d70018"
                 strokeWidth={2}
               />
@@ -445,7 +470,7 @@ const chartData = (revenueChart.data || []).map((item) => {
           </ResponsiveContainer>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-5">
-          <h3 className="text-lg font-bold mb-4">Phân bổ đơn hàng</h3>
+          <h3 className="text-lg font-bold mb-4">Tỷ lệ trạng thái đơn hàng</h3>
           {orderStatusData.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
@@ -469,7 +494,7 @@ const chartData = (revenueChart.data || []).map((item) => {
             </ResponsiveContainer>
           ) : (
             <div className="text-center py-10 text-gray-500">
-              Chưa có dữ liệu
+              Chưa ghi nhận dữ liệu đơn hàng
             </div>
           )}
           <div className="flex flex-wrap justify-center gap-3 mt-2">
@@ -486,14 +511,14 @@ const chartData = (revenueChart.data || []).map((item) => {
         </div>
       </div>
 
-      {/* Bảng đơn hàng gần đây và chờ xử lý */}
+      {/* Danh sách Đơn hàng */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white rounded-xl shadow-sm border p-5">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold">Đơn hàng gần đây</h3>
+            <h3 className="text-lg font-bold">Đơn hàng mới nhất</h3>
             <button
               onClick={() => navigate("/admin/orders")}
-              className="text-sm text-red-600 hover:underline"
+              className="text-sm text-red-600 hover:underline font-medium"
             >
               Xem tất cả
             </button>
@@ -502,18 +527,19 @@ const chartData = (revenueChart.data || []).map((item) => {
             <Loading />
           ) : recentOrders.length === 0 ? (
             <div className="text-center py-8 text-gray-400">
-              Chưa có đơn hàng
+              Chưa có đơn hàng nào được tạo
             </div>
           ) : (
             <div className="space-y-3">
               {recentOrders.map((order) => (
                 <div
                   key={order.id}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                  onClick={() => navigate(`/admin/order-detail/${order.id}`)}
+                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
                 >
                   <div>
-                    <div className="font-medium">
-                      #{order.id.slice(-6)} - {order.customer}
+                    <div className="font-medium text-gray-900">
+                      #{order.id.slice(-6)} — {order.customer}
                     </div>
                     <div className="text-xs text-gray-500">{order.date}</div>
                   </div>
@@ -528,31 +554,32 @@ const chartData = (revenueChart.data || []).map((item) => {
             </div>
           )}
         </div>
+
         <div className="bg-white rounded-xl shadow-sm border p-5">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-bold">Đơn hàng chờ xử lý</h3>
-            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
-              Cần xử lý
+            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-medium">
+              Yêu cầu xử lý
             </span>
           </div>
           {pendingOrders.length === 0 ? (
-            <div className="text-center py-8 text-green-600">
-              ✅ Không có đơn chờ xử lý
+            <div className="text-center py-8 text-green-600 font-medium">
+              ✅ Tuyệt vời! Không có đơn hàng tồn đọng
             </div>
           ) : (
             <div className="space-y-3">
               {pendingOrders.map((order) => (
                 <div
                   key={order.id}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                  onClick={() => navigate(`/admin/order-detail/${order.id}`)}
+                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
                 >
                   <div>
-                    <div className="font-medium">
-                      #{order.id.slice(-6)} - {order.customer}
+                    <div className="font-medium text-gray-900">
+                      #{order.id.slice(-6)} — {order.customer}
                     </div>
                     <div className="text-xs text-gray-500">
-                      {order.date} -{" "}
-                      {order.paymentMethod === "cod" ? "COD" : "Chuyển khoản"}
+                      {order.date} • {order.paymentMethod}
                     </div>
                   </div>
                   <div className="text-right">
@@ -568,45 +595,50 @@ const chartData = (revenueChart.data || []).map((item) => {
         </div>
       </div>
 
-      {/* Top sản phẩm và cảnh báo tồn kho */}
+      {/* Sản phẩm bán chạy & Tồn kho thấp */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white rounded-xl shadow-sm border p-5">
-          <h3 className="text-lg font-bold mb-4">Top sản phẩm bán chạy</h3>
+          <h3 className="text-lg font-bold mb-4">
+            Top 5 sản phẩm bán chạy nhất
+          </h3>
           <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="bg-gray-50 text-xs uppercase">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-bold">
                 <tr>
                   <th className="p-2 text-left">Sản phẩm</th>
-                  <th className="p-2 text-left">Phiên bản</th>
+                  <th className="p-2 text-left">Cấu hình / Màu</th>
                   <th className="p-2 text-center">Đã bán</th>
                   <th className="p-2 text-right">Doanh thu</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-100">
                 {topProductsList.slice(0, 5).map((item, idx) => (
-                  <tr key={idx} className="border-t">
+                  <tr key={idx} className="hover:bg-gray-50 transition">
                     <td className="p-2 flex items-center gap-2">
                       <img
                         src={item._id?.image}
-                        className="w-8 h-8 object-contain border rounded"
+                        className="w-8 h-8 object-contain border rounded bg-white"
+                        alt=""
                       />
-                      <span className="text-sm">{item._id?.title}</span>
+                      <span className="font-medium text-gray-800 line-clamp-1">
+                        {item._id?.title}
+                      </span>
                     </td>
-                    <td className="p-2 text-center ">
-                      {item._id?.storage}/{item._id?.color}
+                    <td className="p-2 text-gray-600">
+                      {item._id?.storage} — {item._id?.color}
                     </td>
-                    <td className="p-2 text-center font-semibold">
+                    <td className="p-2 text-center font-bold text-gray-900">
                       {item.totalQuantity}
                     </td>
-                    <td className="p-2 text-right text-red-600">
+                    <td className="p-2 text-right font-bold text-red-600">
                       {formatCurrency(item.totalRevenue)}
                     </td>
                   </tr>
                 ))}
                 {topProductsList.length === 0 && (
                   <tr>
-                    <td colSpan="3" className="text-center py-4 text-gray-400">
-                      Chưa có dữ liệu
+                    <td colSpan="4" className="text-center py-4 text-gray-400">
+                      Chưa có thống kê sản phẩm
                     </td>
                   </tr>
                 )}
@@ -614,39 +646,43 @@ const chartData = (revenueChart.data || []).map((item) => {
             </table>
           </div>
         </div>
+
         <div className="bg-white rounded-xl shadow-sm border p-5">
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-            ⚠️ Sản phẩm tồn kho thấp
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-amber-600">
+            ⚠️ Cảnh báo sản phẩm sắp hết hàng
           </h3>
           {lowStockItems.length === 0 ? (
-            <div className="text-center py-6 text-green-600">
-              ✅ Không có sản phẩm nào dưới ngưỡng
+            <div className="text-center py-6 text-green-600 font-medium">
+              ✅ An toàn! Không có sản phẩm nào dưới ngưỡng tối thiểu
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead className="bg-gray-50">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-bold">
                   <tr>
                     <th className="p-2 text-left">Sản phẩm</th>
                     <th className="p-2 text-left">Phân loại</th>
-                    <th className="p-2 text-center">Tồn</th>
+                    <th className="p-2 text-center">Tồn kho</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100">
                   {lowStockItems.map((item, idx) => (
-                    <tr key={idx} className="border-t">
+                    <tr key={idx} className="hover:bg-gray-50 transition">
                       <td className="p-2 flex items-center gap-2">
                         <img
                           src={item.image}
-                          className="w-8 h-8 object-contain border rounded"
+                          className="w-8 h-8 object-contain border rounded bg-white"
+                          alt=""
                         />
-                        <span>{item.productTitle}</span>
+                        <span className="font-medium text-gray-800 line-clamp-1">
+                          {item.productTitle}
+                        </span>
                       </td>
-                      <td className="p-2">
-                        {item.color} - {item.storage}
+                      <td className="p-2 text-gray-600">
+                        {item.color} — {item.storage}
                       </td>
                       <td className="p-2 text-center">
-                        <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs">
+                        <span className="bg-red-100 text-red-800 px-2.5 py-0.5 rounded-full text-xs font-bold">
                           {item.quantity}
                         </span>
                       </td>
@@ -659,33 +695,41 @@ const chartData = (revenueChart.data || []).map((item) => {
         </div>
       </div>
 
-      {/* Footer Order Status Overview */}
+      {/* Khối Tổng kết dưới chân trang */}
       <div className="bg-white rounded-xl shadow-sm border p-5">
         <h3 className="text-lg font-bold mb-4">
-          Tổng quan trạng thái đơn hàng
+          Tổng quan số lượng theo trạng thái đơn
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="border rounded-lg p-3 text-center">
-            <div className="text-sm text-gray-500">Chưa xử lý</div>
-            <div className="text-2xl font-bold">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+          <div className="border border-gray-100 rounded-lg p-3 text-center bg-gray-50/50">
+            <div className="text-gray-500">Chưa xử lý</div>
+            <div className="text-2xl font-bold text-gray-700 mt-1">
               {getOrderStats.notProcessed}
             </div>
           </div>
-          <div className="border rounded-lg p-3 text-center">
-            <div className="text-sm text-gray-500">Đang xử lý</div>
-            <div className="text-2xl font-bold">{getOrderStats.processing}</div>
+          <div className="border border-gray-100 rounded-lg p-3 text-center bg-gray-50/50">
+            <div className="text-gray-500">Đang xử lý</div>
+            <div className="text-2xl font-bold text-amber-500 mt-1">
+              {getOrderStats.processing}
+            </div>
           </div>
-          <div className="border rounded-lg p-3 text-center">
-            <div className="text-sm text-gray-500">Đang giao</div>
-            <div className="text-2xl font-bold">{getOrderStats.shipped}</div>
+          <div className="border border-gray-100 rounded-lg p-3 text-center bg-gray-50/50">
+            <div className="text-gray-500">Đang giao hàng</div>
+            <div className="text-2xl font-bold text-blue-500 mt-1">
+              {getOrderStats.shipped}
+            </div>
           </div>
-          <div className="border rounded-lg p-3 text-center">
-            <div className="text-sm text-gray-500">Đã giao</div>
-            <div className="text-2xl font-bold">{getOrderStats.delivered}</div>
+          <div className="border border-gray-100 rounded-lg p-3 text-center bg-gray-50/50">
+            <div className="text-gray-500">Đã giao thành công</div>
+            <div className="text-2xl font-bold text-green-600 mt-1">
+              {getOrderStats.delivered}
+            </div>
           </div>
-          <div className="border rounded-lg p-3 text-center">
-            <div className="text-sm text-gray-500">Đã hủy</div>
-            <div className="text-2xl font-bold">{getOrderStats.cancelled}</div>
+          <div className="border border-gray-100 rounded-lg p-3 text-center bg-gray-50/50">
+            <div className="text-gray-500">Đã hủy đơn</div>
+            <div className="text-2xl font-bold text-red-500 mt-1">
+              {getOrderStats.cancelled}
+            </div>
           </div>
         </div>
       </div>

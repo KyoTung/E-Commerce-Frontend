@@ -3,7 +3,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
-import { Plus, Trash, ArrowLeft, Search, Package, Minus, User } from "lucide-react";
+import {
+  Plus,
+  Trash,
+  ArrowLeft,
+  Search,
+  Package,
+  Minus,
+  User,
+} from "lucide-react";
 import Select from "react-select";
 
 import { getAllProducts } from "../../../features/adminSlice/products/productSlice";
@@ -16,9 +24,15 @@ const AdminCreateOrder = () => {
   const navigate = useNavigate();
 
   // Redux state
-  const { products, isLoading: productsLoading } = useSelector((state) => state.productAdmin);
-  const { allUsers, isLoading: usersLoading } = useSelector((state) => state.customer);
-  const { isLoading: orderLoading, isSuccess } = useSelector((state) => state.orderAdmin);
+  const { products, isLoading: productsLoading } = useSelector(
+    (state) => state.productAdmin,
+  );
+  const { allUsers, isLoading: usersLoading } = useSelector(
+    (state) => state.customer,
+  );
+  const { isLoading: orderLoading, isSuccess } = useSelector(
+    (state) => state.orderAdmin,
+  );
 
   // Local state cho đơn hàng
   const [orderItems, setOrderItems] = useState([]);
@@ -32,18 +46,27 @@ const AdminCreateOrder = () => {
   const [selectedVariant, setSelectedVariant] = useState("");
   const [quantity, setQuantity] = useState(1);
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm();
 
   // Fetch dữ liệu ban đầu
   useEffect(() => {
     dispatch(getAllProducts());
-    dispatch(getAllUser());
+    dispatch(getAllUser({ page: 1, limit: 9999, search: "" }));
   }, [dispatch]);
 
   // Khi chọn user, tự động điền thông tin vào form
   useEffect(() => {
     if (selectedUser) {
-      setValue("name", selectedUser.fullName || selectedUser.firstname + " " + selectedUser.lastname);
+      setValue(
+        "name",
+        selectedUser.fullName ||
+          selectedUser.firstname + " " + selectedUser.lastname,
+      );
       setValue("phone", selectedUser.mobile || "");
       setValue("address", selectedUser.address || "");
       setValue("email", selectedUser.email || "");
@@ -60,7 +83,10 @@ const AdminCreateOrder = () => {
 
   // Format tiền
   const formatPrice = (price) =>
-    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price || 0);
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(price || 0);
 
   // Lọc sản phẩm theo từ khóa (có giới hạn 10)
   const filteredProducts = useMemo(() => {
@@ -76,7 +102,9 @@ const AdminCreateOrder = () => {
       return toast.warning("Vui lòng chọn sản phẩm và phân loại!");
     }
 
-    const variantData = selectedProduct.variants.find((v) => v._id === selectedVariant);
+    const variantData = selectedProduct.variants.find(
+      (v) => v._id === selectedVariant,
+    );
     if (!variantData) return toast.error("Không tìm thấy biến thể");
 
     const newCount = Number(quantity);
@@ -88,7 +116,7 @@ const AdminCreateOrder = () => {
       (item) =>
         item.product === selectedProduct._id &&
         item.color === variantData.color &&
-        item.storage === variantData.storage
+        item.storage === variantData.storage,
     );
 
     if (existingIndex >= 0) {
@@ -105,7 +133,8 @@ const AdminCreateOrder = () => {
         {
           product: selectedProduct._id,
           title: selectedProduct.title,
-          image: variantData.images?.[0]?.url || selectedProduct.images?.[0]?.url,
+          image:
+            variantData.images?.[0]?.url || selectedProduct.images?.[0]?.url,
           color: variantData.color,
           storage: variantData.storage,
           price: variantData.price,
@@ -145,12 +174,15 @@ const AdminCreateOrder = () => {
   };
 
   // Tính tổng tiền
-  const itemsTotal = orderItems.reduce((sum, item) => sum + item.price * item.count, 0);
+  const itemsTotal = orderItems.reduce(
+    (sum, item) => sum + item.price * item.count,
+    0,
+  );
   const finalTotal = itemsTotal + Number(shippingFee) - Number(discountAmount);
 
   // Submit form
   const onSubmit = async (data) => {
-console.log("Form data:", data);
+    console.log("Form data:", data);
 
     if (orderItems.length === 0) {
       return toast.error("Vui lòng thêm ít nhất 1 sản phẩm!");
@@ -182,11 +214,22 @@ console.log("Form data:", data);
 
   if (productsLoading || usersLoading) return <Loading />;
 
- const userOptions = allUsers?.map((u) => ({
-  value: u._id,
-  label: `${u.fullName || u.firstname + " " + u.lastname} (${u.email})`,
-  userData: u,
-}));
+  // const userOptions = allUsers?.map((u) => ({
+  //   value: u._id,
+  //   label: `${u.fullName || u.firstname + " " + u.lastname} `,
+  //   userData: u,
+  // }));
+
+  const userOptions = allUsers?.map((u) => {
+  const name = u.fullName || (u.firstname + " " + u.lastname);
+  const phone = u.mobile || u.phone || "Chưa có SĐT";
+  return {
+    value: u._id,
+    // Hiển thị dạng: "Nguyễn Văn A - 0987654321" giúp dễ nhìn hơn
+    label: `${name} — ${phone}`, 
+    userData: u,
+  };
+});
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -204,20 +247,48 @@ console.log("Form data:", data);
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* CỘT TRÁI: THÔNG TIN KHÁCH HÀNG & CẤU HÌNH */}
         <div className="lg:col-span-1 space-y-6">
-          <form id="createOrderForm" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            id="createOrderForm"
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-6"
+          >
             {/* Box chọn khách hàng có sẵn */}
             <div className="bg-white rounded-xl shadow-sm border p-5">
               <h2 className="font-bold text-gray-900 mb-4 border-b pb-2 flex items-center gap-2">
                 <User size={18} /> Khách hàng
               </h2>
               <div className="mb-4">
-                <label className="block text-gray-600 mb-1 text-sm">Chọn khách hàng (tùy chọn)</label>
-                <Select
+                <label className="block text-gray-600 mb-1 text-sm">
+                  Chọn khách hàng (tùy chọn)
+                </label>
+                {/* <Select
                   options={userOptions}
                   onChange={(opt) => setSelectedUser(opt?.userData || null)}
                   isClearable
                   placeholder="-- Tìm kiếm khách hàng --"
                   className="text-sm"
+                /> */}
+                <Select
+                  options={userOptions}
+                  onChange={(opt) => setSelectedUser(opt?.userData || null)}
+                  isClearable
+                  placeholder="-- Tìm kiếm tên hoặc số điện thoại --"
+                  className="text-sm"
+                  // Logic tìm kiếm tùy chỉnh: Khớp theo Tên HOẶC Số điện thoại công khai
+                  filterOption={(option, rawInput) => {
+                    const input = rawInput.toLowerCase();
+                    const userData = option.data.userData;
+
+                    const name = (
+                      userData.fullName
+                    ).toLowerCase();
+                    const phone = (
+                      userData.phone ||
+                      ""
+                    ).toLowerCase();
+
+                    return name.includes(input) || phone.includes(input);
+                  }}
                 />
               </div>
               <div className="space-y-3 text-sm">
@@ -227,39 +298,68 @@ console.log("Form data:", data);
                     {...register("name", { required: "Vui lòng nhập họ tên" })}
                     className="w-full border rounded p-2 focus:ring-1 focus:ring-blue-500 outline-none"
                   />
-                  {errors.name && <span className="text-red-500 text-xs">{errors.name.message}</span>}
+                  {errors.name && (
+                    <span className="text-red-500 text-xs">
+                      {errors.name.message}
+                    </span>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-gray-600 mb-1">Số điện thoại *</label>
+                  <label className="block text-gray-600 mb-1">
+                    Số điện thoại *
+                  </label>
                   <input
                     {...register("phone", { required: "Vui lòng nhập SĐT" })}
                     className="w-full border rounded p-2 focus:ring-1 focus:ring-blue-500 outline-none"
                   />
-                  {errors.phone && <span className="text-red-500 text-xs">{errors.phone.message}</span>}
+                  {errors.phone && (
+                    <span className="text-red-500 text-xs">
+                      {errors.phone.message}
+                    </span>
+                  )}
                 </div>
                 <div>
                   <label className="block text-gray-600 mb-1">Địa chỉ *</label>
                   <textarea
-                    {...register("address", { required: "Vui lòng nhập địa chỉ" })}
+                    {...register("address", {
+                      required: "Vui lòng nhập địa chỉ",
+                    })}
                     rows={2}
                     className="w-full border rounded p-2 focus:ring-1 focus:ring-blue-500 outline-none"
                   />
-                  {errors.address && <span className="text-red-500 text-xs">{errors.address.message}</span>}
+                  {errors.address && (
+                    <span className="text-red-500 text-xs">
+                      {errors.address.message}
+                    </span>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-gray-600 mb-1">Email (tùy chọn)</label>
-                  <input {...register("email")} type="email" className="w-full border rounded p-2" />
+                  <label className="block text-gray-600 mb-1">
+                    Email (tùy chọn)
+                  </label>
+                  <input
+                    {...register("email")}
+                    type="email"
+                    className="w-full border rounded p-2"
+                  />
                 </div>
               </div>
             </div>
 
             {/* Box thiết lập đơn hàng */}
             <div className="bg-white rounded-xl shadow-sm border p-5">
-              <h2 className="font-bold text-gray-900 mb-4 border-b pb-2">Thiết lập đơn</h2>
+              <h2 className="font-bold text-gray-900 mb-4 border-b pb-2">
+                Thiết lập đơn
+              </h2>
               <div className="space-y-3 text-sm">
                 <div>
-                  <label className="block text-gray-600 mb-1">Trạng thái đơn hàng</label>
-                  <select {...register("orderStatus")} className="w-full border rounded p-2">
+                  <label className="block text-gray-600 mb-1">
+                    Trạng thái đơn hàng
+                  </label>
+                  <select
+                    {...register("orderStatus")}
+                    className="w-full border rounded p-2"
+                  >
                     <option value="Confirmed">Đã xác nhận (Confirmed)</option>
                     <option value="Processing">Đang xử lý (Processing)</option>
                     <option value="Dispatched">Đang giao (Dispatched)</option>
@@ -267,15 +367,25 @@ console.log("Form data:", data);
                   </select>
                 </div>
                 <div>
-                  <label className="block text-gray-600 mb-1">Phương thức thanh toán</label>
-                  <select {...register("paymentMethod")} className="w-full border rounded p-2">
+                  <label className="block text-gray-600 mb-1">
+                    Phương thức thanh toán
+                  </label>
+                  <select
+                    {...register("paymentMethod")}
+                    className="w-full border rounded p-2"
+                  >
                     <option value="cod">COD - Thanh toán khi nhận</option>
                     <option value="bank_transfer">Chuyển khoản / Thẻ</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-gray-600 mb-1">Trạng thái thanh toán</label>
-                  <select {...register("paymentStatus")} className="w-full border rounded p-2">
+                  <label className="block text-gray-600 mb-1">
+                    Trạng thái thanh toán
+                  </label>
+                  <select
+                    {...register("paymentStatus")}
+                    className="w-full border rounded p-2"
+                  >
                     <option value="not_paid">Chưa thanh toán</option>
                     <option value="paid">Đã thanh toán</option>
                   </select>
@@ -307,27 +417,31 @@ console.log("Form data:", data);
                     className="w-full bg-transparent outline-none text-sm"
                   />
                 </div>
-                {searchTerm && !selectedProduct && filteredProducts.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-60 overflow-y-auto">
-                    {filteredProducts.map((p) => (
-                      <div
-                        key={p._id}
-                        onClick={() => {
-                          setSelectedProduct(p);
-                          setSearchTerm(p.title);
-                        }}
-                        className="flex items-center gap-3 p-2 hover:bg-blue-50 cursor-pointer border-b"
-                      >
-                        <img
-                          src={p.images?.[0]?.url}
-                          className="w-10 h-10 object-contain border rounded bg-white"
-                          alt=""
-                        />
-                        <div className="text-sm font-medium text-gray-800 line-clamp-1">{p.title}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {searchTerm &&
+                  !selectedProduct &&
+                  filteredProducts.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-60 overflow-y-auto">
+                      {filteredProducts.map((p) => (
+                        <div
+                          key={p._id}
+                          onClick={() => {
+                            setSelectedProduct(p);
+                            setSearchTerm(p.title);
+                          }}
+                          className="flex items-center gap-3 p-2 hover:bg-blue-50 cursor-pointer border-b"
+                        >
+                          <img
+                            src={p.images?.[0]?.url}
+                            className="w-10 h-10 object-contain border rounded bg-white"
+                            alt=""
+                          />
+                          <div className="text-sm font-medium text-gray-800 line-clamp-1">
+                            {p.title}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
               </div>
 
               {selectedProduct && (
@@ -339,7 +453,11 @@ console.log("Form data:", data);
                   >
                     <option value="">-- Chọn phân loại --</option>
                     {selectedProduct.variants?.map((v) => (
-                      <option key={v._id} value={v._id} disabled={v.quantity <= 0}>
+                      <option
+                        key={v._id}
+                        value={v._id}
+                        disabled={v.quantity <= 0}
+                      >
                         {v.color} - {v.storage}{" "}
                         {v.quantity <= 0 ? "(Hết hàng)" : `(Còn ${v.quantity})`}
                       </option>
@@ -390,7 +508,9 @@ console.log("Form data:", data);
                           className="w-10 h-10 border rounded object-contain p-0.5"
                           alt=""
                         />
-                        <span className="font-medium text-gray-800 line-clamp-1">{item.title}</span>
+                        <span className="font-medium text-gray-800 line-clamp-1">
+                          {item.title}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-gray-600">
                         {item.color} - {item.storage}
@@ -404,7 +524,9 @@ console.log("Form data:", data);
                           >
                             <Minus size={14} />
                           </button>
-                          <span className="w-8 text-center font-bold">{item.count}</span>
+                          <span className="w-8 text-center font-bold">
+                            {item.count}
+                          </span>
                           <button
                             type="button"
                             onClick={() => updateItemCount(idx, item.count + 1)}
@@ -414,7 +536,9 @@ console.log("Form data:", data);
                           </button>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-right font-medium">{formatPrice(item.price)}</td>
+                      <td className="px-4 py-3 text-right font-medium">
+                        {formatPrice(item.price)}
+                      </td>
                       <td className="px-4 py-3 text-right font-medium text-[#d70018]">
                         {formatPrice(item.price * item.count)}
                       </td>
@@ -467,7 +591,9 @@ console.log("Form data:", data);
               </div>
               <div className="flex justify-between border-t pt-3">
                 <span className="font-bold text-base">Tổng cộng:</span>
-                <span className="text-2xl font-bold text-[#d70018]">{formatPrice(finalTotal)}</span>
+                <span className="text-2xl font-bold text-[#d70018]">
+                  {formatPrice(finalTotal)}
+                </span>
               </div>
             </div>
             <button
