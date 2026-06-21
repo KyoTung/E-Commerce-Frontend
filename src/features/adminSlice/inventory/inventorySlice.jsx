@@ -171,12 +171,19 @@ const inventorySlice = createSlice({
       })
       .addCase(getStock.fulfilled, (state, action) => {
         state.loading = false;
-        state.stockItems = Array.isArray(action.payload) ? action.payload : [];
-        state.totalStock = state.stockItems.length;
+        // Nhận dữ liệu phân trang từ API mới gửi về
+        state.stockItems = action.payload.stockItems || [];
+        state.totalStock = action.payload.total || 0;
+        state.currentPage = action.payload.page || 1;
+        state.limit = action.payload.limit || 10;
+        state.totalPages = action.payload.totalPages || 1;
       })
       .addCase(getStock.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        state.stockItems = [];
+        state.totalStock = 0;
+        state.totalPages = 1;
         toast.error("Lấy danh sách tồn kho thất bại");
       });
   },

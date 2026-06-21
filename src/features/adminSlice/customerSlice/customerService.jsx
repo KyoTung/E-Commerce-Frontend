@@ -1,13 +1,15 @@
-
-import axiosClient from "../../../api/axiosClient"; 
+import axiosClient from "../../../api/axiosClient";
 
 const createUser = async (userData) => {
-  const response = await axiosClient.post('/user/register', userData);
+  const response = await axiosClient.post("/user/register", userData);
   return response.data;
 };
 
 const updateUser = async (userId, userData) => {
-  const response = await axiosClient.put(`/user/update-user/${userId}`, userData);
+  const response = await axiosClient.put(
+    `/user/update-user/${userId}`,
+    userData,
+  );
   return response.data;
 };
 
@@ -16,8 +18,18 @@ const getUserDetail = async (userId) => {
   return response.data;
 };
 
-const getAllUser = async () => {
-  const response = await axiosClient.get('/user/all-users');
+// const getAllUser = async (page = 1, limit = 10, search = "") => {
+//   const response = await axiosClient.get("/user/all-users", {
+//     params: { page, limit, search },
+//   });
+//   return response.data;
+// };
+
+// MỚI (Thêm dấu ngoặc nhọn { } để nhận đúng object từ Slice truyền sang)
+const getAllUser = async ({ page = 1, limit = 10, search = "" } = {}) => {
+  const response = await axiosClient.get("/user/all-users", {
+    params: { page, limit, search },
+  });
   return response.data;
 };
 

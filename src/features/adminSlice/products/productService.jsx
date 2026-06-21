@@ -2,7 +2,7 @@ import axiosClient from "../../../api/axiosClient";
 
 const createProduct = async (productData) => {
   // axiosClient tự động xử lý Content-Type và Token
-  const response = await axiosClient.post('/product', productData);
+  const response = await axiosClient.post("/product", productData);
   return response.data;
 };
 
@@ -13,9 +13,9 @@ const updateProduct = async (productId, productData) => {
 
 const getAllProductsAdmin = async (page = 1, limit = 10, search = "") => {
   const response = await axiosClient.get("/product/admin", {
-    params: { page, limit, search }
+    params: { page, limit, search },
   });
-  return response.data;  // { products, total, totalPages, currentPage }
+  return response.data; // { products, total, totalPages, currentPage }
 };
 
 const getProduct = async (productId) => {
