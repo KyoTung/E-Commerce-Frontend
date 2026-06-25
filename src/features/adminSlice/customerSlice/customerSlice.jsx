@@ -55,12 +55,14 @@ export const getUserInfo = createAsyncThunk(
 
 export const getAllUser = createAsyncThunk(
   "user/get-all-user",
-  async ({ page, limit, search } = {}, thunkAPI) => {
+  async ({ page, limit, search, role, status } = {}, thunkAPI) => {
     try {
       const params = {};
       if (page) params.page = page;
       if (limit) params.limit = limit;
       if (search) params.search = search;
+      if (role) params.role = role;
+      if (status) params.status = status;
       const response = await customerService.getAllUser(params);
       return response;
     } catch (error) {

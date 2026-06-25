@@ -130,6 +130,7 @@ const EditUser = () => {
                 onChange={handleChange}
               >
                 <option value="user">Khách hàng</option>
+                <option value="staff">Nhân viên</option>
                 <option value="admin">Quản trị viên</option>
               </select>
             </div>

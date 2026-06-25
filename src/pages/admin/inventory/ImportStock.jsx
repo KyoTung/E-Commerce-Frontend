@@ -40,8 +40,10 @@ const ImportStock = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState("");
-  const [quantity, setQuantity] = useState(1);
-  const [importPrice, setImportPrice] = useState(0);
+  
+  // Quản lý state số lượng và giá nhập (Dạng chuỗi hiển thị định dạng)
+  const [quantity, setQuantity] = useState("1");
+  const [importPriceDisplay, setImportPriceDisplay] = useState("");
 
   useEffect(() => {
     dispatch(getAllProducts());
@@ -61,6 +63,20 @@ const ImportStock = () => {
       currency: "VND",
     }).format(price || 0);
 
+  // --- HÀM HELPER ĐỊNH DẠNG TIỀN TỆ VÀ CHẶN SỐ ÂM ---
+  const formatCurrencyHelper = (rawValue) => {
+    if (rawValue === undefined || rawValue === null || rawValue === "") return "";
+    // Loại bỏ toàn bộ ký tự không phải số (Ngăn chặn hoàn toàn dấu trừ số âm)
+    const cleanValue = String(rawValue).replace(/\D/g, "");
+    if (!cleanValue) return "";
+    return new Intl.NumberFormat("vi-VN").format(Number(cleanValue));
+  };
+
+  const parseCurrencyToNumber = (formattedValue) => {
+    if (!formattedValue) return 0;
+    return Number(String(formattedValue).replace(/\./g, ""));
+  };
+
   const filteredProducts = useMemo(() => {
     if (!searchTerm) return [];
     return products
@@ -78,8 +94,10 @@ const ImportStock = () => {
     if (!selectedProduct || !selectedVariant) {
       return toast.warning("Vui lòng chọn sản phẩm và phân loại!");
     }
-    if (importPrice <= 0) {
-      return toast.warning("Vui lòng nhập giá nhập!");
+
+    const priceNumeric = parseCurrencyToNumber(importPriceDisplay);
+    if (priceNumeric <= 0) {
+      return toast.warning("Vui lòng nhập giá nhập lớn hơn 0!");
     }
 
     const variantData = selectedProduct.variants.find(
@@ -99,7 +117,7 @@ const ImportStock = () => {
 
     if (existingIndex >= 0) {
       const updatedItems = [...orderItems];
-      updatedItems[existingIndex].count += newCount;
+      updatedItems[existingIndex].quantity += newCount;
       setOrderItems(updatedItems);
     } else {
       setOrderItems([
@@ -112,18 +130,18 @@ const ImportStock = () => {
           color: variantData.color,
           storage: variantData.storage,
           quantity: newCount,
-          importPrice: Number(importPrice),
+          importPrice: priceNumeric,
           maxQuantity: variantData.quantity,
         },
       ]);
     }
 
-    // Reset form chọn
+    // Reset form chọn sản phẩm
     setSelectedProduct(null);
     setSelectedVariant("");
     setSearchTerm("");
-    setQuantity(1);
-    setImportPrice(0);
+    setQuantity("1");
+    setImportPriceDisplay("");
   };
 
   const updateItemCount = (index, newCount) => {
@@ -147,29 +165,29 @@ const ImportStock = () => {
     0,
   );
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!selectedSupplier) {
-    return toast.error("Vui lòng chọn nhà cung cấp");
-  }
-  if (orderItems.length === 0) {
-    return toast.error("Vui lòng thêm ít nhất 1 sản phẩm");
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedSupplier) {
+      return toast.error("Vui lòng chọn nhà cung cấp");
+    }
+    if (orderItems.length === 0) {
+      return toast.error("Vui lòng thêm ít nhất 1 sản phẩm");
+    }
 
-  const payload = {
-    supplier: selectedSupplier.value,        
-    items: orderItems.map((item) => ({
-      product: item.product,                 
-      color: item.color,
-      storage: item.storage,
-      quantity: item.quantity,
-      importPrice: item.importPrice,
-    })),
-    note: note,
+    const payload = {
+      supplier: selectedSupplier.value,        
+      items: orderItems.map((item) => ({
+        product: item.product,                 
+        color: item.color,
+        storage: item.storage,
+        quantity: item.quantity,
+        importPrice: item.importPrice,
+      })),
+      note: note,
+    };
+
+    await dispatch(createImport(payload));
   };
-
-  await dispatch(createImport(payload));
-};
 
   if (productsLoading || suppliersLoading) return <Loading />;
 
@@ -274,7 +292,7 @@ const handleSubmit = async (e) => {
                 {selectedVariant && (
                   <div className="mt-2 p-1.5 bg-blue-50 rounded text-xs text-gray-700">
                     <div className="flex justify-between">
-                      <span>Tồn:</span>
+                      <span>Tồn hiện tại:</span>
                       <span className="font-medium">
                         {selectedProduct.variants.find(
                           (v) => v._id === selectedVariant,
@@ -282,7 +300,7 @@ const handleSubmit = async (e) => {
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Giá bán:</span>
+                      <span>Giá bán lẻ niêm yết:</span>
                       <span className="font-medium text-[#d70018]">
                         {formatPrice(
                           selectedProduct.variants.find(
@@ -296,32 +314,43 @@ const handleSubmit = async (e) => {
               </div>
             )}
 
-            {/* Số lượng */}
+            {/* Số lượng - Chặn ký tự chữ và số âm */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Số lượng <span className="text-red-500">*</span>
               </label>
               <input
-                type="number"
-                min="1"
+                type="text"
                 value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
-                className="w-full border rounded p-2 text-center text-sm outline-none"
+                onChange={(e) => {
+                  // Chỉ cho phép nhập chữ số, loại bỏ hoàn toàn ký tự lạ hoặc dấu trừ
+                  const cleanQty = e.target.value.replace(/\D/g, "");
+                  setQuantity(cleanQty);
+                }}
+                className="w-full border rounded p-2 text-center text-sm outline-none focus:border-blue-500"
               />
             </div>
 
-            {/* Giá nhập */}
+            {/* Giá nhập - Chặn số âm & Tự động định dạng tiền Việt */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Giá nhập (VNĐ) <span className="text-red-500">*</span>
-              </label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Giá nhập (VNĐ) <span className="text-red-500">*</span>
+                </label>
+                {importPriceDisplay && (
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                    {importPriceDisplay} ₫
+                  </span>
+                )}
+              </div>
               <input
-                type="number"
-                min="0"
-                step="1000"
-                value={importPrice}
-                onChange={(e) => setImportPrice(Number(e.target.value))}
-                className="w-full border rounded p-2 text-right text-sm outline-none"
+                type="text"
+                value={importPriceDisplay}
+                onChange={(e) => {
+                  const formatted = formatCurrencyHelper(e.target.value);
+                  setImportPriceDisplay(formatted);
+                }}
+                className="w-full border rounded p-2 text-right text-sm outline-none focus:border-blue-500"
                 placeholder="0"
               />
             </div>

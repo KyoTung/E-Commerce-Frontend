@@ -25,10 +25,9 @@ const getUserDetail = async (userId) => {
 //   return response.data;
 // };
 
-// MỚI (Thêm dấu ngoặc nhọn { } để nhận đúng object từ Slice truyền sang)
-const getAllUser = async ({ page = 1, limit = 10, search = "" } = {}) => {
+const getAllUser = async ({ page = 1, limit = 10, search = "", role = "", status = "" } = {}) => {
   const response = await axiosClient.get("/user/all-users", {
-    params: { page, limit, search },
+    params: { page, limit, search, role, status },
   });
   return response.data;
 };

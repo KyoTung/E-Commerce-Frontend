@@ -10,6 +10,8 @@ import {
   TrendingDown,
   ArrowLeftRight,
   AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   getTransactions,
@@ -24,9 +26,8 @@ const TransactionHistory = () => {
   const dispatch = useDispatch();
   const {
     transactions,
-    totalTransactions,
+    totalPages,
     currentPage,
-    limit,
     loading,
     currentTransaction,
   } = useSelector((state) => state.inventory);
@@ -41,18 +42,19 @@ const TransactionHistory = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
-      setPage(1);
+      setPage(1); // Reset về trang 1 khi gõ tìm kiếm mới
     }, 500);
     return () => clearTimeout(timer);
   }, [search]);
 
+  // Gọi API lấy danh sách khi các tham số thay đổi
   useEffect(() => {
     dispatch(
       getTransactions({
         page,
         limit: 10,
         search: debouncedSearch,
-        type: filterType === "all" ? undefined : filterType,
+        type: filterType !== "all" ? filterType : undefined,
       })
     );
   }, [dispatch, page, debouncedSearch, filterType]);
@@ -63,172 +65,209 @@ const TransactionHistory = () => {
         page,
         limit: 10,
         search: debouncedSearch,
-        type: filterType === "all" ? undefined : filterType,
+        type: filterType !== "all" ? filterType : undefined,
       })
     );
   };
 
-  const handleViewDetail = (id) => {
-    dispatch(getTransactionById(id));
-    setShowDetailModal(true);
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
+  };
+
+  const handleViewDetail = async (id) => {
+    const result = await dispatch(getTransactionById(id));
+    if (getTransactionById.fulfilled.match(result)) {
+      setShowDetailModal(true);
+    } else {
+      toast.error("Không thể lấy chi tiết giao dịch");
+    }
   };
 
   const handleCancelTransaction = async (id) => {
-    if (window.confirm("Bạn có chắc muốn hủy phiếu nhập này? Hành động sẽ hoàn lại số lượng đã nhập.")) {
-      await dispatch(cancelTransaction(id));
-      handleRefresh();
+    if (window.confirm("Bạn có chắc chắn muốn hủy phiếu nhập này? Số lượng kho sẽ được hoàn trả ngược lại.")) {
+      const result = await dispatch(cancelTransaction(id));
+      if (cancelTransaction.fulfilled.match(result)) {
+        handleRefresh();
+      }
     }
   };
 
   const formatPrice = (price) =>
-    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price || 0);
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(price || 0);
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: vi });
+  const getTypeBadge = (type) => {
+    switch (type) {
+      case "IMPORT":
+        return {
+          label: "Nhập kho",
+          className: "bg-emerald-100 text-emerald-800",
+          icon: <TrendingUp size={14} className="inline mr-1" />,
+        };
+      case "EXPORT":
+        return {
+          label: "Xuất kho",
+          className: "bg-amber-100 text-amber-800",
+          icon: <TrendingDown size={14} className="inline mr-1" />,
+        };
+      case "SALE":
+        return {
+          label: "Bán hàng",
+          className: "bg-blue-100 text-blue-800",
+          icon: <Package size={14} className="inline mr-1" />,
+        };
+      default:
+        return {
+          label: type,
+          className: "bg-gray-100 text-gray-800",
+          icon: <ArrowLeftRight size={14} className="inline mr-1" />,
+        };
+    }
   };
 
-  const getTransactionTypeLabel = (type) => {
-    const map = {
-      import: { label: "Nhập kho", icon: TrendingUp, className: "bg-green-100 text-green-800" },
-      export: { label: "Xuất kho", icon: TrendingDown, className: "bg-red-100 text-red-800" },
-      return: { label: "Trả hàng", icon: ArrowLeftRight, className: "bg-yellow-100 text-yellow-800" },
-      adjustment: { label: "Điều chỉnh", icon: AlertTriangle, className: "bg-blue-100 text-blue-800" },
-    };
-    return map[type] || { label: type, icon: Package, className: "bg-gray-100 text-gray-800" };
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "cancelled":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-amber-100 text-amber-800";
+    }
   };
 
-  const getExportTypeLabel = (exportType) => {
-    const map = {
-      return_to_supplier: "Trả NCC",
-      internal_use: "Dùng nội bộ",
-      damage: "Hỏng/Mất",
-      adjustment: "Điều chỉnh",
-    };
-    return map[exportType] || exportType;
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case "completed":
+        return "Thành công";
+      case "cancelled":
+        return "Đã hủy";
+      default:
+        return "Chờ xử lý";
+    }
   };
-
-  const totalPages = Math.ceil(totalTransactions / 10);
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-6 bg-gray-50 min-h-screen">
       <ToastContainer />
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-800">Lịch sử giao dịch kho</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Lịch sử giao dịch kho</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Theo dõi tất cả hoạt động nhập kho, xuất kho điều chỉnh và bán lẻ sản phẩm
+          </p>
+        </div>
         <button
           onClick={handleRefresh}
-          className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition"
+          className="flex items-center gap-2 bg-white border shadow-sm px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition self-start sm:self-center"
         >
-          <RefreshCw size={18} /> Tải lại
+          <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+          Làm mới
         </button>
       </div>
 
-      {/* Bộ lọc và tìm kiếm */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="w-full sm:w-64">
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          >
-            <option value="all">Tất cả giao dịch</option>
-            <option value="import">Nhập kho</option>
-            <option value="export">Xuất kho</option>
-            <option value="return">Trả hàng</option>
-            <option value="adjustment">Điều chỉnh</option>
-          </select>
-        </div>
+      {/* Bộ lọc và Tìm kiếm */}
+      <div className="bg-white rounded-xl shadow-sm border p-4 mb-6 flex flex-col md:flex-row gap-4">
         <div className="flex-1">
           <input
             type="text"
+            placeholder="Tìm kiếm giao dịch (Mã phiếu, tên sản phẩm...)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm kiếm theo mã phiếu hoặc tên nhà cung cấp..."
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            className="w-full border rounded-lg px-4 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50/50"
           />
+        </div>
+        <div className="flex gap-2">
+          {["all", "IMPORT", "EXPORT", "SALE"].map((type) => (
+            <button
+              key={type}
+              onClick={() => {
+                setFilterType(type);
+                setPage(1);
+              }}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                filterType === type
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              {type === "all"
+                ? "Tất cả"
+                : type === "IMPORT"
+                ? "Nhập kho"
+                : type === "EXPORT"
+                ? "Xuất kho"
+                : "Bán lẻ"}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Bảng giao dịch */}
-      <div className="overflow-hidden rounded-xl bg-white shadow-sm border border-gray-100">
-        {loading ? (
+      {/* Bảng dữ liệu chính */}
+      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+        {loading && transactions.length === 0 ? (
           <div className="py-20">
             <Loading />
           </div>
         ) : (
           <div className="overflow-x-auto">
-            {transactions.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">Không tìm thấy giao dịch nào.</div>
-            ) : (
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
-                      Mã phiếu
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
-                      Loại
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
-                      Nhà cung cấp / Đối tác
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
-                      Ngày tạo
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-gray-500">
-                      Tổng giá trị
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-bold uppercase tracking-wider text-gray-500">
-                      Thao tác
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 bg-white">
-                  {transactions.map((tx) => {
-                    const typeInfo = getTransactionTypeLabel(tx.transactionType);
-                    const TypeIcon = typeInfo.icon;
-                    const isImport = tx.transactionType === "import";
-                    const canCancel = isImport && tx.status !== "cancelled"; // backend cần có status field
+            <table className="w-full text-sm text-left">
+              <thead className="bg-gray-50 text-gray-600 font-semibold border-b border-gray-100">
+                <tr>
+                  <th className="px-6 py-3.5">Mã phiếu</th>
+                  <th className="px-6 py-3.5">Thời gian</th>
+                  <th className="px-6 py-3.5">Loại giao dịch</th>
+                  <th className="px-6 py-3.5 text-right">Tổng giá trị</th>
+                  <th className="px-6 py-3.5 text-center">Trạng thái</th>
+                  <th className="px-6 py-3.5 text-center w-32">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-gray-700">
+                {transactions.length > 0 ? (
+                  transactions.map((t) => {
+                    const badge = getTypeBadge(t.transactionType);
                     return (
-                      <tr key={tx._id} className="hover:bg-gray-50 transition">
-                        <td className="whitespace-nowrap px-6 py-4 font-mono text-sm text-gray-600">
-                          #{tx._id.slice(-8).toUpperCase()}
+                      <tr key={t._id} className="hover:bg-gray-50/50 transition">
+                        <td className="px-6 py-4 font-mono text-xs text-blue-600 font-semibold">
+                          #{t._id.slice(-8).toUpperCase()}
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4">
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${typeInfo.className}`}
-                          >
-                            <TypeIcon size={12} /> {typeInfo.label}
+                        <td className="px-6 py-4 text-gray-500">
+                          {t.createdAt
+                            ? format(new Date(t.createdAt), "dd/MM/yyyy HH:mm", { locale: vi })
+                            : "—"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>
+                            {badge.icon}
+                            {badge.label}
                           </span>
-                          {tx.transactionType === "export" && tx.exportType && (
-                            <span className="ml-2 text-xs text-gray-400">
-                              ({getExportTypeLabel(tx.exportType)})
-                            </span>
-                          )}
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                          {tx.supplier?.name || (tx.transactionType === "export" ? "Xuất nội bộ" : "—")}
+                        <td className="px-6 py-4 text-right font-semibold text-gray-900">
+                          {t.totalValue ? formatPrice(t.totalValue) : "—"}
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                          {formatDate(tx.createdAt)}
+                        <td className="px-6 py-4 text-center">
+                          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusBadge(t.status)}`}>
+                            {getStatusLabel(t.status)}
+                          </span>
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium text-gray-900">
-                          {tx.totalValue ? formatPrice(tx.totalValue) : "—"}
-                        </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-center">
-                          <div className="flex justify-center gap-2">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-center gap-2">
                             <button
-                              onClick={() => handleViewDetail(tx._id)}
-                              className="rounded-md p-1.5 text-blue-600 hover:bg-blue-50 transition"
+                              onClick={() => handleViewDetail(t._id)}
+                              className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition"
                               title="Xem chi tiết"
                             >
                               <Eye size={16} />
                             </button>
-                            {canCancel && (
+                            {t.transactionType === "IMPORT" && t.status === "completed" && (
                               <button
-                                onClick={() => handleCancelTransaction(tx._id)}
-                                className="rounded-md p-1.5 text-red-600 hover:bg-red-50 transition"
-                                title="Hủy phiếu nhập"
+                                onClick={() => handleCancelTransaction(t._id)}
+                                className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition"
+                                title="Hủy phiếu nhập kho"
                               >
                                 <XCircle size={16} />
                               </button>
@@ -237,42 +276,44 @@ const TransactionHistory = () => {
                         </td>
                       </tr>
                     );
-                  })}
-                </tbody>
-              </table>
-            )}
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="text-center py-12 text-gray-400 font-medium">
+                      Không tìm thấy giao dịch nào phù hợp
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
 
-      {/* Phân trang */}
+      {/* --- THANH PHÂN TRANG (PAGINATION) --- */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 mt-4 rounded-lg shadow-sm">
-          <div className="flex flex-1 justify-between sm:justify-end gap-2">
+          <div className="flex flex-1 justify-between sm:justify-end gap-2 items-center">
             <button
-              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              onClick={() => handlePageChange(page - 1)}
               disabled={page === 1}
               className={`relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium ${
-                page === 1
-                  ? "text-gray-300 cursor-not-allowed"
-                  : "text-gray-700 hover:bg-gray-50"
+                page === 1 ? "text-gray-300 cursor-not-allowed" : "text-gray-700 hover:bg-gray-50"
               }`}
             >
-              Trước
+              <ChevronLeft size={16} className="mr-1" /> Trước
             </button>
-            <span className="text-sm text-gray-700 py-2">
-              Trang {page} / {totalPages}
+            <span className="text-sm text-gray-700">
+              Trang <strong>{currentPage}</strong> / {totalPages}
             </span>
             <button
-              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+              onClick={() => handlePageChange(page + 1)}
               disabled={page === totalPages}
               className={`relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium ${
-                page === totalPages
-                  ? "text-gray-300 cursor-not-allowed"
-                  : "text-gray-700 hover:bg-gray-50"
+                page === totalPages ? "text-gray-300 cursor-not-allowed" : "text-gray-700 hover:bg-gray-50"
               }`}
             >
-              Sau
+              Sau <ChevronRight size={16} className="ml-1" />
             </button>
           </div>
         </div>
@@ -280,92 +321,94 @@ const TransactionHistory = () => {
 
       {/* Modal chi tiết giao dịch */}
       {showDetailModal && currentTransaction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-3xl rounded-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b p-5">
-              <h3 className="text-xl font-bold text-gray-800">
-                Chi tiết phiếu #{currentTransaction._id.slice(-8).toUpperCase()}
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="w-full max-w-3xl bg-white rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="bg-gray-50 border-b p-4 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">
+                  Chi tiết giao dịch #{currentTransaction._id.slice(-8).toUpperCase()}
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Loại: {getTypeBadge(currentTransaction.transactionType).label} | Trạng thái:{" "}
+                  {getStatusLabel(currentTransaction.status)}
+                </p>
+              </div>
               <button
                 onClick={() => setShowDetailModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 text-xl font-bold p-1"
               >
-                <XCircle size={24} />
+                ×
               </button>
             </div>
-            <div className="p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="p-6 max-h-[70vh] overflow-y-auto space-y-6">
+              {/* Thông tin chung */}
+              <div className="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-4 rounded-lg">
                 <div>
-                  <span className="text-gray-500">Loại giao dịch:</span>
-                  <p className="font-medium">
-                    {getTransactionTypeLabel(currentTransaction.transactionType).label}
-                    {currentTransaction.transactionType === "export" &&
-                      currentTransaction.exportType &&
-                      ` (${getExportTypeLabel(currentTransaction.exportType)})`}
+                  <span className="text-gray-400">Người thực hiện:</span>
+                  <p className="font-semibold text-gray-700">
+                    {currentTransaction.user?.fullName} 
                   </p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Nhà cung cấp:</span>
-                  <p className="font-medium">
-                    {currentTransaction.supplier?.name || "—"}
+                  <span className="text-gray-400">Thời gian tạo:</span>
+                  <p className="font-semibold text-gray-700">
+                    {currentTransaction.createdAt
+                      ? format(new Date(currentTransaction.createdAt), "dd/MM/yyyy HH:mm:ss")
+                      : "—"}
                   </p>
                 </div>
-                <div>
-                  <span className="text-gray-500">Ngày tạo:</span>
-                  <p className="font-medium">{formatDate(currentTransaction.createdAt)}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Người tạo:</span>
-                  <p className="font-medium">
-                    {currentTransaction.createdBy?.name || "Admin"}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <span className="text-gray-500">Ghi chú:</span>
-                  <p className="font-medium text-gray-700">
-                    {currentTransaction.note || "Không có"}
-                  </p>
-                </div>
+                {currentTransaction.supplier && (
+                  <div className="col-span-2 border-t pt-2 mt-2">
+                    <span className="text-gray-400">Nhà cung cấp:</span>
+                    <p className="font-semibold text-blue-700">{currentTransaction.supplier.name}</p>
+                  </div>
+                )}
+                {currentTransaction.note && (
+                  <div className="col-span-2 border-t pt-2 mt-2">
+                    <span className="text-gray-400">Ghi chú:</span>
+                    <p className="text-gray-600 italic">"{currentTransaction.note}"</p>
+                  </div>
+                )}
               </div>
 
-              <div className="mt-4">
-                <h4 className="font-semibold text-gray-800 mb-2">Danh sách sản phẩm</h4>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead className="bg-gray-50">
+              {/* Danh sách sản phẩm thuộc phiếu */}
+              <div>
+                <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                  <Package size={16} /> Danh sách mặt hàng
+                </h4>
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-gray-50 text-gray-600 font-medium border-b">
                       <tr>
-                        <th className="px-4 py-2 text-left">Sản phẩm</th>
-                        <th className="px-4 py-2 text-left">Phân loại</th>
-                        <th className="px-4 py-2 text-center">SL</th>
+                        <th className="px-4 py-2">Sản phẩm</th>
+                        <th className="px-4 py-2">Phân loại</th>
+                        <th className="px-4 py-2 text-center">Số lượng</th>
                         <th className="px-4 py-2 text-right">Đơn giá</th>
                         <th className="px-4 py-2 text-right">Thành tiền</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {currentTransaction.items?.map((item, idx) => (
-                        <tr key={idx}>
-                          <td className="px-4 py-2">
-                            <div className="flex items-center gap-2">
-                              <img
-                                src={item.product?.images?.[0]?.url}
-                                className="w-8 h-8 object-contain border rounded"
-                                alt=""
-                              />
-                              <span>{item.product?.title}</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-2">{item.color} - {item.storage}</td>
-                          <td className="px-4 py-2 text-center">{item.quantity}</td>
-                          <td className="px-4 py-2 text-right">
-                            {item.importPrice ? formatPrice(item.importPrice) : "—"}
-                          </td>
-                          <td className="px-4 py-2 text-right font-medium">
-                            {item.importPrice
-                              ? formatPrice(item.importPrice * item.quantity)
-                              : "—"}
-                          </td>
-                        </tr>
-                      ))}
+                    <tbody className="divide-y text-gray-600">
+                      {currentTransaction.items?.map((item, idx) => {
+                        // SỬA LỖI GIÁ: Chọn trường giá tương thích theo loại giao dịch
+                        const actualPrice = item.importPrice || item.price || item.exportPrice || 0;
+                        return (
+                          <tr key={idx} className="hover:bg-gray-50/50">
+                            <td className="px-4 py-2.5 font-medium text-gray-800">
+                              {item.product?.title || "Sản phẩm đã bị xóa"}
+                            </td>
+                            <td className="px-4 py-2 text-xs">
+                              {item.color} / {item.storage}
+                            </td>
+                            <td className="px-4 py-2 text-center font-semibold">{item.quantity}</td>
+                            <td className="px-4 py-2 text-right">
+                              {actualPrice > 0 ? formatPrice(actualPrice) : "—"}
+                            </td>
+                            <td className="px-4 py-2 text-right font-medium text-gray-900">
+                              {actualPrice > 0 ? formatPrice(actualPrice * item.quantity) : "—"}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

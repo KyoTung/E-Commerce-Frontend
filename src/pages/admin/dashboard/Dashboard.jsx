@@ -89,6 +89,13 @@ const Dashboard = () => {
   const formatNumber = (value) =>
     new Intl.NumberFormat("vi-VN").format(value || 0);
 
+  // Helper chuyển đổi text hiển thị của period hiện tại
+  const getPeriodText = () => {
+    if (period === "week") return "7 ngày qua";
+    if (period === "month") return "30 ngày qua";
+    return "12 tháng qua";
+  };
+
   // Tính tổng tồn kho từ variants
   const getTotalQuantity = (product) => {
     if (product.variants && product.variants.length > 0) {
@@ -278,10 +285,34 @@ const Dashboard = () => {
   return (
     <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
       {/* Tiêu đề điều hướng */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Bảng điều khiển</h1>
-        <div className="text-sm text-gray-500 mt-1">
-          Trang chủ / Tổng quan thống kê
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Bảng điều khiển tổng quan</h1>
+          <div className="text-sm text-gray-500 mt-1">
+            Trang chủ / Thống kê kinh doanh số
+          </div>
+        </div>
+
+        {/* Thanh điều khiển bộ lọc thời gian toàn cục của các KPI */}
+        <div className="flex bg-gray-200/80 p-1 rounded-xl self-start sm:self-auto">
+          <button
+            onClick={() => handlePeriodChange("week")}
+            className={`px-4 py-1.5 text-xs rounded-lg font-bold transition-all ${period === "week" ? "bg-white text-red-600 shadow-sm" : "text-gray-600 hover:text-gray-900"}`}
+          >
+            Tuần này
+          </button>
+          <button
+            onClick={() => handlePeriodChange("month")}
+            className={`px-4 py-1.5 text-xs rounded-lg font-bold transition-all ${period === "month" ? "bg-white text-red-600 shadow-sm" : "text-gray-600 hover:text-gray-900"}`}
+          >
+            Tháng này
+          </button>
+          <button
+            onClick={() => handlePeriodChange("year")}
+            className={`px-4 py-1.5 text-xs rounded-lg font-bold transition-all ${period === "year" ? "bg-white text-red-600 shadow-sm" : "text-gray-600 hover:text-gray-900"}`}
+          >
+            Năm này
+          </button>
         </div>
       </div>
 
@@ -292,8 +323,11 @@ const Dashboard = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-          <div className="bg-white rounded-xl shadow-sm border p-5">
-            <div className="flex justify-between items-start">
+          <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
+            <span className="absolute top-0 right-0 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
+              {getPeriodText()}
+            </span>
+            <div className="flex justify-between items-start mt-1">
               <div>
                 <p className="text-sm text-gray-500">Tổng doanh thu</p>
                 <p className="text-2xl font-bold">
@@ -304,12 +338,14 @@ const Dashboard = () => {
                 <DollarSign className="text-green-600" size={22} />
               </div>
             </div>
-            <div className="mt-3 text-xs text-gray-500">
-              +12.5% so với tuần trước
-            </div>
+            <div className="mt-3 text-xs text-gray-400">Số liệu chu kỳ đã chọn</div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border p-5">
-            <div className="flex justify-between items-start">
+          
+          <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
+            <span className="absolute top-0 right-0 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
+              {getPeriodText()}
+            </span>
+            <div className="flex justify-between items-start mt-1">
               <div>
                 <p className="text-sm text-gray-500">Tổng đơn hàng</p>
                 <p className="text-2xl font-bold">
@@ -320,12 +356,14 @@ const Dashboard = () => {
                 <ShoppingBag className="text-blue-600" size={22} />
               </div>
             </div>
-            <div className="mt-3 text-xs text-gray-500">
-              +8.2% so với tuần trước
-            </div>
+            <div className="mt-3 text-xs text-gray-400">Số lượng đơn phát sinh</div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border p-5">
-            <div className="flex justify-between items-start">
+
+          <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
+            <span className="absolute top-0 right-0 bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
+              Toàn thời gian
+            </span>
+            <div className="flex justify-between items-start mt-1">
               <div>
                 <p className="text-sm text-gray-500">Sản phẩm đã bán</p>
                 <p className="text-2xl font-bold">
@@ -336,12 +374,14 @@ const Dashboard = () => {
                 <TrendingUp className="text-indigo-600" size={22} />
               </div>
             </div>
-            <div className="mt-3 text-xs text-gray-500">
-              Tổng số lượng sản phẩm tiêu thụ
-            </div>
+            <div className="mt-3 text-xs text-gray-400">Tổng sản phẩm tiêu thụ tích lũy</div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border p-5">
-            <div className="flex justify-between items-start">
+
+          <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
+            <span className="absolute top-0 right-0 bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
+              Toàn thời gian
+            </span>
+            <div className="flex justify-between items-start mt-1">
               <div>
                 <p className="text-sm text-gray-500">Lượt truy cập</p>
                 <p className="text-2xl font-bold">{formatNumber(visitCount)}</p>
@@ -350,15 +390,18 @@ const Dashboard = () => {
                 <FaEyeIcon className="text-purple-600" size={22} />
               </div>
             </div>
-            <div className="mt-3 text-xs text-gray-500">Toàn bộ thời gian</div>
+            <div className="mt-3 text-xs text-gray-400">Tổng lượt xem hệ thống</div>
           </div>
         </div>
       )}
 
       {/* KPI Hàng 2 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-        <div className="bg-white rounded-xl shadow-sm border p-5">
-          <div className="flex justify-between items-start">
+        <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
+          <span className="absolute top-0 right-0 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
+            {getPeriodText()}
+          </span>
+          <div className="flex justify-between items-start mt-1">
             <div>
               <p className="text-sm text-gray-500">Khách hàng mới</p>
               <p className="text-2xl font-bold">
@@ -369,12 +412,14 @@ const Dashboard = () => {
               <Users className="text-pink-600" size={22} />
             </div>
           </div>
-          <div className="mt-3 text-xs text-red-500">
-            -3.4% so với tuần trước
-          </div>
+          <div className="mt-3 text-xs text-gray-400">Tài khoản mới kích hoạt</div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-5">
-          <div className="flex justify-between items-start">
+
+        <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
+          <span className="absolute top-0 right-0 bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
+            Thời gian thực
+          </span>
+          <div className="flex justify-between items-start mt-1">
             <div>
               <p className="text-sm text-gray-500">Sản phẩm tồn kho thấp</p>
               <p className="text-2xl font-bold">
@@ -385,12 +430,14 @@ const Dashboard = () => {
               <AlertTriangle className="text-yellow-600" size={22} />
             </div>
           </div>
-          <div className="mt-3 text-xs text-yellow-600">
-            Cần kế hoạch nhập hàng
-          </div>
+          <div className="mt-3 text-xs text-amber-600 font-medium">Cần lập kế hoạch nhập hàng</div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-5">
-          <div className="flex justify-between items-start">
+
+        <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
+          <span className="absolute top-0 right-0 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
+            {getPeriodText()}
+          </span>
+          <div className="flex justify-between items-start mt-1">
             <div>
               <p className="text-sm text-gray-500">Giá trị đơn trung bình</p>
               <p className="text-2xl font-bold">
@@ -401,10 +448,14 @@ const Dashboard = () => {
               <TrendingUp className="text-emerald-600" size={22} />
             </div>
           </div>
-          <div className="mt-3 text-xs text-gray-500">Giá trị AOV</div>
+          <div className="mt-3 text-xs text-gray-400">Giá trị AOV trong kỳ</div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-5">
-          <div className="flex justify-between items-start">
+
+        <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
+          <span className="absolute top-0 right-0 bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
+            Toàn thời gian
+          </span>
+          <div className="flex justify-between items-start mt-1">
             <div>
               <p className="text-sm text-gray-500">Tỷ lệ hoàn thành đơn</p>
               <p className="text-2xl font-bold">
@@ -420,9 +471,7 @@ const Dashboard = () => {
               <CheckCircle className="text-teal-600" size={22} />
             </div>
           </div>
-          <div className="mt-3 text-xs text-gray-500">
-            Đơn thành công / Tổng số đơn
-          </div>
+          <div className="mt-3 text-xs text-gray-400">Đơn thành công / Tổng đơn hệ thống</div>
         </div>
       </div>
 
@@ -430,26 +479,9 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border p-5">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold">Biến động doanh thu</h3>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handlePeriodChange("week")}
-                className={`px-3 py-1 text-xs rounded-md font-semibold transition ${period === "week" ? "bg-[#d70018] text-white" : "bg-gray-100 text-gray-600"}`}
-              >
-                7 ngày qua
-              </button>
-              <button
-                onClick={() => handlePeriodChange("month")}
-                className={`px-3 py-1 text-xs rounded-md font-semibold transition ${period === "month" ? "bg-[#d70018] text-white" : "bg-gray-100 text-gray-600"}`}
-              >
-                Theo tháng
-              </button>
-              <button
-                onClick={() => handlePeriodChange("year")}
-                className={`px-3 py-1 text-xs rounded-md font-semibold transition ${period === "year" ? "bg-[#d70018] text-white" : "bg-gray-100 text-gray-600"}`}
-              >
-                Theo năm
-              </button>
+            <div>
+              <h3 className="text-lg font-bold text-gray-800">Biến động doanh thu</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Biểu đồ hiển thị chi tiết theo: <span className="font-semibold text-red-600">{getPeriodText()}</span></p>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={300}>
@@ -469,10 +501,12 @@ const Dashboard = () => {
             </LineChart>
           </ResponsiveContainer>
         </div>
+        
         <div className="bg-white rounded-xl shadow-sm border p-5">
-          <h3 className="text-lg font-bold mb-4">Tỷ lệ trạng thái đơn hàng</h3>
+          <h3 className="text-lg font-bold text-gray-800">Tỷ lệ trạng thái đơn hàng</h3>
+          <p className="text-xs text-gray-400 mt-0.5 mb-4">Thống kê dữ liệu: <span className="font-semibold text-slate-600">Toàn bộ đơn hệ thống</span></p>
           {orderStatusData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={230}>
               <PieChart>
                 <Pie
                   data={orderStatusData}
@@ -515,7 +549,10 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white rounded-xl shadow-sm border p-5">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold">Đơn hàng mới nhất</h3>
+            <div>
+              <h3 className="text-lg font-bold text-gray-800">Đơn hàng mới nhất</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Hiển thị <span className="font-semibold text-slate-600">5 đơn hàng vừa phát sinh</span> thời gian thực</p>
+            </div>
             <button
               onClick={() => navigate("/admin/orders")}
               className="text-sm text-red-600 hover:underline font-medium"
@@ -535,7 +572,7 @@ const Dashboard = () => {
                 <div
                   key={order.id}
                   onClick={() => navigate(`/admin/order-detail/${order.id}`)}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer"
                 >
                   <div>
                     <div className="font-medium text-gray-900">
@@ -557,7 +594,10 @@ const Dashboard = () => {
 
         <div className="bg-white rounded-xl shadow-sm border p-5">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold">Đơn hàng chờ xử lý</h3>
+            <div>
+              <h3 className="text-lg font-bold text-gray-800">Đơn hàng chờ xử lý</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Danh sách tồn đọng cần xử lý gấp</p>
+            </div>
             <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-medium">
               Yêu cầu xử lý
             </span>
@@ -572,7 +612,7 @@ const Dashboard = () => {
                 <div
                   key={order.id}
                   onClick={() => navigate(`/admin/order-detail/${order.id}`)}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer"
                 >
                   <div>
                     <div className="font-medium text-gray-900">
@@ -598,9 +638,8 @@ const Dashboard = () => {
       {/* Sản phẩm bán chạy & Tồn kho thấp */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white rounded-xl shadow-sm border p-5">
-          <h3 className="text-lg font-bold mb-4">
-            Top 5 sản phẩm bán chạy nhất
-          </h3>
+          <h3 className="text-lg font-bold text-gray-800">Top 5 sản phẩm bán chạy nhất</h3>
+          <p className="text-xs text-gray-400 mt-0.5 mb-4">Xếp hạng theo sản lượng bán: <span className="font-semibold text-red-600">{getPeriodText()}</span></p>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-bold">
@@ -648,9 +687,10 @@ const Dashboard = () => {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border p-5">
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-amber-600">
+          <h3 className="text-lg font-bold mb-1 flex items-center gap-2 text-amber-600">
             ⚠️ Cảnh báo sản phẩm sắp hết hàng
           </h3>
+          <p className="text-xs text-gray-400 mb-4">Trạng thái kho thực tế hiện tại (Tồn kho &lt; 5)</p>
           {lowStockItems.length === 0 ? (
             <div className="text-center py-6 text-green-600 font-medium">
               ✅ An toàn! Không có sản phẩm nào dưới ngưỡng tối thiểu
@@ -697,9 +737,10 @@ const Dashboard = () => {
 
       {/* Khối Tổng kết dưới chân trang */}
       <div className="bg-white rounded-xl shadow-sm border p-5">
-        <h3 className="text-lg font-bold mb-4">
+        <h3 className="text-lg font-bold text-gray-800">
           Tổng quan số lượng theo trạng thái đơn
         </h3>
+        <p className="text-xs text-gray-400 mt-0.5 mb-4">Số lượng lũy kế trên <span className="font-semibold text-slate-600">tất cả dữ liệu đơn hàng</span> thu thập được</p>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
           <div className="border border-gray-100 rounded-lg p-3 text-center bg-gray-50/50">
             <div className="text-gray-500">Chưa xử lý</div>

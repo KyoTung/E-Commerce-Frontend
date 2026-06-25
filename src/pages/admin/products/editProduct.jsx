@@ -34,6 +34,10 @@ const EditProduct = ({ placeholder }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
+  // State cục bộ phục vụ hiển thị định dạng tiền tệ VNĐ
+  const [basePriceDisplay, setBasePriceDisplay] = useState("");
+  const [variantPriceDisplays, setVariantPriceDisplays] = useState([]);
+
   const {
     register,
     handleSubmit,
@@ -54,7 +58,44 @@ const EditProduct = ({ placeholder }) => {
     [placeholder]
   );
 
-  // 1. Lấy dữ liệu
+  // --- HÀM HELPER ĐỊNH DẠNG TIỀN TỆ VÀ CHẶN SỐ ÂM ---
+  const formatCurrencyHelper = (rawValue) => {
+    if (rawValue === undefined || rawValue === null || rawValue === "") return "";
+    const cleanValue = String(rawValue).replace(/\D/g, "");
+    if (!cleanValue) return "";
+    return new Intl.NumberFormat("vi-VN").format(Number(cleanValue));
+  };
+
+  const parseCurrencyToNumber = (formattedValue) => {
+    if (!formattedValue) return 0;
+    return Number(String(formattedValue).replace(/\./g, ""));
+  };
+
+  // Xử lý thay đổi Giá cơ bản
+  const handleBasePriceChange = (e) => {
+    const inputValue = e.target.value;
+    const formatted = formatCurrencyHelper(inputValue);
+    const numericValue = parseCurrencyToNumber(formatted);
+
+    setBasePriceDisplay(formatted);
+    setValue("basePrice", numericValue || "", { shouldValidate: true });
+  };
+
+  // Xử lý thay đổi Giá phân loại
+  const handleVariantPriceChange = (index, value) => {
+    const formatted = formatCurrencyHelper(value);
+    const numericValue = parseCurrencyToNumber(formatted);
+
+    const updatedDisplays = [...variantPriceDisplays];
+    updatedDisplays[index] = formatted;
+    setVariantPriceDisplays(updatedDisplays);
+
+    const updatedVariants = [...variants];
+    updatedVariants[index].price = numericValue || "";
+    setVariants(updatedVariants);
+  };
+
+  // 1. Lấy dữ liệu danh mục từ API lúc khởi tạo
   useEffect(() => {
     dispatch(getAllBrand());
     dispatch(getAllCategory());
@@ -64,7 +105,7 @@ const EditProduct = ({ placeholder }) => {
     }
   }, [product_id, dispatch]);
 
-  // 2. Điền dữ liệu vào form
+  // 2. Điền dữ liệu cũ vào form (Đã đồng bộ bổ sung định dạng hiển thị tiền tệ)
   useEffect(() => {
     if (product && (product._id === product_id || product.id === product_id)) {
       reset({
@@ -75,7 +116,6 @@ const EditProduct = ({ placeholder }) => {
         brand: product.brand,
         category: product.category,
         tags: product.tags ? product.tags.join(", ") : "",
-        // Thông số kỹ thuật
         screen: product.specifications?.screen,
         processor: product.specifications?.processor,
         storage: product.specifications?.storage,
@@ -88,18 +128,22 @@ const EditProduct = ({ placeholder }) => {
         design: product.specifications?.design,
       });
 
-      // Ảnh chính
+      // Đổ giá trị tiền tệ định dạng sẵn vào ô hiển thị Giá cơ bản
+      setBasePriceDisplay(formatCurrencyHelper(product.basePrice));
+
       if (product.images) {
         setGallery(product.images);
       }
 
-      // Phân loại
       if (product.variants && product.variants.length > 0) {
         setVariants(product.variants);
+        // Đổ mảng giá trị định dạng sẵn vào danh sách ô hiển thị Giá phân loại
+        setVariantPriceDisplays(product.variants.map(v => formatCurrencyHelper(v.price)));
       } else {
         setVariants([
           { color: "", storage: "", price: "", quantity: "", images: [] },
         ]);
+        setVariantPriceDisplays([""]);
       }
     }
   }, [product, product_id, reset]);
@@ -108,7 +152,6 @@ const EditProduct = ({ placeholder }) => {
     setValue("description", newContent);
   };
 
-  // Helper upload ảnh
   const uploadImagesHelper = async (files) => {
     const uploadPromises = Array.from(files).map(async (file) => {
       const imageForm = new FormData();
@@ -130,7 +173,6 @@ const EditProduct = ({ placeholder }) => {
     return await Promise.all(uploadPromises);
   };
 
-  // Xử lý ảnh chính
   const handleFileChange = async (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -163,8 +205,11 @@ const EditProduct = ({ placeholder }) => {
     }
   };
 
-  // Xử lý phân loại (variants)
   const handleVariantChange = (index, field, value) => {
+    // Chặn số âm cho ô Số lượng của phiên bản biến thể
+    if (field === "quantity") {
+      value = String(value).replace(/\D/g, "");
+    }
     const updatedVariants = [...variants];
     updatedVariants[index][field] = value;
     setVariants(updatedVariants);
@@ -191,12 +236,18 @@ const EditProduct = ({ placeholder }) => {
         images: [],
       },
     ]);
+    setVariantPriceDisplays([
+      ...variantPriceDisplays,
+      formatCurrencyHelper(lastVariant.price),
+    ]);
   };
 
   const removeVariant = (index) => {
     if (variants.length > 1) {
       const updatedVariants = variants.filter((_, i) => i !== index);
       setVariants(updatedVariants);
+      const updatedDisplays = variantPriceDisplays.filter((_, i) => i !== index);
+      setVariantPriceDisplays(updatedDisplays);
     } else {
       toast.error("Cần ít nhất một phân loại");
     }
@@ -231,7 +282,6 @@ const EditProduct = ({ placeholder }) => {
     setVariants(updatedVariants);
   };
 
-  // Submit cập nhật sản phẩm
   const handleUpdateProduct = async (formData) => {
     if (isSubmitting) return;
 
@@ -330,7 +380,7 @@ const EditProduct = ({ placeholder }) => {
                   <input
                     type="text"
                     {...register("title", { required: "Bắt buộc" })}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   {errors.title && (
                     <p className="text-red-500 text-sm">
@@ -350,14 +400,24 @@ const EditProduct = ({ placeholder }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Giá cơ bản *
-                  </label>
+                  <div className="flex justify-between items-center">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Giá cơ bản (VND) *
+                    </label>
+                    {basePriceDisplay && (
+                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                        {basePriceDisplay} ₫
+                      </span>
+                    )}
+                  </div>
                   <input
-                    type="number"
-                    {...register("basePrice", { required: "Bắt buộc" })}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                    type="text"
+                    value={basePriceDisplay}
+                    onChange={handleBasePriceChange}
+                    placeholder="Ví dụ: 15.000.000"
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
+                  <input type="hidden" {...register("basePrice", { required: "Bắt buộc" })} />
                 </div>
 
                 {/* Ảnh sản phẩm chính */}
@@ -466,7 +526,7 @@ const EditProduct = ({ placeholder }) => {
                       <button
                         type="button"
                         onClick={() => removeVariant(index)}
-                        className="text-red-600 hover:text-red-800 text-sm"
+                        className="text-red-600 hover:text-red-800 text-sm font-medium"
                       >
                         Xoá
                       </button>
@@ -474,7 +534,7 @@ const EditProduct = ({ placeholder }) => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs text-gray-600">
+                      <label className="block text-xs font-medium text-gray-600">
                         Màu sắc
                       </label>
                       <select
@@ -493,7 +553,7 @@ const EditProduct = ({ placeholder }) => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-600">
+                      <label className="block text-xs font-medium text-gray-600">
                         Dung lượng
                       </label>
                       <select
@@ -512,24 +572,33 @@ const EditProduct = ({ placeholder }) => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-600">
-                        Giá
-                      </label>
+                      <div className="flex justify-between items-center">
+                        <label className="block text-xs font-medium text-gray-600">
+                          Giá *
+                        </label>
+                        {variantPriceDisplays[index] && (
+                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1 rounded">
+                            {variantPriceDisplays[index]} ₫
+                          </span>
+                        )}
+                      </div>
                       <input
-                        type="number"
-                        value={variant.price}
+                        type="text"
+                        value={variantPriceDisplays[index] || ""}
                         onChange={(e) =>
-                          handleVariantChange(index, "price", e.target.value)
+                          handleVariantPriceChange(index, e.target.value)
                         }
-                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
+                        placeholder="Ví dụ: 16.500.000"
+                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-600">
+                      <label className="block text-xs font-medium text-gray-600">
                         Số lượng
                       </label>
                       <input
                         type="number"
+                        min="0"
                         value={variant.quantity}
                         onChange={(e) =>
                           handleVariantChange(index, "quantity", e.target.value)
@@ -541,7 +610,7 @@ const EditProduct = ({ placeholder }) => {
 
                   {/* Ảnh cho phân loại */}
                   <div className="mt-3">
-                    <label className="block text-xs text-gray-600 mb-1">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
                       Ảnh phân loại
                     </label>
                     <input
@@ -553,7 +622,7 @@ const EditProduct = ({ placeholder }) => {
                       className="text-xs text-gray-500"
                     />
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {variant.images.map((img, imgIdx) => (
+                      {variant.images?.map((img, imgIdx) => (
                         <div key={imgIdx} className="relative">
                           <img
                             src={img.url || img}
@@ -588,7 +657,6 @@ const EditProduct = ({ placeholder }) => {
             <div className="border-b pb-6">
               <h2 className="mb-4 text-xl font-semibold">Thông số kỹ thuật</h2>
               <div className="grid grid-cols-1 gap-4">
-                {/* Danh sách các trường thông số, hiển thị bằng tiếng Việt */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
                     Màn hình
