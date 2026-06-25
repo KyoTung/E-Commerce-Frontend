@@ -1,25 +1,19 @@
 import React, { useState } from "react";
 import { FiX, FiCheckCircle, FiSmartphone } from "react-icons/fi";
 import { toast } from "react-toastify";
-import orderService from "../features/guestSlice/order/orderService"; // Import service gọi API
+import orderService from "../features/guestSlice/order/orderService";
 
 const PaymentModal = ({ orderId, totalAmount, paymentUrl, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
 
-  // Xử lý khi bấm nút "Fake Success"
   const handleSimulatePayment = async () => {
     try {
       setLoading(true);
-      // Gọi API Backend để set trạng thái đơn hàng thành Paid
       await orderService.simulatePaymentSuccess(orderId);
-      
       toast.success("Giả lập thanh toán thành công!");
-      
-      // Chờ 1 xíu cho đẹp rồi chuyển trang
       setTimeout(() => {
-        onSuccess(); // Gọi hàm callback chuyển trang của cha
+        onSuccess();
       }, 1000);
-      
     } catch (error) {
       toast.error("Lỗi giả lập thanh toán");
       setLoading(false);
@@ -29,7 +23,6 @@ const PaymentModal = ({ orderId, totalAmount, paymentUrl, onClose, onSuccess }) 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative">
-        
         {/* Header */}
         <div className="bg-blue-600 p-4 text-center relative">
           <button 
@@ -49,7 +42,6 @@ const PaymentModal = ({ orderId, totalAmount, paymentUrl, onClose, onSuccess }) 
 
         {/* Body */}
         <div className="p-6 space-y-6">
-          
           <div className="text-center">
             <p className="text-gray-500 text-sm mb-1">Số tiền thanh toán</p>
             <p className="text-3xl font-bold text-gray-800">
@@ -57,10 +49,7 @@ const PaymentModal = ({ orderId, totalAmount, paymentUrl, onClose, onSuccess }) 
             </p>
           </div>
 
-          {/* Option 1: QR Code giả lập (Cho đẹp) */}
           <div className="flex justify-center my-4">
-             {/* Bạn có thể dùng thư viện qrcode.react nếu muốn QR thật, 
-                 ở đây mình dùng ảnh static cho nhẹ */}
              <div className="border-2 border-dashed border-gray-300 p-2 rounded-lg relative">
                 <img 
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${paymentUrl || "DEMO"}`} 
@@ -74,7 +63,6 @@ const PaymentModal = ({ orderId, totalAmount, paymentUrl, onClose, onSuccess }) 
           </div>
 
           <div className="space-y-3">
-            {/* NÚT 1: Giả lập thành công */}
             <button
               onClick={handleSimulatePayment}
               disabled={loading}
@@ -90,7 +78,6 @@ const PaymentModal = ({ orderId, totalAmount, paymentUrl, onClose, onSuccess }) 
               )}
             </button>
             
-            {/* NÚT 2: Link thật*/}
             {paymentUrl && (
                 <a 
                     href={paymentUrl}
@@ -101,11 +88,17 @@ const PaymentModal = ({ orderId, totalAmount, paymentUrl, onClose, onSuccess }) 
                     Thử mở App ZaloPay thật <FiSmartphone className="inline ml-1" />
                 </a>
             )}
-          </div>
 
+            {/* ✅ Nút Hủy thanh toán – mới thêm */}
+            <button
+              onClick={onClose}
+              className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 rounded-xl transition-all"
+            >
+              Hủy thanh toán
+            </button>
+          </div>
         </div>
         
-        {/* Footer */}
         <div className="bg-gray-50 p-3 text-center text-xs text-gray-400">
           Hệ thống đang chạy trong chế độ Test Mode
         </div>

@@ -219,12 +219,26 @@ const Checkout = () => {
     }
   };
 
-  const handlePaymentSuccess = () => {
-    setShowPaymentModal(false);
+  // const handlePaymentSuccess = () => {
+  //   setShowPaymentModal(false);
 
-    navigate(`/order-confirmation/${createdOrderInfo.id}`, {
-      state: { isNewOrder: true },
-    });
+  //   navigate(`/order-confirmation/${createdOrderInfo.id}`, {
+  //     state: { isNewOrder: true },
+  //   });
+  // };
+
+  const handlePaymentSuccess = async () => {
+    try {
+      // Gọi API simulate payment để cập nhật trạng thái đơn hàng
+      await orderService.simulatePayment(createdOrderInfo.id);
+      setShowPaymentModal(false);
+      toast.success("Thanh toán thành công!");
+      navigate(`/order-confirmation/${createdOrderInfo.id}`, {
+        state: { isNewOrder: true },
+      });
+    } catch (error) {
+      toast.error(error?.message || "Cập nhật thanh toán thất bại");
+    }
   };
 
   // --- RENDER ---
@@ -594,7 +608,13 @@ const Checkout = () => {
           orderId={createdOrderInfo.id}
           totalAmount={createdOrderInfo.total}
           paymentUrl={createdOrderInfo.url}
-          onClose={() => setShowPaymentModal(false)}
+          onClose={() => {
+            setShowPaymentModal(false);
+            // Điều hướng đến trang xác nhận ngay cả khi hủy thanh toán
+            navigate(`/order-confirmation/${createdOrderInfo.id}`, {
+              state: { isNewOrder: true },
+            });
+          }}
           onSuccess={handlePaymentSuccess}
         />
       )}

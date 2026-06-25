@@ -5,8 +5,20 @@ const updateOrder = async (id, orderData) => {
   return response.data;
 };
 
-const getAllOrder = async (page = 1, limit = 10, search = "") => {
-  const response = await axiosClient.get(`/order?page=${page}&limit=${limit}&search=${search}`);
+// const getAllOrder = async (page = 1, limit = 10, search = "") => {
+//   const response = await axiosClient.get(`/order?page=${page}&limit=${limit}&search=${search}`);
+//   return response.data;
+// };
+
+const getAllOrder = async (params = {}) => {
+  const { page = 1, limit = 10, search = '', orderStatus, paymentStatus, minPrice, maxPrice } = params;
+  let query = `page=${page}&limit=${limit}`;
+  if (search) query += `&search=${encodeURIComponent(search)}`;
+  if (orderStatus) query += `&orderStatus=${encodeURIComponent(orderStatus)}`;
+  if (paymentStatus) query += `&paymentStatus=${encodeURIComponent(paymentStatus)}`;
+  if (minPrice !== undefined && minPrice !== '') query += `&minPrice=${minPrice}`;
+  if (maxPrice !== undefined && maxPrice !== '') query += `&maxPrice=${maxPrice}`;
+  const response = await axiosClient.get(`/order?${query}`);
   return response.data;
 };
 

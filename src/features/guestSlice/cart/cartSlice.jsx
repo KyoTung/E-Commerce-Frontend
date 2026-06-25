@@ -141,7 +141,10 @@ export const cartSlice = createSlice({
       .addCase(updateCartItem.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
-         toast.error("Cập nhật giỏ hàng thất bại")
+        state.message = action.payload?.message
+        toast.error(state?.message || "Cập nhật giỏ hàng thất bại")
+
+       
       })
 
       .addCase(deleteCart.fulfilled, (state) => {

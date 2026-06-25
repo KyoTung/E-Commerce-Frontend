@@ -5,6 +5,7 @@ import { RiDeleteBinLine } from "react-icons/ri";
 import { FiShoppingCart, FiArrowLeft } from "react-icons/fi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { XCircle } from "lucide-react";
 
 
 // Actions
@@ -21,12 +22,15 @@ const Cart = () => {
 
   const location = useLocation();
 
-  const { cart, isLoading } = useSelector((state) => state.cart);
+  const { cart, isLoading, message, isError } = useSelector((state) => state.cart);
   const [coupon, setCoupon] = useState("");
   
   // Lưu các sản phẩm được chọn (Dùng key kết hợp ID, màu, dung lượng)
   const [selectedKeys, setSelectedKeys] = useState([]);
   const [couponDetails, setCouponDetails] = useState(null);
+   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
 
   // Fetch Cart on Mount
   useEffect(() => {
@@ -160,6 +164,20 @@ const handleCheckout = () => {
 
   // --- RENDER ---
 
+  useEffect(() => {
+    if (isError && message) {
+      setErrorMessage(message);
+      setShowErrorModal(true);
+      // Reset state để không hiển thị lại lần sau (nếu muốn giữ modal thì không cần reset ngay)
+      // dispatch(resetCartState()); // Có thể reset sau khi đóng modal
+    }
+  }, [isError, message]);
+
+  const closeErrorModal = () => {
+    setShowErrorModal(false);
+    dispatch(resetCartState()); // Reset khi đóng modal
+  };
+
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loading /></div>;
 
   if (!cart || !cart.products || cart.products.length === 0) {
@@ -179,6 +197,22 @@ const handleCheckout = () => {
   return (
     <div className="container mx-auto min-h-screen px-4 py-8 max-w-[1200px]">
       <ToastContainer />
+      {showErrorModal && (
+      <div className="fixed top-4 right-4 z-[9999] max-w-sm w-full animate-slide-in">
+          <div className="bg-white text-red-600 rounded-lg shadow-2xl p-4 flex items-start gap-3">
+            
+            <div className="flex-1">
+              <p className="text-sm font-medium">{errorMessage}</p>
+            </div>
+            <button
+              onClick={closeErrorModal}
+              className="text-red hover:text-red-700 transition"
+            >
+              <XCircle className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
       <h1 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
         Giỏ hàng <span className="text-sm font-normal text-gray-500">({cart.products.length} sản phẩm)</span>
       </h1>
