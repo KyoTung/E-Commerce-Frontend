@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
 import {
   DollarSign,
   ShoppingBag,
@@ -284,6 +285,7 @@ const Dashboard = () => {
 
   return (
     <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
+      <ToastContainer/>
       {/* Tiêu đề điều hướng */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

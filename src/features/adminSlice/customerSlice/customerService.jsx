@@ -13,17 +13,19 @@ const updateUser = async (userId, userData) => {
   return response.data;
 };
 
+const updateUserRole = async (userId, userData) => {
+  const response = await axiosClient.put(
+    `/user/update-role/${userId}`,
+    userData,
+  );
+  return response.data;
+};
+
 const getUserDetail = async (userId) => {
   const response = await axiosClient.get(`/user/${userId}`);
   return response.data;
 };
 
-// const getAllUser = async (page = 1, limit = 10, search = "") => {
-//   const response = await axiosClient.get("/user/all-users", {
-//     params: { page, limit, search },
-//   });
-//   return response.data;
-// };
 
 const getAllUser = async ({ page = 1, limit = 10, search = "", role = "", status = "" } = {}) => {
   const response = await axiosClient.get("/user/all-users", {
@@ -55,6 +57,7 @@ const customerService = {
   deleteUser,
   blockUser,
   unBlockUser,
+  updateUserRole
 };
 
 export default customerService;

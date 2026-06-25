@@ -42,14 +42,11 @@ export const updateProduct = createAsyncThunk(
 
 export const getAllProducts = createAsyncThunk(
   "admin/product/get-all-products",
-  async ({ page = 1, limit = 10, search = "" } = {}, thunkAPI) => {
+  async (params = {}, thunkAPI) => {
     try {
-      const response = await productService.getAllProductsAdmin(
-        page,
-        limit,
-        search,
-      );
-      return response; // { products, total, totalPages, currentPage }
+      // Chuyển thẳng object params sang service xử lý đóng gói Axios
+      const response = await productService.getAllProductsAdmin(params);
+      return response; 
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || error.message,
@@ -121,19 +118,24 @@ export const productSlice = createSlice({
         state.error = action.payload?.message || "Failed to update product";
       })
 
+     // Tìm đến addCase của deleteProduct trong file productSlice.jsx và sửa thành:
       .addCase(deleteProduct.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(deleteProduct.fulfilled, (state, action) => {
         state.loading = false;
-        state.products = state.products.filter(
-          (product) => product.id !== action.payload.id,
+        // Cập nhật lại thuộc tính isActive của sản phẩm trong mảng local store
+        const index = state.products.findIndex(
+          (product) => product._id === action.payload.product?._id
         );
+        if (index !== -1) {
+          state.products[index].isActive = action.payload.product?.isActive;
+        }
       })
       .addCase(deleteProduct.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Failed to delete product";
+        state.error = action.payload?.message || "Thao tác thay đổi trạng thái sản phẩm thất bại";
       })
 
       .addCase(getProduct.pending, (state) => {

@@ -40,6 +40,19 @@ export const updateUser = createAsyncThunk(
   },
 );
 
+export const updateUserRole  = createAsyncThunk(
+  "admin/user/update-role",
+  async ({ userId, userData }, thunkAPI) => {
+    try {
+      const response = await customerService.updateUserRole(userId, userData);
+      return response;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message;
+      return thunkAPI.rejectWithValue({ message });
+    }
+  },
+);
+
 export const getUserInfo = createAsyncThunk(
   "/admin/user/get-user",
   async (userId, thunkAPI) => {
@@ -139,6 +152,20 @@ export const customerSlice = createSlice({
       state.isSuccess = true;
     });
     builder.addCase(updateUser.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload?.message;
+    });
+
+    builder.addCase(updateUserRole.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(updateUserRole.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+    });
+    builder.addCase(updateUserRole.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;

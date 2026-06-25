@@ -144,21 +144,7 @@ const NewUser = () => {
               )}
             </div>
 
-            {/* Vai trò */}
-            <div className="mb-4">
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Vai trò
-              </label>
-              <select
-                name="role"
-                value={newUser.role}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              >
-                <option value="user">Khách hàng</option>
-                <option value="admin">Quản trị viên</option>
-              </select>
-            </div>
+         
 
             {/* Mật khẩu và xác nhận */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

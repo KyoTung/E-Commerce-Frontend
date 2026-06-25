@@ -11,11 +11,11 @@ const updateProduct = async (productId, productData) => {
   return response.data;
 };
 
-const getAllProductsAdmin = async (page = 1, limit = 10, search = "") => {
+const getAllProductsAdmin = async (params) => {
   const response = await axiosClient.get("/product/admin", {
-    params: { page, limit, search },
+    params: params, 
   });
-  return response.data; // { products, total, totalPages, currentPage }
+  return response.data; 
 };
 
 const getProduct = async (productId) => {

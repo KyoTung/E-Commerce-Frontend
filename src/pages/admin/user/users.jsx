@@ -17,6 +17,7 @@ import {
   blockUser,
   unBlockUser,
   updateUser,
+  updateUserRole
 } from "../../../features/adminSlice/customerSlice/customerSlice";
 
 const User = () => {
@@ -31,22 +32,18 @@ const User = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [filterRole, setFilterRole] = useState("all");
-  
-  // MẶC ĐỊNH NGHIỆP VỤ: Chỉ hiển thị các thành viên đang mở (isBlock = false)
-  // Các giá trị: "active" (Đang mở), "blocked" (Bị khóa), "all" (Tất cả)
   const [filterStatus, setFilterStatus] = useState("active"); 
   const [updatingUserId, setUpdatingUserId] = useState(null);
 
-  // Debounce search giảm tải lượng gọi API liên tục khi gõ chữ
+  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
-      setCurrentPage(1); // Reset về trang 1 khi tìm kiếm từ khóa mới
+      setCurrentPage(1);
     }, 500);
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Hàm tập trung chịu trách nhiệm gọi API lấy dữ liệu kèm theo các bộ lọc đa năng
   const fetchUsersList = () => {
     dispatch(
       getAllUser({ 
@@ -54,17 +51,15 @@ const User = () => {
         limit, 
         search: debouncedSearch.trim(),
         role: filterRole !== "all" ? filterRole : undefined,
-        status: filterStatus !== "all" ? filterStatus : undefined // Gửi trạng thái đóng mở lên backend
+        status: filterStatus !== "all" ? filterStatus : undefined
       })
     );
   };
 
-  // Theo dõi sự thay đổi của các bộ lọc để tự động nạp lại bảng dữ liệu
   useEffect(() => {
     fetchUsersList();
   }, [dispatch, currentPage, limit, debouncedSearch, filterRole, filterStatus]);
 
-  // Định dạng thời gian hiển thị chuẩn Việt Nam
   const formatDate = (dateString) => {
     if (!dateString) return "—";
     return new Date(dateString).toLocaleString("vi-VN", {
@@ -77,7 +72,6 @@ const User = () => {
     }).replace(",", "");
   };
 
-  // Chuyển đổi số trang phân trang mượt mà
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
@@ -85,7 +79,6 @@ const User = () => {
     }
   };
 
-  // Hành động: Khóa tài khoản (isBlock -> true dưới DB)
   const onBlockUser = async (user) => {
     const userName = user.name || user.fullName || user.email;
     if (!window.confirm(`Bạn có chắc chắn muốn KHÓA tài khoản của thành viên [${userName}]?`)) return;
@@ -98,7 +91,6 @@ const User = () => {
     }
   };
 
-  // Hành động: Mở khóa tài khoản (isBlock -> false dưới DB)
   const onUnBlockUser = async (user) => {
     const userName = user.name || user.fullName || user.email;
     if (!window.confirm(`Bạn có chắc chắn muốn MỞ KHÓA tài khoản cho thành viên [${userName}]?`)) return;
@@ -111,7 +103,7 @@ const User = () => {
     }
   };
 
-  // Hành động: Thay đổi vai trò quyền lực (Admin / Staff / User)
+  // ĐÃ FIX BUG: Đổi cấu trúc gọi hàm khớp hoàn toàn với extraReducers { userId, userData } của updateUser Thunk
   const handleRoleChange = async (user, newRole) => {
     const roleLabels = { admin: "Quản trị viên", staff: "Nhân viên", user: "Khách hàng" };
     const userName = user.name || user.fullName || `${user.firstname} ${user.lastname}`;
@@ -120,13 +112,13 @@ const User = () => {
       setUpdatingUserId(user._id);
       try {
         const result = await dispatch(
-          updateUser({
+          updateUserRole({
             userId: user._id,
             userData: { role: newRole },
           })
         );
 
-        if (updateUser.fulfilled.match(result)) {
+        if (updateUserRole.fulfilled.match(result)) {
           toast.success("Cập nhật phân quyền thành công!");
           fetchUsersList();
         } else {
@@ -140,7 +132,6 @@ const User = () => {
     }
   };
 
-  // Gán class màu sắc động cho Select phân quyền nổi bật trực quan
   const getRoleSelectClass = (role) => {
     switch (role) {
       case "admin":
@@ -156,7 +147,6 @@ const User = () => {
     <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
       <ToastContainer />
       
-      {/* Khối tiêu đề đầu trang */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Quản lý thành viên</h1>
@@ -178,10 +168,8 @@ const User = () => {
         </div>
       </div>
 
-      {/* Bộ thanh công cụ tìm kiếm và lọc dữ liệu nâng cao */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 space-y-4">
         <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
-          {/* Ô nhập từ khóa tìm kiếm nhanh */}
           <div className="w-full md:w-80">
             <input
               type="text"
@@ -192,14 +180,13 @@ const User = () => {
             />
           </div>
 
-          {/* BỘ LỌC TRẠNG THÁI ĐÓNG / MỞ (ĐƯỢC BỔ SUNG CHUẨN NGHIỆP VỤ) */}
           <div className="flex items-center gap-2 text-sm w-full md:w-auto justify-end">
             <span className="font-semibold text-gray-500 whitespace-nowrap">Trạng thái tài khoản:</span>
             <select
               value={filterStatus}
               onChange={(e) => {
                 setFilterStatus(e.target.value);
-                setCurrentPage(1); // Quay về trang 1 khi thay đổi trạng thái lọc
+                setCurrentPage(1);
               }}
               className="border rounded-lg p-2 font-medium text-sm outline-none text-gray-700 bg-gray-50 cursor-pointer focus:border-blue-500 transition"
             >
@@ -210,7 +197,6 @@ const User = () => {
           </div>
         </div>
 
-        {/* Khối các tab lọc nhanh theo từng Vai trò */}
         <div className="flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none] border-t pt-3">
           {[
             { key: "all", label: "Tất cả vai trò" },
@@ -222,7 +208,7 @@ const User = () => {
               key={item.key}
               onClick={() => {
                 setFilterRole(item.key);
-                setCurrentPage(1); // Quay về trang 1 khi đổi bộ lọc vai trò
+                setCurrentPage(1);
               }}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
                 filterRole === item.key
@@ -236,7 +222,6 @@ const User = () => {
         </div>
       </div>
 
-      {/* Bảng hiển thị thông tin danh sách thành viên */}
       <div className="overflow-hidden rounded-xl bg-white shadow-sm border border-gray-100">
         {isLoading && allUsers.length === 0 ? (
           <div className="py-20"><Loading /></div>
@@ -261,7 +246,6 @@ const User = () => {
                 <tbody className="divide-y divide-gray-100 bg-white text-sm text-gray-700 font-medium">
                   {allUsers.map((user, idx) => (
                     <tr key={user._id} className="hover:bg-gray-50/50 transition">
-                      {/* Số thứ tự liên tiếp dựa theo số phân trang */}
                       <td className="whitespace-nowrap px-6 py-4 text-gray-400">
                         {(currentPage - 1) * limit + idx + 1}
                       </td>
@@ -276,7 +260,6 @@ const User = () => {
                         {formatDate(user.createdAt)}
                       </td>
                       
-                      {/* Cột Dropdown Phân quyền chức vụ */}
                       <td className="whitespace-nowrap px-6 py-4 text-center">
                         <div className="inline-flex items-center gap-2">
                           <select
@@ -295,7 +278,6 @@ const User = () => {
                         </div>
                       </td>
 
-                      {/* Cột hiển thị Badge trạng thái tương ứng biến user.isBlock */}
                       <td className="whitespace-nowrap px-6 py-4 text-center">
                         <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${
                           user.isBlock ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
@@ -304,7 +286,6 @@ const User = () => {
                         </span>
                       </td>
                       
-                      {/* Cột Thao tác hành động (ĐÃ LOẠI BỎ ICON THÙNG RÁC XÓA CỨNG) */}
                       <td className="whitespace-nowrap px-6 py-4 text-right">
                         <div className="flex justify-end gap-1">
                           <button
@@ -342,7 +323,7 @@ const User = () => {
         )}
       </div>
 
-      {/* Hệ thống thanh điều hướng phân trang số */}
+      {/* Phân trang */}
       {totalPages > 1 && (
         <div className="flex flex-col sm:flex-row items-center justify-between border-t border-gray-200 bg-white px-4 py-3 mt-4 rounded-lg shadow-sm gap-4">
           <div className="text-sm text-gray-700 font-medium">
@@ -364,7 +345,6 @@ const User = () => {
               <ChevronLeft size={16} className="mr-1" /> Trước
             </button>
 
-            {/* Các ô số trang nhanh trên màn hình rộng máy tính */}
             <div className="hidden md:flex items-center gap-1">
               {[...Array(totalPages)].map((_, index) => {
                 const pageNumber = index + 1;

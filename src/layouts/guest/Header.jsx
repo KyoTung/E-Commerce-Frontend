@@ -326,7 +326,7 @@ const handleSearch = (e) => {
                         </p>
                       </div>
                       <div className="py-1">
-                        {user.role === "admin" && (
+                        {user.role === "admin" || user.role === "staff" && (
                           <Link
                             to="/admin"
                             className="flex items-center px-4 py-2.5 text-sm hover:bg-gray-100"
