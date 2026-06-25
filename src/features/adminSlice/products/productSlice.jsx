@@ -118,14 +118,12 @@ export const productSlice = createSlice({
         state.error = action.payload?.message || "Failed to update product";
       })
 
-     // Tìm đến addCase của deleteProduct trong file productSlice.jsx và sửa thành:
       .addCase(deleteProduct.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(deleteProduct.fulfilled, (state, action) => {
         state.loading = false;
-        // Cập nhật lại thuộc tính isActive của sản phẩm trong mảng local store
         const index = state.products.findIndex(
           (product) => product._id === action.payload.product?._id
         );

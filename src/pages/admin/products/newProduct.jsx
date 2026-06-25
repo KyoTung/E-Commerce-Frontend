@@ -24,13 +24,21 @@ const NewProduct = ({ placeholder }) => {
   const [gallery, setGallery] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Khởi tạo variants với quantity = 0
   const [variants, setVariants] = useState([
-    { color: "", storage: "", price: "", quantity: "", images: [] },
+    { color: "", storage: "", price: "", quantity: 0, images: [] },
   ]);
 
-  // State cục bộ phục vụ việc hiển thị text định dạng tiền tệ thân thiện với người dùng
+  // State cho giá cơ bản
   const [basePriceDisplay, setBasePriceDisplay] = useState("");
-  const [variantPriceDisplays, setVariantPriceDisplays] = useState([""]);
+  const [basePriceRaw, setBasePriceRaw] = useState("");
+  const [isBasePriceFocused, setIsBasePriceFocused] = useState(false);
+
+  // State cho giá variant
+  const [variantPriceRaw, setVariantPriceRaw] = useState([]);
+  const [variantPriceDisplay, setVariantPriceDisplay] = useState([]);
+  const [variantPriceFocusIndex, setVariantPriceFocusIndex] = useState(null);
 
   const {
     register,
@@ -62,50 +70,96 @@ const NewProduct = ({ placeholder }) => {
     dispatch(getAllColor());
   }, [dispatch]);
 
-  // --- HÀM HELPER ĐỊNH DẠNG TIỀN TỆ ---
-  // Hàm loại bỏ ký tự không phải số, chặn số âm và định dạng chuỗi có dấu chấm phân tách
-  const formatCurrencyHelper = (rawValue) => {
-    if (!rawValue) return "";
-    // Chỉ giữ lại các chữ số (loại bỏ dấu trừ '-' và các ký tự khác)
-    const cleanValue = String(rawValue).replace(/\D/g, "");
-    if (!cleanValue) return "";
-    
-    // Tạo chuỗi định dạng phân tách hàng nghìn bằng dấu chấm (ví dụ: 15.000.000)
-    return new Intl.NumberFormat("vi-VN").format(Number(cleanValue));
+  // ---------- HÀM XỬ LÝ TIỀN TỆ AN TOÀN ----------
+  const formatCurrencyHelper = (value) => {
+    if (value === undefined || value === null || value === "") return "";
+    const num = Math.round(Number(value));
+    if (isNaN(num) || num === 0) return "";
+    return new Intl.NumberFormat("vi-VN", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(num);
   };
 
-  // Hàm chuyển chuỗi định dạng ngược lại thành số nguyên thuần để lưu vào Database
-  const parseCurrencyToNumber = (formattedValue) => {
-    if (!formattedValue) return 0;
-    return Number(String(formattedValue).replace(/\./g, ""));
+  const parseCurrencyToNumber = (value) => {
+    if (!value) return 0;
+    const cleaned = String(value).replace(/\D/g, "");
+    const num = parseInt(cleaned, 10);
+    return isNaN(num) ? 0 : num;
   };
 
-  // Xử lý thay đổi Giá cơ bản
+  // ---------- XỬ LÝ GIÁ CƠ BẢN ----------
+  const handleBasePriceFocus = () => {
+    setIsBasePriceFocused(true);
+    const raw = basePriceRaw || String(parseCurrencyToNumber(basePriceDisplay));
+    setBasePriceDisplay(raw);
+  };
+
+  const handleBasePriceBlur = () => {
+    setIsBasePriceFocused(false);
+    const numericValue = parseCurrencyToNumber(basePriceDisplay);
+    const formatted = formatCurrencyHelper(numericValue);
+    setBasePriceDisplay(formatted);
+    setBasePriceRaw(String(numericValue));
+    setValue("basePrice", numericValue, { shouldValidate: true });
+  };
+
   const handleBasePriceChange = (e) => {
-    const inputValue = e.target.value;
-    const formatted = formatCurrencyHelper(inputValue);
-    const numericValue = parseCurrencyToNumber(formatted);
-
-    setBasePriceDisplay(formatted); // Cập nhật text hiển thị (Có dấu chấm)
-    setValue("basePrice", numericValue || "", { shouldValidate: true }); // Lưu số thuần vào React Hook Form
+    const rawValue = e.target.value.replace(/\D/g, "");
+    setBasePriceDisplay(rawValue);
+    setBasePriceRaw(rawValue);
+    const numericValue = parseCurrencyToNumber(rawValue);
+    setValue("basePrice", numericValue, { shouldValidate: true });
   };
 
-  // Xử lý thay đổi Giá của từng phân loại cụ thể
-  const handleVariantPriceChange = (index, value) => {
-    const formatted = formatCurrencyHelper(value);
-    const numericValue = parseCurrencyToNumber(formatted);
+  // ---------- XỬ LÝ GIÁ VARIANT ----------
+  const handleVariantPriceFocus = (index) => {
+    setVariantPriceFocusIndex(index);
+    const raw = variantPriceRaw[index] || String(parseCurrencyToNumber(variantPriceDisplay[index] || ""));
+    const updatedDisplay = [...variantPriceDisplay];
+    updatedDisplay[index] = raw;
+    setVariantPriceDisplay(updatedDisplay);
+  };
 
-    // Cập nhật mảng hiển thị text
-    const updatedDisplays = [...variantPriceDisplays];
-    updatedDisplays[index] = formatted;
-    setVariantPriceDisplays(updatedDisplays);
+  const handleVariantPriceBlur = (index) => {
+    setVariantPriceFocusIndex(null);
+    const rawValue = variantPriceDisplay[index] || variantPriceRaw[index] || "";
+    const numericValue = parseCurrencyToNumber(rawValue);
+    const formatted = formatCurrencyHelper(numericValue);
 
-    // Cập nhật giá số nguyên vào mảng variants gốc
-    const updatedVariants = [...variants];
-    updatedVariants[index].price = numericValue || "";
+    const updatedDisplay = [...variantPriceDisplay];
+    updatedDisplay[index] = formatted;
+    setVariantPriceDisplay(updatedDisplay);
+
+    const updatedRaw = [...variantPriceRaw];
+    updatedRaw[index] = String(numericValue);
+    setVariantPriceRaw(updatedRaw);
+
+    // Cập nhật vào variants
+    const updatedVariants = variants.map((v, i) => {
+      if (i === index) {
+        return {
+          ...v,
+          price: numericValue,
+        };
+      }
+      return v;
+    });
     setVariants(updatedVariants);
   };
 
+  const handleVariantPriceChange = (index, e) => {
+    const rawValue = e.target.value.replace(/\D/g, "");
+    const updatedRaw = [...variantPriceRaw];
+    updatedRaw[index] = rawValue;
+    setVariantPriceRaw(updatedRaw);
+
+    const updatedDisplay = [...variantPriceDisplay];
+    updatedDisplay[index] = rawValue;
+    setVariantPriceDisplay(updatedDisplay);
+  };
+
+  // ---------- CÁC HANDLER KHÁC ----------
   const handleEditorChange = (newContent) => {
     setValue("description", newContent);
   };
@@ -158,7 +212,6 @@ const NewProduct = ({ placeholder }) => {
   };
 
   const handleVariantChange = (index, field, value) => {
-    // Chặn số âm cho ô Số lượng (quantity)
     if (field === "quantity") {
       value = String(value).replace(/\D/g, "");
     }
@@ -173,8 +226,7 @@ const NewProduct = ({ placeholder }) => {
     if (
       !lastVariant.color ||
       !lastVariant.storage ||
-      !lastVariant.price ||
-      !lastVariant.quantity
+      !lastVariant.price
     ) {
       toast.warning("Vui lòng nhập đầy đủ thông tin cho phân loại hiện tại");
       return;
@@ -186,25 +238,19 @@ const NewProduct = ({ placeholder }) => {
         color: "",
         storage: "",
         price: lastVariant.price,
-        quantity: lastVariant.quantity,
+        quantity: 0, // Mặc định 0
         images: [],
       },
     ]);
-    
-    // Đồng bộ sao chép định dạng giá hiển thị của phân loại trước sang phân loại mới
-    setVariantPriceDisplays([
-      ...variantPriceDisplays,
-      formatCurrencyHelper(lastVariant.price),
-    ]);
+    setVariantPriceRaw([...variantPriceRaw, ""]);
+    setVariantPriceDisplay([...variantPriceDisplay, ""]);
   };
 
   const removeVariant = (index) => {
     if (variants.length > 1) {
-      const updatedVariants = variants.filter((_, i) => i !== index);
-      setVariants(updatedVariants);
-      
-      const updatedDisplays = variantPriceDisplays.filter((_, i) => i !== index);
-      setVariantPriceDisplays(updatedDisplays);
+      setVariants(variants.filter((_, i) => i !== index));
+      setVariantPriceRaw(variantPriceRaw.filter((_, i) => i !== index));
+      setVariantPriceDisplay(variantPriceDisplay.filter((_, i) => i !== index));
     } else {
       toast.error("Cần ít nhất một phân loại");
     }
@@ -239,35 +285,40 @@ const NewProduct = ({ placeholder }) => {
     setVariants(updatedVariants);
   };
 
+  // ---------- SUBMIT ----------
   const handleAddProduct = async (formData) => {
     if (isSubmitting) return;
 
+    // Chỉ kiểm tra color, storage, price (không bắt buộc quantity)
     const invalidVariants = variants.filter(
-      (v) => !v.color || !v.storage || !v.price || !v.quantity
+      (v) => !v.color || !v.storage || !v.price
     );
 
     if (invalidVariants.length > 0) {
-      toast.error("Vui lòng điền đầy đủ thông tin cho tất cả các phân loại");
+      toast.error("Vui lòng điền đầy đủ thông tin cho tất cả các phân loại (màu, dung lượng, giá)");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
+      const cleanedVariants = variants.map((variant) => ({
+        ...variant,
+        price: parseCurrencyToNumber(variant.price),
+        quantity: parseInt(variant.quantity, 10) || 0,
+        images: variant.images || [],
+      }));
+
       const productData = {
         title: formData.title,
         slug:
           formData.slug || formData.title.toLowerCase().replace(/\s+/g, "-"),
-        basePrice: Number(formData.basePrice),
+        basePrice: parseCurrencyToNumber(formData.basePrice),
         description: formData.description,
         brand: formData.brand,
         category: formData.category,
         images: gallery,
-        variants: variants.map((variant) => ({
-          ...variant,
-          price: Number(variant.price),
-          quantity: Number(variant.quantity),
-        })),
+        variants: cleanedVariants,
         tags: formData.tags
           ? formData.tags.split(",").map((tag) => tag.trim())
           : [],
@@ -314,7 +365,6 @@ const NewProduct = ({ placeholder }) => {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {/* Cột trái */}
           <div className="space-y-6">
-            {/* Thông tin chung */}
             <div className="border-b pb-6">
               <h2 className="mb-4 text-xl font-semibold">Thông tin chung</h2>
               <div className="space-y-4">
@@ -352,7 +402,7 @@ const NewProduct = ({ placeholder }) => {
                     <label className="block text-sm font-medium text-gray-700">
                       Giá cơ bản (VND) *
                     </label>
-                    {basePriceDisplay && (
+                    {basePriceDisplay && !isBasePriceFocused && (
                       <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
                         {basePriceDisplay} ₫
                       </span>
@@ -362,11 +412,15 @@ const NewProduct = ({ placeholder }) => {
                     type="text"
                     value={basePriceDisplay}
                     onChange={handleBasePriceChange}
-                    placeholder="Ví dụ: 15.000.000"
+                    onFocus={handleBasePriceFocus}
+                    onBlur={handleBasePriceBlur}
+                    placeholder="Nhập số tiền..."
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
-                  {/* Trường ẩn để lưu giá trị kiểm thử của react-hook-form */}
-                  <input type="hidden" {...register("basePrice", { required: "Giá cơ bản là bắt buộc" })} />
+                  <input
+                    type="hidden"
+                    {...register("basePrice", { required: "Giá cơ bản là bắt buộc" })}
+                  />
                   {errors.basePrice && (
                     <p className="mt-1 text-sm text-red-500">
                       {errors.basePrice.message}
@@ -374,7 +428,6 @@ const NewProduct = ({ placeholder }) => {
                   )}
                 </div>
 
-                {/* Ảnh sản phẩm chính */}
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700">
                     Ảnh sản phẩm
@@ -426,7 +479,6 @@ const NewProduct = ({ placeholder }) => {
               </div>
             </div>
 
-            {/* Liên kết thương hiệu, danh mục */}
             <div className="border-b pb-6">
               <h2 className="mb-4 text-xl font-semibold">Liên kết</h2>
               <div className="space-y-4">
@@ -505,7 +557,6 @@ const NewProduct = ({ placeholder }) => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    {/* Màu sắc */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600">
                         Màu sắc *
@@ -525,7 +576,6 @@ const NewProduct = ({ placeholder }) => {
                         ))}
                       </select>
                     </div>
-                    {/* Dung lượng */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600">
                         Dung lượng *
@@ -545,46 +595,47 @@ const NewProduct = ({ placeholder }) => {
                         ))}
                       </select>
                     </div>
-                    {/* Giá phân loại định dạng mới */}
                     <div>
                       <div className="flex justify-between items-center">
                         <label className="block text-xs font-medium text-gray-600">
                           Giá *
                         </label>
-                        {variantPriceDisplays[index] && (
+                        {variantPriceDisplay[index] && variantPriceFocusIndex !== index && (
                           <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1 rounded">
-                            {variantPriceDisplays[index]} ₫
+                            {variantPriceDisplay[index]} ₫
                           </span>
                         )}
                       </div>
                       <input
                         type="text"
-                        value={variantPriceDisplays[index] || ""}
-                        onChange={(e) =>
-                          handleVariantPriceChange(index, e.target.value)
-                        }
-                        placeholder="Ví dụ: 16.500.000"
+                        value={variantPriceDisplay[index] || ""}
+                        onChange={(e) => handleVariantPriceChange(index, e)}
+                        onFocus={() => handleVariantPriceFocus(index)}
+                        onBlur={() => handleVariantPriceBlur(index)}
+                        placeholder="Nhập số tiền..."
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     </div>
-                    {/* Số lượng tồn kho */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600">
-                        Số lượng *
+                        Số lượng tồn kho
                       </label>
                       <input
-                        type="number"
-                        min="0"
+                        type="text"
+                        inputMode="numeric"
                         value={variant.quantity}
                         onChange={(e) =>
                           handleVariantChange(index, "quantity", e.target.value)
                         }
+                        placeholder="Mặc định 0, cập nhật qua nhập kho"
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       />
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        Sẽ được cập nhật khi nhập kho
+                      </p>
                     </div>
                   </div>
 
-                  {/* Ảnh cho phân loại */}
                   <div className="mt-3">
                     <label className="block text-xs font-medium text-gray-600 mb-1">
                       Ảnh phân loại
@@ -628,7 +679,7 @@ const NewProduct = ({ placeholder }) => {
             </div>
           </div>
 
-          {/* Cột phải: Thông số kỹ thuật & Mô tả */}
+          {/* Cột phải */}
           <div className="space-y-6">
             <div className="border-b pb-6">
               <h2 className="mb-4 text-xl font-semibold">Thông số kỹ thuật</h2>

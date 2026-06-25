@@ -51,7 +51,7 @@ const AllProducts = () => {
   const [localProducts, setLocalProducts] = useState([]); // Danh sách hiển thị
   const [page, setPage] = useState(1); // Trang hiện tại
   const [hasMore, setHasMore] = useState(true); // Kiểm tra còn dữ liệu không
-  const LIMIT = 10; // Số lượng sản phẩm mỗi lần tải (Nên chia hết cho 2 và 5 để đẹp grid)
+  const LIMIT = 10; // Số lượng sản phẩm mỗi lần tải
 
   // State Filter
   const [filter, setFilter] = useState({
@@ -90,12 +90,9 @@ const AllProducts = () => {
       title: searchParams.get("title") || "",
       sort: "-createdAt",
     });
-    // setPage(1);
-    // setHasMore(true);
   }, [searchParams]);
 
   useEffect(() => {
-
     // Hủy request cũ nếu có
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -119,16 +116,11 @@ const AllProducts = () => {
       ...(filter.title && { title: filter.title }),
     };
 
-    // Chỉ set loading cho lần đầu, không set khi load thêm
-    if (page === 1) {
-      // isLoading đã có trong slice, không cần set state local
-    } else {
+    if (page > 1) {
       setIsLoadingMore(true);
     }
 
     dispatch(getAllProducts(queryParams))
-
-    
       .unwrap()
       .catch((err) => {
         if (err.name !== "AbortError") {
@@ -144,26 +136,24 @@ const AllProducts = () => {
     return () => controller.abort();
   }, [dispatch, filter, page]);
 
-useEffect(() => {
-  if (reduxProducts) {
-    if (page === 1) {
-      setLocalProducts(reduxProducts);
-    } else {
-      setLocalProducts(prev => {
-        const merged = [...prev, ...reduxProducts];
-        // Loại bỏ trùng lặp dựa trên _id
-        const unique = merged.filter((item, index, self) =>
-          index === self.findIndex((p) => p._id === item._id)
-        );
-        return unique;
-      });
+  useEffect(() => {
+    if (reduxProducts) {
+      if (page === 1) {
+        setLocalProducts(reduxProducts);
+      } else {
+        setLocalProducts(prev => {
+          const merged = [...prev, ...reduxProducts];
+          const unique = merged.filter((item, index, self) =>
+            index === self.findIndex((p) => p._id === item._id)
+          );
+          return unique;
+        });
+      }
+      setHasMore(reduxProducts.length === LIMIT);
     }
-    setHasMore(reduxProducts.length === LIMIT);
-  }
-}, [reduxProducts, page]);
+  }, [reduxProducts, page]);
 
   // --- HANDLERS ---
-
   const handleLoadMore = () => {
     setPage((prevPage) => prevPage + 1);
   };
@@ -197,10 +187,7 @@ useEffect(() => {
   };
 
   const handleCategoryClick = (slug) => {
-    // Nếu đang chọn chính nó thì bỏ chọn, ngược lại thì chọn mới
     const newCategory = filter.slugCategory === slug ? "" : slug;
-
-    // Cập nhật URL
     if (newCategory) {
       setSearchParams({
         ...Object.fromEntries(searchParams),
@@ -211,20 +198,17 @@ useEffect(() => {
       delete newParams.category;
       setSearchParams(newParams);
     }
-
-    // Reset về trang 1 và scroll lên
     setPage(1);
     isFirstLoad.current = false;
   };
 
-  //  thêm vào yêu thích
   const addToWish = (id) => {
     if (!user) {
       toast.warn("Vui lòng đăng nhập để thêm vào yêu thích!", {
-        position: "top-center", // Hiện ở giữa cho dễ thấy
+        position: "top-center",
         autoClose: 2000,
       });
-      return; // Dừng lại, không chạy code bên dưới
+      return;
     }
     dispatch(addwishList(id))
       .unwrap()
@@ -237,7 +221,6 @@ useEffect(() => {
       });
   };
 
-  // Helper
   const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -249,11 +232,8 @@ useEffect(() => {
     return [specs.screen, specs.ram, specs.storage].filter(Boolean).slice(0, 3);
   };
 
-  //ham kiểm tra xem 1 sản phẩm có nằm trong wishlist của user không
   const checkIsLiked = (productId) => {
-    // Nếu chưa có wishlist hoặc rỗng -> false
     if (!wishlist || wishlist.length === 0) return false;
-
     return wishlist.some((item) => {
       const itemId = typeof item === "string" ? item : item?._id;
       return itemId === productId;
@@ -269,11 +249,11 @@ useEffect(() => {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-bold text-gray-800 uppercase">
-              {filter.category
-                ? `Điện thoại ${filter.category}`
+              {filter.slugCategory
+                ? `Điện thoại ${filter.slugCategory}`
                 : "Tất cả sản phẩm"}
             </h1>
-            {(filter.brand || filter.minPrice !== "" || filter.category) && (
+            {(filter.brand || filter.minPrice !== "" || filter.slugCategory) && (
               <button
                 onClick={clearFilter}
                 className="text-sm text-red-500 flex items-center gap-1 hover:underline font-medium"
@@ -285,19 +265,18 @@ useEffect(() => {
 
           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 space-y-4">
             {/* --- CATEGORY FILTER --- */}
-            <div className="bg-white rounded-lg  mb-4">
+            <div className="bg-white rounded-lg mb-4">
               <h3 className="text-sm font-bold text-gray-700 mb-2">
                 Danh mục sản phẩm
               </h3>
               <div className="flex flex-wrap gap-2">
                 {categories &&
                   categories.map((item, index) => {
-                    // So sánh slug trên URL với slug của item
                     const isActive = filter.slugCategory === item.slug;
                     return (
                       <button
                         key={index}
-                        onClick={() => handleCategoryClick(item.slug)} // Truyền slug vào
+                        onClick={() => handleCategoryClick(item.slug)}
                         className={`px-3 py-1.5 text-xs sm:text-sm border rounded-lg transition-all ${
                           isActive
                             ? "bg-blue-50 border-blue-500 text-blue-600 font-bold"
@@ -375,7 +354,7 @@ useEffect(() => {
                   <option value="-createdAt">Mới nhất</option>
                   <option value="basePrice">Giá thấp đến cao</option>
                   <option value="-basePrice">Giá cao đến thấp</option>
-                  <option value="-sold">Bán chạy nhất</option>
+                  
                 </select>
               </div>
             </div>
@@ -398,7 +377,11 @@ useEffect(() => {
                   <Link
                     to={`/product/${product._id}`}
                     key={product._id}
-                    className="group relative flex flex-col h-full overflow-hidden rounded-xl bg-white p-2 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-3"
+                    className={`group relative flex flex-col h-full overflow-hidden rounded-xl bg-white p-2 shadow-sm transition-all duration-300 sm:p-3 ${
+                      product.isActive === false 
+                        ? "opacity-75 grayscale-[30%] border border-red-200 shadow-none hover:shadow-none" 
+                        : "hover:-translate-y-1 hover:shadow-lg"
+                    }`}
                   >
                     <div className="relative mb-2 flex h-40 w-full items-center justify-center overflow-hidden rounded-lg sm:h-48">
                       <img
@@ -409,15 +392,26 @@ useEffect(() => {
                         alt={product.title}
                         className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
                       />
-                      {product.tags?.includes("hot") && (
-                        <div className="absolute top-0 left-0 bg-[#d70018] text-white text-[10px] font-bold px-2 py-0.5 rounded-br-lg shadow-sm">
-                          HOT
+                      
+                      {/* BỘ LỌC THÔNG BÁO THEO YÊU CẦU: Hiển thị nhãn đỏ ở góc trên bên phải Card nếu ngừng bán */}
+                      {product.isActive === false ? (
+                        <div className="absolute top-0 right-0 bg-[#d70018] text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-bl-lg shadow-md tracking-wider animate-pulse">
+                          NGỪNG BÁN
                         </div>
+                      ) : (
+                        product.tags?.includes("hot") && (
+                          <div className="absolute top-0 left-0 bg-[#d70018] text-white text-[10px] font-bold px-2 py-0.5 rounded-br-lg shadow-sm">
+                            HOT
+                          </div>
+                        )
                       )}
                     </div>
+                    
                     <div className="flex flex-1 flex-col">
                       <h3
-                        className="mb-1 text-xs font-semibold leading-relaxed text-gray-700 line-clamp-2 hover:text-[#d70018] sm:mb-2 sm:text-sm min-h-[2.5em]"
+                        className={`mb-1 text-xs font-semibold leading-relaxed text-gray-700 line-clamp-2 sm:mb-2 sm:text-sm min-h-[2.5em] ${
+                          product.isActive === false ? "text-gray-400 italic font-medium" : "hover:text-[#d70018]"
+                        }`}
                         title={product.title}
                       >
                         {product.title}
@@ -433,9 +427,12 @@ useEffect(() => {
                         ))}
                       </div>
                       <div className="mb-1 flex flex-wrap items-baseline gap-x-2 mt-auto">
-                        <span className="text-sm font-bold text-[#d70018] sm:text-base">
+                        <span className={`text-sm font-bold sm:text-base ${product.isActive === false ? "text-gray-400 line-through" : "text-[#d70018]"}`}>
                           {formatPrice(displayPrice)}
                         </span>
+                        {product.isActive === false && (
+                          <span className="text-[10px] text-red-500 font-bold block">(Hết hàng)</span>
+                        )}
                       </div>
                       <div className="mt-auto flex items-center justify-between pt-2 border-t border-gray-50">
                         <div className="flex items-center gap-1">
@@ -446,19 +443,21 @@ useEffect(() => {
                           </span>
                         </div>
                         <button
-                          className="text-gray-400 hover:text-[#d70018] transition-colors flex items-center gap-1 text-xs group/heart"
+                          disabled={product.isActive === false}
+                          className={`transition-colors flex items-center gap-1 text-xs group/heart ${
+                            product.isActive === false ? "text-gray-300 cursor-not-allowed" : "text-gray-400 hover:text-[#d70018]"
+                          }`}
                           onClick={(e) => {
                             e.preventDefault();
-                            addToWish(product._id);
+                            if (product.isActive !== false) addToWish(product._id);
                           }}
                         >
                           {isLiked ? "Đã thích" : "Yêu thích"}
-
                           <FaHeart
                             className={`transition-colors ${
                               isLiked
                                 ? "text-[#d70018]"
-                                : "text-gray-300 group-hover/heart:text-[#d70018]"
+                                : product.isActive === false ? "text-gray-200" : "text-gray-300 group-hover/heart:text-[#d70018]"
                             }`}
                             size={12}
                           />

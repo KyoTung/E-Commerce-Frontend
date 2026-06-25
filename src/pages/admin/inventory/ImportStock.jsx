@@ -15,7 +15,7 @@ import Select from "react-select";
 
 import { getAllProducts } from "../../../features/adminSlice/products/productSlice";
 import { getSuppliers } from "../../../features/adminSlice/supplier/supplierSlice";
-import { createImport } from "../../../features/adminSlice/inventory/inventorySlice";
+import { createImport, clearImportSuccess } from "../../../features/adminSlice/inventory/inventorySlice";
 import Loading from "../../../components/Loading";
 
 const ImportStock = () => {
@@ -40,10 +40,14 @@ const ImportStock = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState("");
-  
-  // Quản lý state số lượng và giá nhập (Dạng chuỗi hiển thị định dạng)
+
+  // State số lượng (luôn là số nguyên, không format)
   const [quantity, setQuantity] = useState("1");
+
+  // State giá nhập: tách raw và display, có focus/blur
+  const [importPriceRaw, setImportPriceRaw] = useState("");
   const [importPriceDisplay, setImportPriceDisplay] = useState("");
+  const [isImportPriceFocused, setIsImportPriceFocused] = useState(false);
 
   useEffect(() => {
     dispatch(getAllProducts());
@@ -54,8 +58,15 @@ const ImportStock = () => {
     if (importSuccess) {
       toast.success("Nhập kho thành công!");
       navigate("/admin/inventory/transactions");
+     dispatch(clearImportSuccess());
     }
   }, [importSuccess, navigate]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(clearImportSuccess());
+    };
+  }, [dispatch]);
 
   const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN", {
@@ -63,18 +74,44 @@ const ImportStock = () => {
       currency: "VND",
     }).format(price || 0);
 
-  // --- HÀM HELPER ĐỊNH DẠNG TIỀN TỆ VÀ CHẶN SỐ ÂM ---
-  const formatCurrencyHelper = (rawValue) => {
-    if (rawValue === undefined || rawValue === null || rawValue === "") return "";
-    // Loại bỏ toàn bộ ký tự không phải số (Ngăn chặn hoàn toàn dấu trừ số âm)
-    const cleanValue = String(rawValue).replace(/\D/g, "");
-    if (!cleanValue) return "";
-    return new Intl.NumberFormat("vi-VN").format(Number(cleanValue));
+  // --- HÀM HELPER ĐỊNH DẠNG TIỀN TỆ ---
+  const formatCurrencyHelper = (value) => {
+    if (value === undefined || value === null || value === "") return "";
+    const num = Math.round(Number(value));
+    if (isNaN(num) || num === 0) return "";
+    return new Intl.NumberFormat("vi-VN", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(num);
   };
 
-  const parseCurrencyToNumber = (formattedValue) => {
-    if (!formattedValue) return 0;
-    return Number(String(formattedValue).replace(/\./g, ""));
+  const parseCurrencyToNumber = (value) => {
+    if (!value) return 0;
+    const cleaned = String(value).replace(/\D/g, "");
+    const num = parseInt(cleaned, 10);
+    return isNaN(num) ? 0 : num;
+  };
+
+  // ========== XỬ LÝ GIÁ NHẬP ==========
+  const handleImportPriceFocus = () => {
+    setIsImportPriceFocused(true);
+    const raw = importPriceRaw || String(parseCurrencyToNumber(importPriceDisplay));
+    setImportPriceDisplay(raw);
+  };
+
+  const handleImportPriceBlur = () => {
+    setIsImportPriceFocused(false);
+    const rawValue = importPriceDisplay || importPriceRaw || "";
+    const numericValue = parseCurrencyToNumber(rawValue);
+    const formatted = formatCurrencyHelper(numericValue);
+    setImportPriceDisplay(formatted);
+    setImportPriceRaw(String(numericValue));
+  };
+
+  const handleImportPriceChange = (e) => {
+    const rawValue = e.target.value.replace(/\D/g, "");
+    setImportPriceDisplay(rawValue);
+    setImportPriceRaw(rawValue);
   };
 
   const filteredProducts = useMemo(() => {
@@ -95,7 +132,9 @@ const ImportStock = () => {
       return toast.warning("Vui lòng chọn sản phẩm và phân loại!");
     }
 
-    const priceNumeric = parseCurrencyToNumber(importPriceDisplay);
+    // Lấy giá trị số từ raw (hoặc display nếu chưa blur)
+    const rawValue = importPriceRaw || importPriceDisplay;
+    const priceNumeric = parseCurrencyToNumber(rawValue);
     if (priceNumeric <= 0) {
       return toast.warning("Vui lòng nhập giá nhập lớn hơn 0!");
     }
@@ -142,6 +181,7 @@ const ImportStock = () => {
     setSearchTerm("");
     setQuantity("1");
     setImportPriceDisplay("");
+    setImportPriceRaw("");
   };
 
   const updateItemCount = (index, newCount) => {
@@ -175,9 +215,9 @@ const ImportStock = () => {
     }
 
     const payload = {
-      supplier: selectedSupplier.value,        
+      supplier: selectedSupplier.value,
       items: orderItems.map((item) => ({
-        product: item.product,                 
+        product: item.product,
         color: item.color,
         storage: item.storage,
         quantity: item.quantity,
@@ -314,7 +354,7 @@ const ImportStock = () => {
               </div>
             )}
 
-            {/* Số lượng - Chặn ký tự chữ và số âm */}
+            {/* Số lượng */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Số lượng <span className="text-red-500">*</span>
@@ -323,7 +363,6 @@ const ImportStock = () => {
                 type="text"
                 value={quantity}
                 onChange={(e) => {
-                  // Chỉ cho phép nhập chữ số, loại bỏ hoàn toàn ký tự lạ hoặc dấu trừ
                   const cleanQty = e.target.value.replace(/\D/g, "");
                   setQuantity(cleanQty);
                 }}
@@ -331,13 +370,13 @@ const ImportStock = () => {
               />
             </div>
 
-            {/* Giá nhập - Chặn số âm & Tự động định dạng tiền Việt */}
+            {/* Giá nhập (có focus/blur) */}
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-medium text-gray-700">
                   Giá nhập (VNĐ) <span className="text-red-500">*</span>
                 </label>
-                {importPriceDisplay && (
+                {importPriceDisplay && !isImportPriceFocused && (
                   <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
                     {importPriceDisplay} ₫
                   </span>
@@ -346,12 +385,11 @@ const ImportStock = () => {
               <input
                 type="text"
                 value={importPriceDisplay}
-                onChange={(e) => {
-                  const formatted = formatCurrencyHelper(e.target.value);
-                  setImportPriceDisplay(formatted);
-                }}
+                onChange={handleImportPriceChange}
+                onFocus={handleImportPriceFocus}
+                onBlur={handleImportPriceBlur}
                 className="w-full border rounded p-2 text-right text-sm outline-none focus:border-blue-500"
-                placeholder="0"
+                placeholder="Nhập số tiền..."
               />
             </div>
 
