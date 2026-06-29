@@ -28,13 +28,18 @@ const getRevenueByCategory = async (params) => {
   const response = await axiosClient.get('/stats/revenue-by-category', { params });
   return response.data;
 };
+
+
+
+
+
 const dashboardService = {
   getOverview,
   getRevenueChart,
   getTopProducts,
   getLowStock,
   getRevenueByBrand,
-  getRevenueByCategory
+  getRevenueByCategory,
 };
 
 export default dashboardService;

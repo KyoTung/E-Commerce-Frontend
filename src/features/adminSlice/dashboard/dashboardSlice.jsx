@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import dashboardService from "./dashboardService";
-
+import axiosClient from "../../../api/axiosClient";
 
 export const fetchOverview = createAsyncThunk(
   "dashboard/fetchOverview",
@@ -12,9 +12,11 @@ export const fetchOverview = createAsyncThunk(
       if (endDate) params.endDate = endDate;
       return await dashboardService.getOverview(params);
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message,
+      );
     }
-  }
+  },
 );
 
 export const fetchRevenueChart = createAsyncThunk(
@@ -28,23 +30,30 @@ export const fetchRevenueChart = createAsyncThunk(
       if (endDate) params.endDate = endDate;
       return await dashboardService.getRevenueChart(params);
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message,
+      );
     }
-  }
+  },
 );
 
 export const fetchTopProducts = createAsyncThunk(
   "dashboard/fetchTopProducts",
-  async ({ limit = 5, by = "quantity", period = "month", startDate, endDate } = {}, thunkAPI) => {
+  async (
+    { limit = 5, by = "quantity", period = "month", startDate, endDate } = {},
+    thunkAPI,
+  ) => {
     try {
       const params = { limit, by, period };
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
       return await dashboardService.getTopProducts(params);
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message,
+      );
     }
-  }
+  },
 );
 
 export const fetchLowStock = createAsyncThunk(
@@ -53,31 +62,57 @@ export const fetchLowStock = createAsyncThunk(
     try {
       return await dashboardService.getLowStock(threshold);
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message,
+      );
     }
-  }
+  },
 );
 
 export const fetchRevenueByBrand = createAsyncThunk(
-  'dashboard/fetchRevenueByBrand',
+  "dashboard/fetchRevenueByBrand",
   async ({ startDate, endDate } = {}, thunkAPI) => {
     try {
-      const response = await dashboardService.getRevenueByBrand({ startDate, endDate });
+      const response = await dashboardService.getRevenueByBrand({
+        startDate,
+        endDate,
+      });
       return response;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message,
+      );
     }
-  }
+  },
 );
 
 export const fetchRevenueByCategory = createAsyncThunk(
-  'dashboard/fetchRevenueByCategory',
+  "dashboard/fetchRevenueByCategory",
   async ({ startDate, endDate } = {}, thunkAPI) => {
     try {
-      const response = await dashboardService.getRevenueByCategory({ startDate, endDate });
+      const response = await dashboardService.getRevenueByCategory({
+        startDate,
+        endDate,
+      });
       return response;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message,
+      );
+    }
+  },
+);
+
+
+export const fetchAllImportTransactions = createAsyncThunk(
+  "dashboard/fetchAllImports",
+  async (_, thunkAPI) => {
+    try {
+      // Gọi API lấy tất cả giao dịch IMPORT, limit=1000 (hoặc tăng nếu cần)
+      const response = await axiosClient.get("/inventory/transactions?limit=1000&type=IMPORT");
+      return response.data.transactions; // mảng các giao dịch
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data || error.message);
     }
   }
 );
@@ -94,8 +129,9 @@ const initialState = {
   revenueChart: { data: [], period: "day", dateFormat: "YYYY-MM-DD" },
   topProducts: [],
   lowStockItems: [],
-   brandData: [],      
+  brandData: [],
   categoryData: [],
+  importTransactions: [],
   loading: false,
   error: null,
 };
@@ -178,6 +214,17 @@ const dashboardSlice = createSlice({
         state.categoryData = action.payload;
       })
       .addCase(fetchRevenueByCategory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchAllImportTransactions.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchAllImportTransactions.fulfilled, (state, action) => {
+        state.loading = false;
+        state.importTransactions = action.payload;
+      })
+      .addCase(fetchAllImportTransactions.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

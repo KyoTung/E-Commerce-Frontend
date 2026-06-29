@@ -20,13 +20,13 @@ import ForgotPassword from "../pages/guest/ForgotPassword";
 import AllProducts from "../pages/guest/AllProducts";
 import Wishlist from "../pages/guest/Wishlist";
 import LoginSuccess from "../pages/authen/LoginSuccess";
-import RecruitmentPage from "../pages/guest/RecruitmentPage"
+import RecruitmentPage from "../pages/guest/RecruitmentPage";
 import PolicyPage from "../pages/guest/PolicyPage";
 import ComingSoonPage from "../pages/guest/ComingSoonPage";
 
 import AdminLayout from "../layouts/admin/layout";
 import Dashboard from "../pages/admin/dashboard/Dashboard";
-import ReportsPage from "../pages/admin/dashboard/ReportsPage"
+import ReportsPage from "../pages/admin/dashboard/ReportsPage";
 import User from "../pages/admin/user/users";
 import EditUser from "../pages/admin/user/editUser";
 import NewUser from "../pages/admin/user/newUser";
@@ -52,6 +52,7 @@ import StockOverview from "../pages/admin/inventory/StockOverview";
 import ExportStock from "../pages/admin/inventory/ExportStock";
 import TransactionHistory from "../pages/admin/inventory/TransactionHistory";
 import BannerManager from "../pages/admin/banner/BannerManager";
+import ImeiLookup from "../pages/guest/ImeiLookup";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginForm /> },
@@ -71,6 +72,10 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <Home />,
+      },
+      {
+        path: "/warranty-lookup",
+        element: <ImeiLookup />,
       },
       {
         path: "/products",
@@ -126,17 +131,17 @@ export const router = createBrowserRouter([
         element: <About />,
       },
       {
-        path:"/recruitment",
-        element: <RecruitmentPage/>
+        path: "/recruitment",
+        element: <RecruitmentPage />,
       },
       {
-        path:"/policy",
-        element:<PolicyPage/>
+        path: "/policy",
+        element: <PolicyPage />,
       },
       {
-        path:"/comingsoon",
-        element:<ComingSoonPage/>
-      }
+        path: "/comingsoon",
+        element: <ComingSoonPage />,
+      },
     ],
   },
 
@@ -225,22 +230,22 @@ export const router = createBrowserRouter([
       },
 
       {
-        path:"inventory/import",
+        path: "inventory/import",
         element: <ImportStock />,
       },
 
       {
-        path:"inventory/export",
+        path: "inventory/export",
         element: <ExportStock />,
       },
 
       {
-        path:"inventory/stock",
+        path: "inventory/stock",
         element: <StockOverview />,
       },
 
       {
-        path:"inventory/transactions",
+        path: "inventory/transactions",
         element: <TransactionHistory />,
       },
 
@@ -261,8 +266,8 @@ export const router = createBrowserRouter([
         element: <Enquiries />,
       },
       {
-       path:"banner",
-       element:<BannerManager/>
+        path: "banner",
+        element: <BannerManager />,
       },
 
       {

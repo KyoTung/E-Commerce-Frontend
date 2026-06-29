@@ -32,12 +32,24 @@ const adminCreateOrder = async (orderData) => {
   return response.data;
 };
 
+const updateImei = async (orderId, imeiList) => {
+  const response = await axiosClient.put(`/order/update-imei/${orderId}`, { imeiList });
+  return response.data;
+};
+
+const getOrderByImei = async (imei) => {
+  const response = await axiosClient.get(`/order/imei-detail/${imei}`);
+  return response.data;
+};
+
 
 const OrderService = {
   updateOrder,
   getAllOrder,
   getOrder,
-  adminCreateOrder
+  adminCreateOrder,
+  updateImei,
+  getOrderByImei
 };
 
 export default OrderService;

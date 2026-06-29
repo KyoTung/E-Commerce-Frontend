@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import {
   DollarSign,
@@ -33,6 +33,7 @@ import {
   fetchRevenueChart,
   fetchTopProducts,
   fetchLowStock,
+  fetchAllImportTransactions,
 } from "../../../features/adminSlice/dashboard/dashboardSlice";
 import { getAllOrder } from "../../../features/adminSlice/orders/orderSlice";
 import { getAllProducts } from "../../../features/adminSlice/products/productSlice";
@@ -42,8 +43,14 @@ import Loading from "../../../components/Loading";
 const Dashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { overview, revenueChart, topProducts, lowStockItems, loading } =
-    useSelector((state) => state.dashboard);
+  const {
+    overview,
+    revenueChart,
+    topProducts,
+    lowStockItems,
+    loading,
+    importTransactions,
+  } = useSelector((state) => state.dashboard);
   const { orders, loading: orderLoading } = useSelector(
     (state) => state.orderAdmin,
   );
@@ -69,6 +76,7 @@ const Dashboard = () => {
       if (data) setVisitCount(data.totalVisits);
     };
     fetchStats();
+    dispatch(fetchAllImportTransactions());
   }, [dispatch, period]);
 
   useEffect(() => {
@@ -167,6 +175,82 @@ const Dashboard = () => {
     { name: "Đang giao", value: getOrderStats.shipped, color: "#3b82f6" },
     { name: "Chưa xử lý", value: getOrderStats.notProcessed, color: "#9ca3af" },
   ].filter((item) => item.value > 0);
+
+  const profitStats = React.useMemo(() => {
+    // 1. Lọc đơn hàng theo period
+    const now = new Date();
+    let startDate = new Date(0);
+    if (period === "week") {
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - 7);
+    } else if (period === "month") {
+      startDate = new Date(now);
+      startDate.setMonth(now.getMonth() - 1);
+    } else if (period === "year") {
+      startDate = new Date(now);
+      startDate.setFullYear(now.getFullYear() - 1);
+    }
+    startDate.setHours(0, 0, 0, 0);
+
+    const filteredOrders = orders.filter((o) => {
+      const orderDate = new Date(o.createdAt);
+      return (
+        orderDate >= startDate &&
+        (o.paymentStatus === "paid" || o.paymentMethod === "cod")
+      );
+    });
+
+    // 2. Tổng doanh thu, giảm giá, phí ship
+    const totalRevenue = filteredOrders.reduce(
+      (sum, o) => sum + (o.total || 0),
+      0,
+    );
+    const totalDiscount = filteredOrders.reduce(
+      (sum, o) => sum + (o.discountAmount || 0),
+      0,
+    );
+    const totalShipping = filteredOrders.reduce(
+      (sum, o) => sum + (o.shippingFee || 0),
+      0,
+    );
+
+    // 3. Tính giá nhập bình quân từ các giao dịch IMPORT
+    const avgCostMap = {};
+    (importTransactions || []).forEach((t) => {
+      if (t.transactionType !== "IMPORT") return;
+      t.items.forEach((item) => {
+        const key = `${item.product}_${item.color}_${item.storage}`;
+        if (!avgCostMap[key]) avgCostMap[key] = { totalQty: 0, totalCost: 0 };
+        avgCostMap[key].totalQty += item.quantity;
+        avgCostMap[key].totalCost += (item.importPrice || 0) * item.quantity;
+      });
+    });
+    Object.keys(avgCostMap).forEach((key) => {
+      const data = avgCostMap[key];
+      data.avgPrice = data.totalQty > 0 ? data.totalCost / data.totalQty : 0;
+    });
+
+    // 4. Tính COGS (giá vốn hàng bán) cho các đơn hàng đã lọc
+    let totalCOGS = 0;
+    filteredOrders.forEach((order) => {
+      order.products.forEach((p) => {
+        const key = `${p.product}_${p.color}_${p.storage}`;
+        const avg = avgCostMap[key]?.avgPrice || 0;
+        totalCOGS += avg * p.count;
+      });
+    });
+
+    const profit = totalRevenue - totalDiscount - totalShipping - totalCOGS;
+
+    return {
+      totalRevenue,
+      totalDiscount,
+      totalShipping,
+      totalCOGS,
+      profit,
+      orderCount: filteredOrders.length,
+    };
+  }, [orders, period, importTransactions]);
 
   // Đơn hàng gần đây (5 mới nhất)
   const recentOrders = React.useMemo(() => {
@@ -285,11 +369,13 @@ const Dashboard = () => {
 
   return (
     <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
-      <ToastContainer/>
+      <ToastContainer />
       {/* Tiêu đề điều hướng */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Bảng điều khiển tổng quan</h1>
+          <h1 className="text-2xl font-bold text-gray-800">
+            Bảng điều khiển tổng quan
+          </h1>
           <div className="text-sm text-gray-500 mt-1">
             Trang chủ / Thống kê kinh doanh số
           </div>
@@ -340,9 +426,11 @@ const Dashboard = () => {
                 <DollarSign className="text-green-600" size={22} />
               </div>
             </div>
-            <div className="mt-3 text-xs text-gray-400">Số liệu chu kỳ đã chọn</div>
+            <div className="mt-3 text-xs text-gray-400">
+              Số liệu chu kỳ đã chọn
+            </div>
           </div>
-          
+
           <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
             <span className="absolute top-0 right-0 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
               {getPeriodText()}
@@ -358,7 +446,9 @@ const Dashboard = () => {
                 <ShoppingBag className="text-blue-600" size={22} />
               </div>
             </div>
-            <div className="mt-3 text-xs text-gray-400">Số lượng đơn phát sinh</div>
+            <div className="mt-3 text-xs text-gray-400">
+              Số lượng đơn phát sinh
+            </div>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
@@ -376,7 +466,9 @@ const Dashboard = () => {
                 <TrendingUp className="text-indigo-600" size={22} />
               </div>
             </div>
-            <div className="mt-3 text-xs text-gray-400">Tổng sản phẩm tiêu thụ tích lũy</div>
+            <div className="mt-3 text-xs text-gray-400">
+              Tổng sản phẩm tiêu thụ tích lũy
+            </div>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
@@ -392,7 +484,9 @@ const Dashboard = () => {
                 <FaEyeIcon className="text-purple-600" size={22} />
               </div>
             </div>
-            <div className="mt-3 text-xs text-gray-400">Tổng lượt xem hệ thống</div>
+            <div className="mt-3 text-xs text-gray-400">
+              Tổng lượt xem hệ thống
+            </div>
           </div>
         </div>
       )}
@@ -414,7 +508,9 @@ const Dashboard = () => {
               <Users className="text-pink-600" size={22} />
             </div>
           </div>
-          <div className="mt-3 text-xs text-gray-400">Tài khoản mới kích hoạt</div>
+          <div className="mt-3 text-xs text-gray-400">
+            Tài khoản mới kích hoạt
+          </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
@@ -432,7 +528,9 @@ const Dashboard = () => {
               <AlertTriangle className="text-yellow-600" size={22} />
             </div>
           </div>
-          <div className="mt-3 text-xs text-amber-600 font-medium">Cần lập kế hoạch nhập hàng</div>
+          <div className="mt-3 text-xs text-amber-600 font-medium">
+            Cần lập kế hoạch nhập hàng
+          </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
@@ -473,7 +571,57 @@ const Dashboard = () => {
               <CheckCircle className="text-teal-600" size={22} />
             </div>
           </div>
-          <div className="mt-3 text-xs text-gray-400">Đơn thành công / Tổng đơn hệ thống</div>
+          <div className="mt-3 text-xs text-gray-400">
+            Đơn thành công / Tổng đơn hệ thống
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
+          <span className="absolute top-0 right-0 bg-green-50 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
+            {getPeriodText()}
+          </span>
+          <div className="flex justify-between items-start mt-1">
+            <div>
+              <p className="text-sm text-gray-500">Lợi nhuận gộp</p>
+              <p className="text-2xl font-bold text-green-600">
+                {formatCurrency(profitStats.profit)}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Dựa trên {profitStats.orderCount} đơn hàng
+              </p>
+            </div>
+            <div className="p-2 bg-green-100 rounded-lg">
+              <TrendingUp className="text-green-600" size={22} />
+            </div>
+          </div>
+          <div className="mt-3 text-xs text-gray-400 flex flex-col gap-1">
+            <div>
+              Doanh thu:{" "}
+              <span className="font-medium">
+                {formatCurrency(profitStats.totalRevenue)}
+              </span>
+            </div>
+            <div>
+              Giảm giá:{" "}
+              <span className="font-medium">
+                -{formatCurrency(profitStats.totalDiscount)}
+              </span>
+            </div>
+            <div>
+              Phí ship:{" "}
+              <span className="font-medium">
+                -{formatCurrency(profitStats.totalShipping)}
+              </span>
+            </div>
+            <div className="border-t border-gray-100 pt-1 mt-1">
+              Giá vốn (COGS):{" "}
+              <span className="font-medium text-red-500">
+                -{formatCurrency(profitStats.totalCOGS)}
+              </span>
+            </div>
+            <div className="text-[10px] text-blue-500 mt-1">
+              * Tính theo giá nhập bình quân từ các phiếu nhập kho
+            </div>
+          </div>
         </div>
       </div>
 
@@ -482,8 +630,15 @@ const Dashboard = () => {
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border p-5">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h3 className="text-lg font-bold text-gray-800">Biến động doanh thu</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Biểu đồ hiển thị chi tiết theo: <span className="font-semibold text-red-600">{getPeriodText()}</span></p>
+              <h3 className="text-lg font-bold text-gray-800">
+                Biến động doanh thu
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Biểu đồ hiển thị chi tiết theo:{" "}
+                <span className="font-semibold text-red-600">
+                  {getPeriodText()}
+                </span>
+              </p>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={300}>
@@ -503,10 +658,17 @@ const Dashboard = () => {
             </LineChart>
           </ResponsiveContainer>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm border p-5">
-          <h3 className="text-lg font-bold text-gray-800">Tỷ lệ trạng thái đơn hàng</h3>
-          <p className="text-xs text-gray-400 mt-0.5 mb-4">Thống kê dữ liệu: <span className="font-semibold text-slate-600">Toàn bộ đơn hệ thống</span></p>
+          <h3 className="text-lg font-bold text-gray-800">
+            Tỷ lệ trạng thái đơn hàng
+          </h3>
+          <p className="text-xs text-gray-400 mt-0.5 mb-4">
+            Thống kê dữ liệu:{" "}
+            <span className="font-semibold text-slate-600">
+              Toàn bộ đơn hệ thống
+            </span>
+          </p>
           {orderStatusData.length > 0 ? (
             <ResponsiveContainer width="100%" height={230}>
               <PieChart>
@@ -552,8 +714,16 @@ const Dashboard = () => {
         <div className="bg-white rounded-xl shadow-sm border p-5">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h3 className="text-lg font-bold text-gray-800">Đơn hàng mới nhất</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Hiển thị <span className="font-semibold text-slate-600">5 đơn hàng vừa phát sinh</span> thời gian thực</p>
+              <h3 className="text-lg font-bold text-gray-800">
+                Đơn hàng mới nhất
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Hiển thị{" "}
+                <span className="font-semibold text-slate-600">
+                  5 đơn hàng vừa phát sinh
+                </span>{" "}
+                thời gian thực
+              </p>
             </div>
             <button
               onClick={() => navigate("/admin/orders")}
@@ -597,8 +767,12 @@ const Dashboard = () => {
         <div className="bg-white rounded-xl shadow-sm border p-5">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h3 className="text-lg font-bold text-gray-800">Đơn hàng chờ xử lý</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Danh sách tồn đọng cần xử lý gấp</p>
+              <h3 className="text-lg font-bold text-gray-800">
+                Đơn hàng chờ xử lý
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Danh sách tồn đọng cần xử lý gấp
+              </p>
             </div>
             <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-medium">
               Yêu cầu xử lý
@@ -640,8 +814,15 @@ const Dashboard = () => {
       {/* Sản phẩm bán chạy & Tồn kho thấp */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white rounded-xl shadow-sm border p-5">
-          <h3 className="text-lg font-bold text-gray-800">Top 5 sản phẩm bán chạy nhất</h3>
-          <p className="text-xs text-gray-400 mt-0.5 mb-4">Xếp hạng theo sản lượng bán: <span className="font-semibold text-red-600">{getPeriodText()}</span></p>
+          <h3 className="text-lg font-bold text-gray-800">
+            Top 5 sản phẩm bán chạy nhất
+          </h3>
+          <p className="text-xs text-gray-400 mt-0.5 mb-4">
+            Xếp hạng theo sản lượng bán:{" "}
+            <span className="font-semibold text-red-600">
+              {getPeriodText()}
+            </span>
+          </p>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-bold">
@@ -654,7 +835,13 @@ const Dashboard = () => {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {topProductsList.slice(0, 5).map((item, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50 transition">
+                  <tr
+                    key={idx}
+                    className="hover:bg-gray-50 transition"
+                    onClick={() =>
+                      navigate(`/admin/product-detail/${item?._id || item?.id}`)
+                    }
+                  >
                     <td className="p-2 flex items-center gap-2">
                       <img
                         src={item._id?.image}
@@ -692,7 +879,9 @@ const Dashboard = () => {
           <h3 className="text-lg font-bold mb-1 flex items-center gap-2 text-amber-600">
             ⚠️ Cảnh báo sản phẩm sắp hết hàng
           </h3>
-          <p className="text-xs text-gray-400 mb-4">Trạng thái kho thực tế hiện tại (Tồn kho &lt; 5)</p>
+          <p className="text-xs text-gray-400 mb-4">
+            Trạng thái kho thực tế hiện tại (Tồn kho &lt; 5)
+          </p>
           {lowStockItems.length === 0 ? (
             <div className="text-center py-6 text-green-600 font-medium">
               ✅ An toàn! Không có sản phẩm nào dưới ngưỡng tối thiểu
@@ -709,7 +898,15 @@ const Dashboard = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {lowStockItems.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50 transition">
+                    <tr
+                      key={idx}
+                      className="hover:bg-gray-50 transition"
+                      onClick={() =>
+                        navigate(
+                          `/admin/product-detail/${item?._id || item?.id}`,
+                        )
+                      }
+                    >
                       <td className="p-2 flex items-center gap-2">
                         <img
                           src={item.image}
@@ -742,7 +939,13 @@ const Dashboard = () => {
         <h3 className="text-lg font-bold text-gray-800">
           Tổng quan số lượng theo trạng thái đơn
         </h3>
-        <p className="text-xs text-gray-400 mt-0.5 mb-4">Số lượng lũy kế trên <span className="font-semibold text-slate-600">tất cả dữ liệu đơn hàng</span> thu thập được</p>
+        <p className="text-xs text-gray-400 mt-0.5 mb-4">
+          Số lượng lũy kế trên{" "}
+          <span className="font-semibold text-slate-600">
+            tất cả dữ liệu đơn hàng
+          </span>{" "}
+          thu thập được
+        </p>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
           <div className="border border-gray-100 rounded-lg p-3 text-center bg-gray-50/50">
             <div className="text-gray-500">Chưa xử lý</div>

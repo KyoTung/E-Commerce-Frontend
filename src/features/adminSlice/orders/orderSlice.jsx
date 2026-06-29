@@ -10,7 +10,21 @@ const initialState = {
   totalPages: 1,
   totalOrders: 0,
   currentPage: 1,
+  imeiResult: null,
 };
+
+// export const updateOrder = createAsyncThunk(
+//   "admin/order/update",
+//   async ({ orderId, orderData }, thunkAPI) => {
+//     try {
+//       const response = await OrderService.updateOrder(orderId, orderData);
+//       return response;
+//     } catch (error) {
+//       const message = error.response?.data?.message || error.message;
+//       return thunkAPI.rejectWithValue({ message });
+//     }
+//   },
+// );
 
 export const updateOrder = createAsyncThunk(
   "admin/order/update",
@@ -19,7 +33,10 @@ export const updateOrder = createAsyncThunk(
       const response = await OrderService.updateOrder(orderId, orderData);
       return response;
     } catch (error) {
-      const message = error.response?.data?.message || error.message;
+      // Ưu tiên lấy error.message hoặc error (từ backend)
+      const message = error.response?.data?.error 
+                   || error.response?.data?.message 
+                   || error.message;
       return thunkAPI.rejectWithValue({ message });
     }
   },
@@ -27,9 +44,10 @@ export const updateOrder = createAsyncThunk(
 
 export const getAllOrder = createAsyncThunk(
   "admin/order/get-all-order",
-  async ({ page, limit, search } = {}, thunkAPI) => {
+  async (params, thunkAPI) => {
+    // nhận object params
     try {
-      const response = await OrderService.getAllOrder(page, limit, search);
+      const response = await OrderService.getAllOrder(params);
       return response; // { orders, totalPages, totalOrders, currentPage }
     } catch (error) {
       return thunkAPI.rejectWithValue(
@@ -38,6 +56,7 @@ export const getAllOrder = createAsyncThunk(
     }
   },
 );
+
 export const getOrder = createAsyncThunk(
   "admin/order/get-order",
   async (orderId, thunkAPI) => {
@@ -59,7 +78,31 @@ export const adminCreateOrderThunk = createAsyncThunk(
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response?.data || error.message);
     }
-  }
+  },
+);
+
+export const updateImei = createAsyncThunk(
+  "admin/order/update-imei",
+  async ({ orderId, imeiList }, thunkAPI) => {
+    try {
+      const response = await OrderService.updateImei(orderId, imeiList);
+      return response;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+    }
+  },
+);
+
+export const getOrderByImei = createAsyncThunk(
+  "admin/order/get-order-by-imei",
+  async (imei, thunkAPI) => {
+    try {
+      const response = await OrderService.getOrderByImei(imei);
+      return response;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+    }
+  },
 );
 
 export const orderSlice = createSlice({
@@ -75,8 +118,7 @@ export const orderSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = false;
       state.error = null;
-    }
-  
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -136,6 +178,34 @@ export const orderSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
         toast.error(action.payload?.message || "Tạo đơn hàng thất bại");
+      })
+
+      .addCase(updateImei.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateImei.fulfilled, (state, action) => {
+        state.loading = false;
+        state.order = action.payload.order; // cập nhật order mới
+        toast.success("Cập nhật IMEI thành công");
+      })
+      .addCase(updateImei.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Cập nhật IMEI thất bại";
+        toast.error(state.error);
+      })
+      .addCase(getOrderByImei.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getOrderByImei.fulfilled, (state, action) => {
+        state.loading = false;
+        // Lưu kết quả vào state mới (có thể thêm field imeiResult)
+        state.imeiResult = action.payload;
+      })
+      .addCase(getOrderByImei.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Tra cứu IMEI thất bại";
       });
   },
 });

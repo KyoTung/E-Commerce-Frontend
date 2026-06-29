@@ -356,6 +356,12 @@ const handleSearch = (e) => {
                           <FiPackage className="mr-3 text-gray-500" /> Lịch sử
                           đơn hàng
                         </Link>
+                         <Link
+                          to="/warranty-lookup"
+                          className="flex items-center px-4 py-2.5 text-sm hover:bg-gray-100"
+                        >
+                          <FiPackage className="mr-3 text-gray-500" /> Tra cứu bảo hành
+                        </Link>
                       </div>
                       <div className="border-t border-gray-100 p-2">
                         <button

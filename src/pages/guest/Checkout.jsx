@@ -230,7 +230,7 @@ const Checkout = () => {
   const handlePaymentSuccess = async () => {
     try {
       // Gọi API simulate payment để cập nhật trạng thái đơn hàng
-      await orderService.simulatePayment(createdOrderInfo.id);
+      await orderService.simulatePaymentSuccess(createdOrderInfo.id);
       setShowPaymentModal(false);
       toast.success("Thanh toán thành công!");
       navigate(`/order-confirmation/${createdOrderInfo.id}`, {

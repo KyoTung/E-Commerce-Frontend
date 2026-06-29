@@ -13,8 +13,17 @@ const Orders = () => {
   const { orders, loading, totalPages, totalOrders, currentPage } = useSelector(
     (state) => state.orderAdmin,
   );
+  
+  // Search state
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  
+  // Filter states
+  const [orderStatusFilter, setOrderStatusFilter] = useState("");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  
   const itemsPerPage = 10;
 
   // Debounce tìm kiếm (500ms)
@@ -25,40 +34,51 @@ const Orders = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Gọi API mỗi khi page, limit, search thay đổi
-  useEffect(() => {
-    dispatch(
-      getAllOrder({
-        page: currentPage,
-        limit: itemsPerPage,
-        search: debouncedSearch,
-      }),
-    );
-  }, [dispatch, currentPage, debouncedSearch]);
+  // Hàm fetch dữ liệu với tất cả filter
+  const fetchOrders = (page = 1) => {
+    const params = {
+      page,
+      limit: itemsPerPage,
+      search: debouncedSearch,
+      orderStatus: orderStatusFilter,
+      paymentStatus: paymentStatusFilter,
+      minPrice: minPrice ? Number(minPrice) : undefined,
+      maxPrice: maxPrice ? Number(maxPrice) : undefined,
+    };
+    // Loại bỏ các param undefined hoặc rỗng
+    Object.keys(params).forEach(key => {
+      if (params[key] === undefined || params[key] === "" || params[key] === null) {
+        delete params[key];
+      }
+    });
+    dispatch(getAllOrder(params));
+  };
 
-  // Reset về trang 1 khi search thay đổi (dùng debouncedSearch)
+  // Gọi API mỗi khi filter hoặc page hoặc search thay đổi
+  useEffect(() => {
+    fetchOrders(currentPage);
+  }, [currentPage, debouncedSearch, orderStatusFilter, paymentStatusFilter, minPrice, maxPrice]);
+
+  // Khi search thay đổi, reset về trang 1
   useEffect(() => {
     if (debouncedSearch !== undefined) {
-      dispatch(
-        getAllOrder({
-          page: 1,
-          limit: itemsPerPage,
-          search: debouncedSearch,
-        }),
-      );
+      fetchOrders(1);
     }
   }, [debouncedSearch]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      dispatch(
-        getAllOrder({
-          page: newPage,
-          limit: itemsPerPage,
-          search: debouncedSearch,
-        }),
-      );
+      fetchOrders(newPage);
     }
+  };
+
+  // Xóa tất cả filter
+  const clearFilters = () => {
+    setOrderStatusFilter("");
+    setPaymentStatusFilter("");
+    setMinPrice("");
+    setMaxPrice("");
+    setSearch("");
   };
 
   const formatPrice = (price) => {
@@ -82,6 +102,7 @@ const Orders = () => {
   const getStatusColor = (status) => {
     const colors = {
       "Not Processed": "bg-gray-100 text-gray-700",
+      Confirmed: "bg-blue-100 text-blue-500",
       Processing: "bg-blue-100 text-blue-700",
       Shipped: "bg-cyan-100 text-cyan-700",
       Delivered: "bg-teal-100 text-teal-700",
@@ -101,11 +122,11 @@ const Orders = () => {
     return colors[status] || "bg-gray-100 text-gray-700";
   };
 
-  // Hàm hiển thị text trạng thái đơn hàng tiếng Việt
   const translateOrderStatus = (status) => {
     const map = {
-      "Not Processed": "Chưa xử lý",
-      Processing: "Đang xử lý",
+      "Not Processed": "Chờ xác nhận",
+      Confirmed: "Đã xác nhận",
+      Processing: "Đang chuẩn bị",
       Shipped: "Đã giao hàng",
       Delivered: "Đã nhận hàng",
       Completed: "Hoàn thành",
@@ -121,48 +142,97 @@ const Orders = () => {
       {/* Header */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-800">Quản lý đơn hàng</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
-          onClick={() => navigate("/admin/create-order")}
-          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
-        >
-          <Plus size={18} /> Thêm mới
-        </button>
-        <button
-          onClick={() =>
-            dispatch(
-              getAllOrder({
-                page: 1,
-                limit: itemsPerPage,
-                search: debouncedSearch,
-              }),
-            )
-          }
-          className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-700 transition"
-        >
-          <RefreshCw size={18} /> Tải lại
-        </button>
+            onClick={() => navigate("/admin/create-order")}
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+          >
+            <Plus size={18} /> Thêm mới
+          </button>
+          <button
+            onClick={() => fetchOrders(1)}
+            className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-700 transition"
+          >
+            <RefreshCw size={18} /> Tải lại
+          </button>
+          <button
+            onClick={clearFilters}
+            className="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-300 transition"
+          >
+            <X size={18} /> Xóa lọc
+          </button>
         </div>
       </div>
 
-      {/* Ô tìm kiếm */}
-      <div className="mb-4 relative w-full md:w-80">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Tìm kiếm theo mã đơn hàng hoặc tên khách hàng..."
-          className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 pr-10"
-        />
-        {search && (
-          <button
-            onClick={() => setSearch("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
-            title="Xóa tìm kiếm"
-          >
-            <X size={16} />
-          </button>
-        )}
+      {/* Bộ lọc */}
+      <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        {/* Ô tìm kiếm */}
+        <div className="relative">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Tìm kiếm mã/Tên KH..."
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 pr-8"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+
+        {/* Lọc theo trạng thái đơn hàng */}
+        <select
+          value={orderStatusFilter}
+          onChange={(e) => setOrderStatusFilter(e.target.value)}
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+        >
+          <option value="">Tất cả trạng thái đơn</option>
+          <option value="Not Processed">Chờ xác nhận</option>
+          <option value="Confirmed">Đã xác nhận</option>
+          <option value="Processing">Đang chuẩn bị</option>
+          <option value="Dispatched">Đang giao hàng</option>
+          <option value="Delivered">Đã nhận hàng - hoàn thành</option>
+          <option value="Cancelled">Đã hủy</option>
+          <option value="Returned">Hoàn trả</option>
+        </select>
+
+        {/* Lọc theo trạng thái thanh toán */}
+        <select
+          value={paymentStatusFilter}
+          onChange={(e) => setPaymentStatusFilter(e.target.value)}
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+        >
+          <option value="">Tất cả thanh toán</option>
+          <option value="paid">Đã thanh toán</option>
+          <option value="pending">Đang xử lý</option>
+          <option value="not_paid">Chưa thanh toán</option>
+        </select>
+
+        {/* Lọc theo khoảng giá (từ - đến) */}
+        <div className="flex items-center gap-1">
+          <input
+            type="number"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            placeholder="Từ (VNĐ)"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            min="0"
+          />
+          <span className="text-gray-500">-</span>
+          <input
+            type="number"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            placeholder="Đến (VNĐ)"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            min="0"
+          />
+        </div>
       </div>
 
       {/* Bảng đơn hàng */}
@@ -176,45 +246,27 @@ const Orders = () => {
             <div className="overflow-x-auto">
               {orders.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
-                  Không tìm thấy đơn hàng nào.
+                  Không tìm thấy đơn hàng nào phù hợp.
                 </div>
               ) : (
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
-                        #
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
-                        Mã đơn
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
-                        Khách hàng
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
-                        Số điện thoại
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
-                        Tổng tiền
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
-                        Ngày đặt
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
-                        Thanh toán
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
-                        Trạng thái
-                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">#</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Mã đơn</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Khách hàng</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Số điện thoại</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Tổng tiền</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Ngày đặt</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Thanh toán</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Trạng thái</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 bg-white">
                     {orders.map((order, idx) => (
                       <tr
                         key={order._id}
-                        onClick={() =>
-                          navigate(`/admin/order-detail/${order._id}`)
-                        }
+                        onClick={() => navigate(`/admin/order-detail/${order._id}`)}
                         className="hover:bg-gray-50 transition cursor-pointer"
                       >
                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-400">
@@ -253,10 +305,10 @@ const Orders = () => {
                               {order.paymentStatus === "paid"
                                 ? "Đã thanh toán"
                                 : order.paymentStatus === "not_paid"
-                                  ? "Chưa thanh toán"
-                                  : order.paymentStatus === "pending"
-                                    ? "Đang xử lý"
-                                    : order.paymentStatus}
+                                ? "Chưa thanh toán"
+                                : order.paymentStatus === "pending"
+                                ? "Đang xử lý"
+                                : order.paymentStatus}
                             </span>
                             <span className="text-[10px] text-gray-400 uppercase">
                               {order.paymentMethod}
