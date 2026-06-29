@@ -4,10 +4,13 @@ import { getOrderByImei } from "../../features/adminSlice/orders/orderSlice";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../../components/Loading";
+import { isValidIMEI } from "../../utils/validators";
 
 const ImeiLookup = () => {
   const dispatch = useDispatch();
-  const { imeiResult, loading, error } = useSelector((state) => state.orderAdmin);
+  const { imeiResult, loading, error } = useSelector(
+    (state) => state.orderAdmin,
+  );
   const [imei, setImei] = useState("");
 
   const handleSearch = (e) => {
@@ -17,8 +20,8 @@ const ImeiLookup = () => {
       toast.warning("Vui lòng nhập IMEI/Serial");
       return;
     }
-    if (trimmed.length < 10) {
-      toast.warning("IMEI/Serial phải có ít nhất 10 ký tự");
+    if (!isValidIMEI(trimmed)) {
+      toast.error("IMEI không hợp lệ: phải là 15 chữ số và đúng checksum");
       return;
     }
     dispatch(getOrderByImei(trimmed));
@@ -71,7 +74,9 @@ const ImeiLookup = () => {
       <ToastContainer />
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Tra cứu bảo hành sản phẩm</h1>
+          <h1 className="text-3xl font-bold text-gray-800">
+            Tra cứu bảo hành sản phẩm
+          </h1>
           <p className="text-gray-500 mt-2">
             Nhập mã IMEI hoặc số Serial để kiểm tra thông tin bảo hành
           </p>
@@ -79,7 +84,10 @@ const ImeiLookup = () => {
 
         {/* Form tìm kiếm */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
+          <form
+            onSubmit={handleSearch}
+            className="flex flex-col sm:flex-row gap-3"
+          >
             <input
               type="text"
               value={imei}
@@ -108,7 +116,10 @@ const ImeiLookup = () => {
           <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
             <div className="flex items-start gap-4 border-b pb-4">
               <img
-                src={imeiResult.product?.images?.[0]?.url || "https://via.placeholder.com/80"}
+                src={
+                  imeiResult.product?.images?.[0]?.url ||
+                  "https://via.placeholder.com/80"
+                }
                 alt={imeiResult.product?.title}
                 className="w-20 h-20 object-contain border rounded"
                 onError={(e) => {
@@ -128,9 +139,18 @@ const ImeiLookup = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div>
-                <p><span className="font-medium">Khách hàng:</span> {imeiResult.customerName}</p>
-                <p><span className="font-medium">Số điện thoại:</span> {imeiResult.customerPhone}</p>
-                <p><span className="font-medium">Ngày mua:</span> {formatDate(imeiResult.orderDate)}</p>
+                <p>
+                  <span className="font-medium">Khách hàng:</span>{" "}
+                  {imeiResult.customerName}
+                </p>
+                <p>
+                  <span className="font-medium">Số điện thoại:</span>{" "}
+                  {imeiResult.customerPhone}
+                </p>
+                <p>
+                  <span className="font-medium">Ngày mua:</span>{" "}
+                  {formatDate(imeiResult.orderDate)}
+                </p>
               </div>
               <div>
                 <p>
@@ -141,27 +161,33 @@ const ImeiLookup = () => {
                 </p>
                 <p>
                   <span className="font-medium">Trạng thái đơn hàng:</span>{" "}
-                  <span className={`font-semibold ${getStatusColor(imeiResult.status)}`}>
+                  <span
+                    className={`font-semibold ${getStatusColor(imeiResult.status)}`}
+                  >
                     {getStatusText(imeiResult.status)}
                   </span>
                 </p>
                 <p className="text-sm text-gray-500 mt-1">
-                  <span className="font-medium">Mã đơn hàng:</span> #{imeiResult.orderId?.slice(-8).toUpperCase()}
+                  <span className="font-medium">Mã đơn hàng:</span> #
+                  {imeiResult.orderId?.slice(-8).toUpperCase()}
                 </p>
               </div>
             </div>
 
-            {imeiResult.status === "Delivered" || imeiResult.status === "Completed" ? (
+            {imeiResult.status === "Delivered" ||
+            imeiResult.status === "Completed" ? (
               <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
                 ✅ Sản phẩm đang trong thời gian bảo hành (nếu còn hạn)
               </div>
-            ) : imeiResult.status === "Cancelled" || imeiResult.status === "Returned" ? (
+            ) : imeiResult.status === "Cancelled" ||
+              imeiResult.status === "Returned" ? (
               <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
                 ⚠️ Đơn hàng đã bị hủy/trả, không áp dụng bảo hành
               </div>
             ) : (
               <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700 text-sm">
-                ℹ️ Đơn hàng chưa hoàn tất, vui lòng liên hệ cửa hàng để được hỗ trợ
+                ℹ️ Đơn hàng chưa hoàn tất, vui lòng liên hệ cửa hàng để được hỗ
+                trợ
               </div>
             )}
           </div>
@@ -169,7 +195,9 @@ const ImeiLookup = () => {
 
         {!loading && error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600 text-center">
-            {error?.error || error?.message || "Không tìm thấy sản phẩm với IMEI này"}
+            {error?.error ||
+              error?.message ||
+              "Không tìm thấy sản phẩm với IMEI này"}
           </div>
         )}
 

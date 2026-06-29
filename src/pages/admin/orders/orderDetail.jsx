@@ -9,6 +9,7 @@ import {
   updateOrder,
   updateImei,
 } from "../../../features/adminSlice/orders/orderSlice";
+import { isValidIMEI } from "../../../utils/validators";
 
 const OrderDetail = () => {
   const navigate = useNavigate();
@@ -60,8 +61,15 @@ const OrderDetail = () => {
   // Cập nhật IMEI cho sản phẩm
   const handleUpdateImei = async (productIndex) => {
     const imei = imeiValues[productIndex]?.trim();
+
+    console.log(imei);
     if (!imei) {
       toast.warning("Vui lòng nhập IMEI");
+      return;
+    }
+
+    if (!isValidIMEI(imei)) {
+      toast.error("IMEI không hợp lệ: phải là 14-16 chữ số");
       return;
     }
 
@@ -70,10 +78,9 @@ const OrderDetail = () => {
         updateImei({
           orderId: id,
           imeiList: [{ productIndex, imei }],
-        })
+        }),
       ).unwrap();
-      toast.success("Cập nhật IMEI thành công");
-      dispatch(getOrder(id)); // refresh
+      dispatch(getOrder(id));
     } catch (err) {
       toast.error(err?.message || "Cập nhật IMEI thất bại");
     }
@@ -108,7 +115,9 @@ const OrderDetail = () => {
 
   const isOrderClosed = () => {
     if (!order) return false;
-    return order.orderStatus === "Cancelled" || order.orderStatus === "Returned";
+    return (
+      order.orderStatus === "Cancelled" || order.orderStatus === "Returned"
+    );
   };
 
   // State machine cho trạng thái đơn hàng
@@ -175,16 +184,22 @@ const OrderDetail = () => {
   // Tính tổng kết
   const orderSummary = {
     totalItems: order?.products?.length || 0,
-    totalQuantity: order?.products?.reduce((sum, item) => sum + (item.count || 0), 0) || 0,
-    subtotal: order?.products?.reduce((sum, item) => sum + (item.price || 0) * (item.count || 0), 0) || 0,
+    totalQuantity:
+      order?.products?.reduce((sum, item) => sum + (item.count || 0), 0) || 0,
+    subtotal:
+      order?.products?.reduce(
+        (sum, item) => sum + (item.price || 0) * (item.count || 0),
+        0,
+      ) || 0,
   };
 
   if (loading || !order) {
     return <Loading />;
   }
 
-
-  const availableStatuses = statusTransitions[order.orderStatus] || [order.orderStatus];
+  const availableStatuses = statusTransitions[order.orderStatus] || [
+    order.orderStatus,
+  ];
 
   return (
     <div className="container mx-auto bg-white px-4 py-8">
@@ -240,7 +255,9 @@ const OrderDetail = () => {
                 {order.customerInfo?.name}
               </p>
               <p>
-                <span className="font-medium text-gray-800">Số điện thoại:</span>{" "}
+                <span className="font-medium text-gray-800">
+                  Số điện thoại:
+                </span>{" "}
                 {order.customerInfo?.phone}
               </p>
               <p>
@@ -320,19 +337,24 @@ const OrderDetail = () => {
                             <input
                               type="text"
                               value={imeiValues[index] || ""}
-                              onChange={(e) =>
-                                setImeiValues({
-                                  ...imeiValues,
-                                  [index]: e.target.value,
-                                })
-                              }
+                              onChange={(e) => {
+                                // Chỉ cho nhập số, giới hạn 15 ký tự
+                                const val = e.target.value
+                                  .replace(/\D/g, "")
+                                  .slice(0, 16);
+                                setImeiValues({ ...imeiValues, [index]: val });
+                              }}
                               disabled={!isEditable}
                               className="flex-1 rounded border px-2 py-1 text-sm disabled:bg-gray-100 min-w-[140px] max-w-[220px]"
-                              placeholder={isEditable ? "Nhập IMEI" : "Không thể sửa"}
+                              placeholder={
+                                isEditable ? "Nhập IMEI" : "Không thể sửa"
+                              }
                             />
                             <button
                               onClick={() => handleUpdateImei(index)}
-                              disabled={!isEditable || !imeiValues[index]?.trim()}
+                              disabled={
+                                !isEditable || !imeiValues[index]?.trim()
+                              }
                               className="rounded bg-blue-500 px-3 py-1 text-sm text-white hover:bg-blue-600 disabled:opacity-50"
                             >
                               Cập nhật
@@ -437,14 +459,14 @@ const OrderDetail = () => {
                     {order.paymentStatus === "paid"
                       ? "Đã thanh toán"
                       : order.paymentStatus === "not_paid"
-                      ? "Chưa thanh toán"
-                      : order.paymentStatus === "failed"
-                      ? "Thất bại"
-                      : order.paymentStatus === "refunded"
-                      ? "Đã hoàn tiền"
-                      : order.paymentStatus === "authorized"
-                      ? "Đã ủy quyền"
-                      : order.paymentStatus}
+                        ? "Chưa thanh toán"
+                        : order.paymentStatus === "failed"
+                          ? "Thất bại"
+                          : order.paymentStatus === "refunded"
+                            ? "Đã hoàn tiền"
+                            : order.paymentStatus === "authorized"
+                              ? "Đã ủy quyền"
+                              : order.paymentStatus}
                   </span>
                 </div>
 
@@ -504,7 +526,9 @@ const OrderDetail = () => {
                         : "bg-white"
                     }`}
                     value={order.paymentStatus || ""}
-                    onChange={(e) => handleUpdate("paymentStatus", e.target.value)}
+                    onChange={(e) =>
+                      handleUpdate("paymentStatus", e.target.value)
+                    }
                     disabled={loading || isOrderClosed()}
                   >
                     <option value="not_paid">Chưa thanh toán</option>
