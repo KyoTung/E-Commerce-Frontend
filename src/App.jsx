@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { router } from "./routes";
 import { setAccessToken, clearAccessToken } from "./api/axiosClient";
@@ -52,7 +52,9 @@ function App() {
       } finally {
         setIsReady(true);
       }
-    }
+    };
+
+    initApp();
   }, [dispatch]);
 
   if (!isReady) {
