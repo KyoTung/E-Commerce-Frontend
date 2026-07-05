@@ -432,6 +432,57 @@ const Dashboard = () => {
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
+            <span className="absolute top-0 right-0 bg-green-50 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
+              {getPeriodText()}
+            </span>
+            <div className="flex justify-between items-start mt-1">
+              <div>
+                <p className="text-sm text-gray-500">Lợi nhuận gộp</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {formatCurrency(profitStats.profit)}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Dựa trên {profitStats.orderCount} đơn hàng
+                </p>
+              </div>
+              <div className="p-2 bg-green-100 rounded-lg">
+                <TrendingUp className="text-green-600" size={22} />
+              </div>
+            </div>
+
+            {/* Chi tiết thu gọn thành 2 cột, font nhỏ */}
+            <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[10px] text-gray-500">
+              <div className="flex justify-between">
+                <span>Doanh thu:</span>
+                <span className="font-medium text-gray-700">
+                  {formatCurrency(profitStats.totalRevenue)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Giảm giá:</span>
+                <span className="font-medium text-red-500">
+                  -{formatCurrency(profitStats.totalDiscount)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Phí ship:</span>
+                <span className="font-medium text-gray-700">
+                  -{formatCurrency(profitStats.totalShipping)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>COGS:</span>
+                <span className="font-medium text-red-500">
+                  -{formatCurrency(profitStats.totalCOGS)}
+                </span>
+              </div>
+            </div>
+            <div className="text-[9px] text-blue-400 mt-1 leading-tight">
+              * Giá nhập bình quân từ phiếu nhập
+            </div>
+          </div>
+
+          {/* <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
             <span className="absolute top-0 right-0 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
               {getPeriodText()}
             </span>
@@ -449,25 +500,24 @@ const Dashboard = () => {
             <div className="mt-3 text-xs text-gray-400">
               Số lượng đơn phát sinh
             </div>
-          </div>
-
+          </div> */}
           <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
-            <span className="absolute top-0 right-0 bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
-              Toàn thời gian
+            <span className="absolute top-0 right-0 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
+              {getPeriodText()}
             </span>
             <div className="flex justify-between items-start mt-1">
               <div>
-                <p className="text-sm text-gray-500">Sản phẩm đã bán</p>
+                <p className="text-sm text-gray-500">Giá trị đơn trung bình</p>
                 <p className="text-2xl font-bold">
-                  {formatNumber(totalSoldProducts)}
+                  {formatCurrency(overview.averageOrderValue)}
                 </p>
               </div>
-              <div className="p-2 bg-indigo-100 rounded-lg">
-                <TrendingUp className="text-indigo-600" size={22} />
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <TrendingUp className="text-emerald-600" size={22} />
               </div>
             </div>
             <div className="mt-3 text-xs text-gray-400">
-              Tổng sản phẩm tiêu thụ tích lũy
+              Giá trị AOV trong kỳ
             </div>
           </div>
 
@@ -477,15 +527,22 @@ const Dashboard = () => {
             </span>
             <div className="flex justify-between items-start mt-1">
               <div>
-                <p className="text-sm text-gray-500">Lượt truy cập</p>
-                <p className="text-2xl font-bold">{formatNumber(visitCount)}</p>
+                <p className="text-sm text-gray-500">Tỷ lệ hoàn thành đơn</p>
+                <p className="text-2xl font-bold">
+                  {overview.totalOrders
+                    ? Math.round(
+                        (getOrderStats.delivered / overview.totalOrders) * 100,
+                      )
+                    : 0}
+                  %
+                </p>
               </div>
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <FaEyeIcon className="text-purple-600" size={22} />
+              <div className="p-2 bg-teal-100 rounded-lg">
+                <CheckCircle className="text-teal-600" size={22} />
               </div>
             </div>
             <div className="mt-3 text-xs text-gray-400">
-              Tổng lượt xem hệ thống
+              Đơn thành công / Tổng đơn hệ thống
             </div>
           </div>
         </div>
@@ -493,6 +550,44 @@ const Dashboard = () => {
 
       {/* KPI Hàng 2 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
+          <span className="absolute top-0 right-0 bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
+            Toàn thời gian
+          </span>
+          <div className="flex justify-between items-start mt-1">
+            <div>
+              <p className="text-sm text-gray-500">Sản phẩm đã bán</p>
+              <p className="text-2xl font-bold">
+                {formatNumber(totalSoldProducts)}
+              </p>
+            </div>
+            <div className="p-2 bg-indigo-100 rounded-lg">
+              <TrendingUp className="text-indigo-600" size={22} />
+            </div>
+          </div>
+          <div className="mt-3 text-xs text-gray-400">
+            Tổng sản phẩm tiêu thụ tích lũy
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
+          <span className="absolute top-0 right-0 bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
+            Kiểm tra tồn kho
+          </span>
+          <div className="flex justify-between items-start mt-1">
+            <div>
+              <p className="text-sm text-gray-500">Sản phẩm tồn kho thấp</p>
+              <p className="text-2xl font-bold">
+                {formatNumber(overview.lowStockCount)}
+              </p>
+            </div>
+            <div className="p-2 bg-yellow-100 rounded-lg">
+              <AlertTriangle className="text-yellow-600" size={22} />
+            </div>
+          </div>
+          <div className="mt-3 text-xs text-amber-600 font-medium">
+            Cần lập kế hoạch nhập hàng
+          </div>
+        </div>
         <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
           <span className="absolute top-0 right-0 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
             {getPeriodText()}
@@ -512,115 +607,21 @@ const Dashboard = () => {
             Tài khoản mới kích hoạt
           </div>
         </div>
-
-        <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
-          <span className="absolute top-0 right-0 bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
-            Thời gian thực
-          </span>
-          <div className="flex justify-between items-start mt-1">
-            <div>
-              <p className="text-sm text-gray-500">Sản phẩm tồn kho thấp</p>
-              <p className="text-2xl font-bold">
-                {formatNumber(overview.lowStockCount)}
-              </p>
-            </div>
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <AlertTriangle className="text-yellow-600" size={22} />
-            </div>
-          </div>
-          <div className="mt-3 text-xs text-amber-600 font-medium">
-            Cần lập kế hoạch nhập hàng
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
-          <span className="absolute top-0 right-0 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
-            {getPeriodText()}
-          </span>
-          <div className="flex justify-between items-start mt-1">
-            <div>
-              <p className="text-sm text-gray-500">Giá trị đơn trung bình</p>
-              <p className="text-2xl font-bold">
-                {formatCurrency(overview.averageOrderValue)}
-              </p>
-            </div>
-            <div className="p-2 bg-emerald-100 rounded-lg">
-              <TrendingUp className="text-emerald-600" size={22} />
-            </div>
-          </div>
-          <div className="mt-3 text-xs text-gray-400">Giá trị AOV trong kỳ</div>
-        </div>
-
         <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
           <span className="absolute top-0 right-0 bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
             Toàn thời gian
           </span>
           <div className="flex justify-between items-start mt-1">
             <div>
-              <p className="text-sm text-gray-500">Tỷ lệ hoàn thành đơn</p>
-              <p className="text-2xl font-bold">
-                {overview.totalOrders
-                  ? Math.round(
-                      (getOrderStats.delivered / overview.totalOrders) * 100,
-                    )
-                  : 0}
-                %
-              </p>
+              <p className="text-sm text-gray-500">Lượt truy cập</p>
+              <p className="text-2xl font-bold">{formatNumber(visitCount)}</p>
             </div>
-            <div className="p-2 bg-teal-100 rounded-lg">
-              <CheckCircle className="text-teal-600" size={22} />
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <FaEyeIcon className="text-purple-600" size={22} />
             </div>
           </div>
           <div className="mt-3 text-xs text-gray-400">
-            Đơn thành công / Tổng đơn hệ thống
-          </div>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border p-5 relative overflow-hidden">
-          <span className="absolute top-0 right-0 bg-green-50 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
-            {getPeriodText()}
-          </span>
-          <div className="flex justify-between items-start mt-1">
-            <div>
-              <p className="text-sm text-gray-500">Lợi nhuận gộp</p>
-              <p className="text-2xl font-bold text-green-600">
-                {formatCurrency(profitStats.profit)}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                Dựa trên {profitStats.orderCount} đơn hàng
-              </p>
-            </div>
-            <div className="p-2 bg-green-100 rounded-lg">
-              <TrendingUp className="text-green-600" size={22} />
-            </div>
-          </div>
-          <div className="mt-3 text-xs text-gray-400 flex flex-col gap-1">
-            <div>
-              Doanh thu:{" "}
-              <span className="font-medium">
-                {formatCurrency(profitStats.totalRevenue)}
-              </span>
-            </div>
-            <div>
-              Giảm giá:{" "}
-              <span className="font-medium">
-                -{formatCurrency(profitStats.totalDiscount)}
-              </span>
-            </div>
-            <div>
-              Phí ship:{" "}
-              <span className="font-medium">
-                -{formatCurrency(profitStats.totalShipping)}
-              </span>
-            </div>
-            <div className="border-t border-gray-100 pt-1 mt-1">
-              Giá vốn (COGS):{" "}
-              <span className="font-medium text-red-500">
-                -{formatCurrency(profitStats.totalCOGS)}
-              </span>
-            </div>
-            <div className="text-[10px] text-blue-500 mt-1">
-              * Tính theo giá nhập bình quân từ các phiếu nhập kho
-            </div>
+            Tổng lượt xem hệ thống
           </div>
         </div>
       </div>
