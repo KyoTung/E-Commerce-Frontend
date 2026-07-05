@@ -125,19 +125,58 @@ axiosClient.interceptors.response.use(
     originalRequest._retry = true;
     isRefreshing = true;
 
+    // try {
+    //   const response = await axiosClient.post("/user/refresh");
+    //   const newAccessToken = response.data.accessToken || response.data.token;
+
+    //   // DEBUG: Xem Backend trả về mã lỗi gì?
+    //   if (!response.ok) {
+    //     console.error("Refresh API Failed with status:", response.status);
+    //     const errorText = await response.text();
+    //     console.error("Error details:", errorText);
+    //     throw new Error("Refresh failed");
+    //   }
+
+    //   const data = await response.json();
+      
+    //   // DEBUG: Xem Backend có trả về refreshToken mới không?
+    //   console.log("Refresh Success! Data received:", data);
+
+    //   const newAccessToken = data.accessToken || data.token;
+    //   const newRefreshToken = data.refreshToken; 
+
+    //   // 1. Lưu Access Token
+    //   setAccessToken(newAccessToken);
+
+    //   // 2. Lưu Refresh Token mới (nếu có)
+    //   if (newRefreshToken) {
+    //     localStorage.setItem("refreshToken", newRefreshToken);
+    //   } else {
+    //     console.warn("CẢNH BÁO: Backend không trả về refreshToken mới! Lần sau F5 sẽ bị lỗi.");
+    //   }
+
+    //   // Mở cổng hàng đợi
+    //   processQueue(null, newAccessToken);
+
+    //   // Gọi lại request gốc
+    //   originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+    //   return axiosClient(originalRequest);
+    // } catch (err) {
+
+    //   console.log("🚨 LỖI TẠI INTERCEPTOR: Try/catch refresh thất bại");
+    //   processQueue(err, null);
+    //   clearAccessToken();
+    //   window.location.href = "/login";
+    //   return Promise.reject(err);
+    // } finally {
+    //   isRefreshing = false;
+    // }
+
     try {
       const response = await axiosClient.post("/user/refresh");
-      const newAccessToken = response.data.accessToken || response.data.token;
-
-      // DEBUG: Xem Backend trả về mã lỗi gì?
-      if (!response.ok) {
-        console.error("Refresh API Failed with status:", response.status);
-        const errorText = await response.text();
-        console.error("Error details:", errorText);
-        throw new Error("Refresh failed");
-      }
-
-      const data = await response.json();
+      
+      // Trong Axios, dữ liệu trả về đã được tự động parse JSON và nằm trong response.data
+      const data = response.data;
       
       // DEBUG: Xem Backend có trả về refreshToken mới không?
       console.log("Refresh Success! Data received:", data);
@@ -161,9 +200,10 @@ axiosClient.interceptors.response.use(
       // Gọi lại request gốc
       originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
       return axiosClient(originalRequest);
+      
     } catch (err) {
-
-      console.log("🚨 LỖI TẠI INTERCEPTOR: Try/catch refresh thất bại");
+      // Axios sẽ tự động nhảy vào catch nếu API refresh trả về lỗi (400, 401, 500...)
+      console.log(" LỖI TẠI INTERCEPTOR: Refresh API thất bại", err.response?.status);
       processQueue(err, null);
       clearAccessToken();
       window.location.href = "/login";
