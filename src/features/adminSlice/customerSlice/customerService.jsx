@@ -1,13 +1,23 @@
-
-import axiosClient from "../../../api/axiosClient"; 
+import axiosClient from "../../../api/axiosClient";
 
 const createUser = async (userData) => {
-  const response = await axiosClient.post('/user/register', userData);
+  const response = await axiosClient.post("/user/register", userData);
   return response.data;
 };
 
 const updateUser = async (userId, userData) => {
-  const response = await axiosClient.put(`/user/update-user/${userId}`, userData);
+  const response = await axiosClient.put(
+    `/user/update-user/${userId}`,
+    userData,
+  );
+  return response.data;
+};
+
+const updateUserRole = async (userId, userData) => {
+  const response = await axiosClient.put(
+    `/user/update-role/${userId}`,
+    userData,
+  );
   return response.data;
 };
 
@@ -16,8 +26,11 @@ const getUserDetail = async (userId) => {
   return response.data;
 };
 
-const getAllUser = async () => {
-  const response = await axiosClient.get('/user/all-users');
+
+const getAllUser = async ({ page = 1, limit = 10, search = "", role = "", status = "" } = {}) => {
+  const response = await axiosClient.get("/user/all-users", {
+    params: { page, limit, search, role, status },
+  });
   return response.data;
 };
 
@@ -44,6 +57,7 @@ const customerService = {
   deleteUser,
   blockUser,
   unBlockUser,
+  updateUserRole
 };
 
 export default customerService;

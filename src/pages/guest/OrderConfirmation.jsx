@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useParams, Link, useSearchParams } from "react-router-dom"; 
+import React, { useEffect } from "react";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { 
   FiCheckCircle, FiShoppingBag, FiCalendar, FiCreditCard, 
@@ -20,6 +20,8 @@ const OrderConfirmation = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const [searchParams] = useSearchParams(); 
+
+  const isSuccessPage = location.state?.isNewOrder === true;
 
   const { currentOrder, isLoading, isError } = useSelector((state) => state.orderClient);
   
@@ -110,41 +112,38 @@ const OrderConfirmation = () => {
   const paymentStatusObj = translatePaymentStatus(currentOrder.paymentStatus);
   const paymentMethodLabel = translatePaymentMethod(currentOrder.paymentMethod);
 
-  // --- LOGIC XÁC ĐỊNH TRẠNG THÁI HIỂN THỊ ---
-  // Đơn hàng lỗi nếu: Là ZaloPay VÀ Chưa trả tiền
-  const isPaymentFailed = currentOrder.paymentMethod === 'ZaloPay' && currentOrder.paymentStatus !== 'paid';
+  console.log(currentOrder)
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-5xl mx-auto">
         
-        {/* --- DYNAMIC HEADER (Thay đổi theo trạng thái thanh toán) --- */}
-        <div className="text-center mb-10">
-          {isPaymentFailed ? (
-            // TRƯỜNG HỢP LỖI
-            <>
-               <div className="flex items-center justify-center w-20 h-20 rounded-full bg-red-100 mx-auto mb-4 shadow-sm animate-pulse">
-                <FiXCircle className="w-10 h-10 text-red-600" />
-              </div>
-              <h1 className="text-3xl font-bold text-red-600 mb-2">Thanh toán chưa hoàn tất!</h1>
-              <p className="text-gray-600">Giao dịch ZaloPay bị hủy hoặc gặp sự cố.</p>
-              <p className="text-gray-500 text-sm mt-1">Đơn hàng vẫn được giữ. Bạn có thể thanh toán lại bên dưới.</p>
-            </>
-          ) : (
-            // TRƯỜNG HỢP THÀNH CÔNG
-            <>
-              <div className="flex items-center justify-center w-20 h-20 rounded-full bg-green-100 mx-auto mb-4 shadow-sm">
-                <FiCheckCircle className="w-10 h-10 text-green-600" />
-              </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Đặt hàng thành công!</h1>
-              <p className="text-gray-600">Cảm ơn bạn đã mua hàng tại Nest Store.</p>
-            </>
-          )}
-          
-          <p className="text-sm text-gray-500 mt-4">
-            Mã đơn hàng: <span className="font-mono font-bold text-black bg-gray-200 px-2 py-1 rounded">#{currentOrder._id.slice(-8).toUpperCase()}</span>
-          </p>
-        </div>
+        
+        {/* HEADER ĐƯỢC RENDER CÓ ĐIỀU KIỆN */}
+        {isSuccessPage ? (
+          /* Giao diện 1: Đặt hàng thành công (Khách vừa mua xong) */
+          <div className="text-center mb-10">
+            <div className="flex items-center justify-center w-20 h-20 rounded-full bg-green-100 mx-auto mb-4 shadow-sm">
+              <FiCheckCircle className="w-10 h-10 text-green-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Đặt hàng thành công!</h1>
+            <p className="text-gray-600">Cảm ơn bạn đã mua hàng tại Nest Store.</p>
+            <p className="text-sm text-gray-500 mt-2">
+              Mã đơn hàng: <span className="font-mono font-bold text-black bg-gray-200 px-2 py-1 rounded">#{currentOrder._id}</span>
+            </p>
+          </div>
+        ) : (
+          /* Giao diện 2: Chi tiết đơn hàng bình thường (Khách xem lại) */
+          <div className="mb-8 border-b border-gray-200 pb-4">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Chi tiết đơn hàng</h1>
+            <p className="text-sm text-gray-500">
+              Trạng thái: 
+              <span className={`inline-block ml-2 px-2 py-0.5 rounded text-xs font-bold ${orderStatusObj.color}`}>
+                  {orderStatusObj.label}
+              </span>
+            </p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
@@ -234,24 +233,39 @@ const OrderConfirmation = () => {
 
               {/* Order Totals */}
               <div className="border-t border-gray-200 pt-4 mt-6 space-y-2">
-                 <div className="flex justify-between text-gray-600 text-sm">
+                
+                {/* 1. Tạm tính */}
+                <div className="flex justify-between text-gray-600 text-sm">
                   <span>Tạm tính:</span>
                   <span className="font-medium text-gray-900">
                     {formatPrice(currentOrder.products?.reduce((acc, item) => acc + item.price * item.count, 0))}
                   </span>
                 </div>
                 
+                {/* 2. Giảm giá (Chỉ render khi discountAmount > 0) */}
+                {currentOrder.discountAmount > 0 && (
+                  <div className="flex justify-between text-green-600 text-sm">
+                    <span>Giảm giá (Coupon):</span>
+                    <span className="font-medium">- {formatPrice(currentOrder.discountAmount)}</span>
+                  </div>
+                )}
+                
+                {/* 3. Phí vận chuyển (Đọc từ DB thay vì ghi cứng) */}
                 <div className="flex justify-between text-gray-600 text-sm">
                   <span>Phí vận chuyển:</span>
-                  <span className="text-green-600 font-medium">Miễn phí</span>
+                  <span className={currentOrder.shippingFee === 0 ? "text-green-600 font-medium" : "font-medium text-gray-900"}>
+                    {currentOrder.shippingFee === 0 ? "Miễn phí" : formatPrice(currentOrder.shippingFee)}
+                  </span>
                 </div>
-
+                
+                {/* 4. Tổng thanh toán cuối cùng */}
                 <div className="flex justify-between pt-3 border-t border-dashed border-gray-200 items-end">
                   <span className="font-bold text-gray-800">Tổng thanh toán:</span>
                   <span className="text-2xl font-bold text-[#d70018]">
-                    {formatPrice(currentOrder.totalAfterDiscount || currentOrder.total)}
+                    {formatPrice(currentOrder.total)}
                   </span>
                 </div>
+
               </div>
             </div>
           </div>

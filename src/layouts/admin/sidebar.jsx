@@ -37,7 +37,7 @@ export const Sidebar = forwardRef(({ collapsed }, ref) => {
                         href="/admin"
                         className="text-lg font-medium text-slate-900 transition-colors dark:text-slate-50"
                     >
-                        Phone Store
+                        NestStore
                     </a>
                 )}
             </div>
@@ -52,6 +52,7 @@ export const Sidebar = forwardRef(({ collapsed }, ref) => {
                             <NavLink
                                 key={link.label}
                                 to={link.path}
+                                end={link.path === "/admin"}
                                 className={cn("sidebar-item", collapsed && "md:w-[45px]")}
                             >
                                 <link.icon

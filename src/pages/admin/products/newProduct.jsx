@@ -24,9 +24,21 @@ const NewProduct = ({ placeholder }) => {
   const [gallery, setGallery] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Khởi tạo variants với quantity = 0
   const [variants, setVariants] = useState([
-    { color: "", storage: "", price: "", quantity: "", images: [] },
+    { color: "", storage: "", price: "", quantity: 0, images: [] },
   ]);
+
+  // State cho giá cơ bản
+  const [basePriceDisplay, setBasePriceDisplay] = useState("");
+  const [basePriceRaw, setBasePriceRaw] = useState("");
+  const [isBasePriceFocused, setIsBasePriceFocused] = useState(false);
+
+  // State cho giá variant
+  const [variantPriceRaw, setVariantPriceRaw] = useState([]);
+  const [variantPriceDisplay, setVariantPriceDisplay] = useState([]);
+  const [variantPriceFocusIndex, setVariantPriceFocusIndex] = useState(null);
 
   const {
     register,
@@ -37,6 +49,7 @@ const NewProduct = ({ placeholder }) => {
   } = useForm({
     defaultValues: {
       description: "",
+      basePrice: "",
     },
   });
 
@@ -45,7 +58,7 @@ const NewProduct = ({ placeholder }) => {
   const config = useMemo(
     () => ({
       readonly: false,
-      placeholder: placeholder || "Start typing...",
+      placeholder: placeholder || "Bắt đầu viết mô tả...",
       height: 400,
     }),
     [placeholder]
@@ -57,6 +70,96 @@ const NewProduct = ({ placeholder }) => {
     dispatch(getAllColor());
   }, [dispatch]);
 
+  // ---------- HÀM XỬ LÝ TIỀN TỆ AN TOÀN ----------
+  const formatCurrencyHelper = (value) => {
+    if (value === undefined || value === null || value === "") return "";
+    const num = Math.round(Number(value));
+    if (isNaN(num) || num === 0) return "";
+    return new Intl.NumberFormat("vi-VN", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(num);
+  };
+
+  const parseCurrencyToNumber = (value) => {
+    if (!value) return 0;
+    const cleaned = String(value).replace(/\D/g, "");
+    const num = parseInt(cleaned, 10);
+    return isNaN(num) ? 0 : num;
+  };
+
+  // ---------- XỬ LÝ GIÁ CƠ BẢN ----------
+  const handleBasePriceFocus = () => {
+    setIsBasePriceFocused(true);
+    const raw = basePriceRaw || String(parseCurrencyToNumber(basePriceDisplay));
+    setBasePriceDisplay(raw);
+  };
+
+  const handleBasePriceBlur = () => {
+    setIsBasePriceFocused(false);
+    const numericValue = parseCurrencyToNumber(basePriceDisplay);
+    const formatted = formatCurrencyHelper(numericValue);
+    setBasePriceDisplay(formatted);
+    setBasePriceRaw(String(numericValue));
+    setValue("basePrice", numericValue, { shouldValidate: true });
+  };
+
+  const handleBasePriceChange = (e) => {
+    const rawValue = e.target.value.replace(/\D/g, "");
+    setBasePriceDisplay(rawValue);
+    setBasePriceRaw(rawValue);
+    const numericValue = parseCurrencyToNumber(rawValue);
+    setValue("basePrice", numericValue, { shouldValidate: true });
+  };
+
+  // ---------- XỬ LÝ GIÁ VARIANT ----------
+  const handleVariantPriceFocus = (index) => {
+    setVariantPriceFocusIndex(index);
+    const raw = variantPriceRaw[index] || String(parseCurrencyToNumber(variantPriceDisplay[index] || ""));
+    const updatedDisplay = [...variantPriceDisplay];
+    updatedDisplay[index] = raw;
+    setVariantPriceDisplay(updatedDisplay);
+  };
+
+  const handleVariantPriceBlur = (index) => {
+    setVariantPriceFocusIndex(null);
+    const rawValue = variantPriceDisplay[index] || variantPriceRaw[index] || "";
+    const numericValue = parseCurrencyToNumber(rawValue);
+    const formatted = formatCurrencyHelper(numericValue);
+
+    const updatedDisplay = [...variantPriceDisplay];
+    updatedDisplay[index] = formatted;
+    setVariantPriceDisplay(updatedDisplay);
+
+    const updatedRaw = [...variantPriceRaw];
+    updatedRaw[index] = String(numericValue);
+    setVariantPriceRaw(updatedRaw);
+
+    // Cập nhật vào variants
+    const updatedVariants = variants.map((v, i) => {
+      if (i === index) {
+        return {
+          ...v,
+          price: numericValue,
+        };
+      }
+      return v;
+    });
+    setVariants(updatedVariants);
+  };
+
+  const handleVariantPriceChange = (index, e) => {
+    const rawValue = e.target.value.replace(/\D/g, "");
+    const updatedRaw = [...variantPriceRaw];
+    updatedRaw[index] = rawValue;
+    setVariantPriceRaw(updatedRaw);
+
+    const updatedDisplay = [...variantPriceDisplay];
+    updatedDisplay[index] = rawValue;
+    setVariantPriceDisplay(updatedDisplay);
+  };
+
+  // ---------- CÁC HANDLER KHÁC ----------
   const handleEditorChange = (newContent) => {
     setValue("description", newContent);
   };
@@ -95,7 +198,7 @@ const NewProduct = ({ placeholder }) => {
       setGallery((prev) => [...prev, ...results]);
       e.target.value = null;
     } catch (err) {
-      toast.error("Failed to upload images");
+      toast.error("Tải ảnh thất bại");
     } finally {
       setIsUploading(false);
     }
@@ -109,6 +212,9 @@ const NewProduct = ({ placeholder }) => {
   };
 
   const handleVariantChange = (index, field, value) => {
+    if (field === "quantity") {
+      value = String(value).replace(/\D/g, "");
+    }
     const updatedVariants = [...variants];
     updatedVariants[index][field] = value;
     setVariants(updatedVariants);
@@ -120,10 +226,9 @@ const NewProduct = ({ placeholder }) => {
     if (
       !lastVariant.color ||
       !lastVariant.storage ||
-      !lastVariant.price ||
-      !lastVariant.quantity
+      !lastVariant.price
     ) {
-      toast.warning("Please complete the current variant first");
+      toast.warning("Vui lòng nhập đầy đủ thông tin cho phân loại hiện tại");
       return;
     }
 
@@ -133,22 +238,24 @@ const NewProduct = ({ placeholder }) => {
         color: "",
         storage: "",
         price: lastVariant.price,
-        quantity: lastVariant.quantity,
+        quantity: 0, // Mặc định 0
         images: [],
       },
     ]);
+    setVariantPriceRaw([...variantPriceRaw, ""]);
+    setVariantPriceDisplay([...variantPriceDisplay, ""]);
   };
 
   const removeVariant = (index) => {
     if (variants.length > 1) {
-      const updatedVariants = variants.filter((_, i) => i !== index);
-      setVariants(updatedVariants);
+      setVariants(variants.filter((_, i) => i !== index));
+      setVariantPriceRaw(variantPriceRaw.filter((_, i) => i !== index));
+      setVariantPriceDisplay(variantPriceDisplay.filter((_, i) => i !== index));
     } else {
-      toast.error("At least one variant is required");
+      toast.error("Cần ít nhất một phân loại");
     }
   };
 
-  // Handle Variant Images
   const handleVariantImageChange = async (e, variantIndex) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -156,7 +263,6 @@ const NewProduct = ({ placeholder }) => {
     setIsUploading(true);
     try {
       const uploadedImages = await uploadImagesHelper(files);
-
       const updatedVariants = [...variants];
       updatedVariants[variantIndex].images = [
         ...updatedVariants[variantIndex].images,
@@ -165,7 +271,7 @@ const NewProduct = ({ placeholder }) => {
       setVariants(updatedVariants);
       e.target.value = null;
     } catch (err) {
-      toast.error("Failed to upload variant images");
+      toast.error("Tải ảnh phân loại thất bại");
     } finally {
       setIsUploading(false);
     }
@@ -179,37 +285,40 @@ const NewProduct = ({ placeholder }) => {
     setVariants(updatedVariants);
   };
 
-  // 4. SUBMIT FORM
+  // ---------- SUBMIT ----------
   const handleAddProduct = async (formData) => {
     if (isSubmitting) return;
 
-    // Validate Variants
+    // Chỉ kiểm tra color, storage, price (không bắt buộc quantity)
     const invalidVariants = variants.filter(
-      (v) => !v.color || !v.storage || !v.price || !v.quantity
+      (v) => !v.color || !v.storage || !v.price
     );
 
     if (invalidVariants.length > 0) {
-      toast.error("Please complete all variant information");
+      toast.error("Vui lòng điền đầy đủ thông tin cho tất cả các phân loại (màu, dung lượng, giá)");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
+      const cleanedVariants = variants.map((variant) => ({
+        ...variant,
+        price: parseCurrencyToNumber(variant.price),
+        quantity: parseInt(variant.quantity, 10) || 0,
+        images: variant.images || [],
+      }));
+
       const productData = {
         title: formData.title,
         slug:
           formData.slug || formData.title.toLowerCase().replace(/\s+/g, "-"),
-        basePrice: Number(formData.basePrice),
+        basePrice: parseCurrencyToNumber(formData.basePrice),
         description: formData.description,
         brand: formData.brand,
         category: formData.category,
         images: gallery,
-        variants: variants.map((variant) => ({
-          ...variant,
-          price: Number(variant.price),
-          quantity: Number(variant.quantity),
-        })),
+        variants: cleanedVariants,
         tags: formData.tags
           ? formData.tags.split(",").map((tag) => tag.trim())
           : [],
@@ -227,20 +336,19 @@ const NewProduct = ({ placeholder }) => {
         },
       };
 
-      console.log("Submitting:", productData);
       const resultAction = await dispatch(createProduct(productData));
 
       if (createProduct.fulfilled.match(resultAction)) {
-        toast.success("Product created successfully");
+        toast.success("Thêm sản phẩm thành công");
         setTimeout(() => navigate("/admin/products"), 1000);
       } else {
         const errorMessage =
-          resultAction.payload?.message || "Failed to create product";
+          resultAction.payload?.message || "Thêm sản phẩm thất bại";
         toast.error(errorMessage);
       }
     } catch (error) {
       console.error(error);
-      toast.error("An unexpected error occurred");
+      toast.error("Lỗi không xác định");
     } finally {
       setIsSubmitting(false);
     }
@@ -249,30 +357,27 @@ const NewProduct = ({ placeholder }) => {
   return (
     <div>
       <ToastContainer />
-      <h1 className="title mb-6">New Product</h1>
+      <h1 className="title mb-6">Thêm sản phẩm mới</h1>
       <form
         onSubmit={handleSubmit(handleAddProduct)}
         className="mx-auto max-w-7xl rounded-lg bg-white p-6 shadow-md"
       >
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          {/* Left Column */}
+          {/* Cột trái */}
           <div className="space-y-6">
-            {/* General Information */}
             <div className="border-b pb-6">
-              <h2 className="mb-4 text-xl font-semibold">
-                General Information
-              </h2>
+              <h2 className="mb-4 text-xl font-semibold">Thông tin chung</h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Product Title *
+                    Tên sản phẩm *
                   </label>
                   <input
                     type="text"
                     {...register("title", {
-                      required: "Product title is required",
+                      required: "Tên sản phẩm là bắt buộc",
                     })}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   {errors.title && (
                     <p className="mt-1 text-sm text-red-500">
@@ -287,21 +392,34 @@ const NewProduct = ({ placeholder }) => {
                   </label>
                   <input
                     {...register("slug")}
-                    placeholder="Auto-generated from title"
+                    placeholder="Tự động tạo từ tên sản phẩm"
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Base Price *
-                  </label>
+                  <div className="flex justify-between items-center">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Giá cơ bản (VND) *
+                    </label>
+                    {basePriceDisplay && !isBasePriceFocused && (
+                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                        {basePriceDisplay} ₫
+                      </span>
+                    )}
+                  </div>
                   <input
-                    type="number"
-                    {...register("basePrice", {
-                      required: "Base price is required",
-                    })}
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                    type="text"
+                    value={basePriceDisplay}
+                    onChange={handleBasePriceChange}
+                    onFocus={handleBasePriceFocus}
+                    onBlur={handleBasePriceBlur}
+                    placeholder="Nhập số tiền..."
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <input
+                    type="hidden"
+                    {...register("basePrice", { required: "Giá cơ bản là bắt buộc" })}
                   />
                   {errors.basePrice && (
                     <p className="mt-1 text-sm text-red-500">
@@ -310,10 +428,9 @@ const NewProduct = ({ placeholder }) => {
                   )}
                 </div>
 
-                {/* Main Images Upload */}
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700">
-                    Product Images
+                    Ảnh sản phẩm
                   </label>
                   <div className="flex items-center gap-2">
                     <input
@@ -325,9 +442,7 @@ const NewProduct = ({ placeholder }) => {
                       disabled={isUploading}
                     />
                     {isUploading && (
-                      <span className="text-sm text-blue-500">
-                        Uploading...
-                      </span>
+                      <span className="text-sm text-blue-500">Đang tải...</span>
                     )}
                   </div>
 
@@ -337,7 +452,7 @@ const NewProduct = ({ placeholder }) => {
                         <img
                           src={image.url}
                           className="w-20 h-20 rounded object-cover border"
-                          alt={`Product ${imgIndex}`}
+                          alt={`Sản phẩm ${imgIndex}`}
                         />
                         <button
                           type="button"
@@ -353,30 +468,29 @@ const NewProduct = ({ placeholder }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Tags
+                    Thẻ tags
                   </label>
                   <input
                     {...register("tags")}
-                    placeholder="Separate tags with commas"
+                    placeholder="Phân cách bằng dấu phẩy"
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Relations */}
             <div className="border-b pb-6">
-              <h2 className="mb-4 text-xl font-semibold">Relations</h2>
+              <h2 className="mb-4 text-xl font-semibold">Liên kết</h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Brand *
+                    Thương hiệu *
                   </label>
                   <select
-                    {...register("brand", { required: "Brand is required" })}
+                    {...register("brand", { required: "Thương hiệu là bắt buộc" })}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   >
-                    <option value="">Select Brand</option>
+                    <option value="">Chọn thương hiệu</option>
                     {brands.map((brand) => (
                       <option key={brand._id || brand.id} value={brand.title}>
                         {brand.title}
@@ -392,15 +506,15 @@ const NewProduct = ({ placeholder }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Category *
+                    Danh mục *
                   </label>
                   <select
                     {...register("category", {
-                      required: "Category is required",
+                      required: "Danh mục là bắt buộc",
                     })}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                   >
-                    <option value="">Select Category</option>
+                    <option value="">Chọn danh mục</option>
                     {categories.map((category) => (
                       <option
                         key={category._id || category.id}
@@ -419,9 +533,9 @@ const NewProduct = ({ placeholder }) => {
               </div>
             </div>
 
-            {/* Variants Section */}
+            {/* Phiên bản biến thể */}
             <div className="border-b pb-6">
-              <h2 className="mb-4 text-xl font-semibold">Variants</h2>
+              <h2 className="mb-4 text-xl font-semibold">Phiên bản</h2>
               {variants.map((variant, index) => (
                 <div
                   key={index}
@@ -429,7 +543,7 @@ const NewProduct = ({ placeholder }) => {
                 >
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="text-md font-medium text-gray-800">
-                      Variant {index + 1}
+                      Phiên bản {index + 1}
                     </h3>
                     {variants.length > 1 && (
                       <button
@@ -437,16 +551,15 @@ const NewProduct = ({ placeholder }) => {
                         onClick={() => removeVariant(index)}
                         className="text-red-600 hover:text-red-800 text-sm font-medium"
                       >
-                        Remove
+                        Xoá
                       </button>
                     )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    {/* Variant Color */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600">
-                        Color *
+                        Màu sắc *
                       </label>
                       <select
                         value={variant.color}
@@ -455,7 +568,7 @@ const NewProduct = ({ placeholder }) => {
                         }
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       >
-                        <option value="">Select Color</option>
+                        <option value="">Chọn màu</option>
                         {colors.map((color, i) => (
                           <option key={i} value={color.title}>
                             {color.title}
@@ -463,10 +576,9 @@ const NewProduct = ({ placeholder }) => {
                         ))}
                       </select>
                     </div>
-                    {/* Variant Storage */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600">
-                        Storage *
+                        Dung lượng *
                       </label>
                       <select
                         value={variant.storage}
@@ -475,7 +587,7 @@ const NewProduct = ({ placeholder }) => {
                         }
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       >
-                        <option value="">Select Storage</option>
+                        <option value="">Chọn dung lượng</option>
                         {["64GB", "128GB", "256GB", "512GB", "1TB"].map((s) => (
                           <option key={s} value={s}>
                             {s}
@@ -483,40 +595,50 @@ const NewProduct = ({ placeholder }) => {
                         ))}
                       </select>
                     </div>
-                    {/* Variant Price */}
                     <div>
-                      <label className="block text-xs font-medium text-gray-600">
-                        Price *
-                      </label>
+                      <div className="flex justify-between items-center">
+                        <label className="block text-xs font-medium text-gray-600">
+                          Giá *
+                        </label>
+                        {variantPriceDisplay[index] && variantPriceFocusIndex !== index && (
+                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1 rounded">
+                            {variantPriceDisplay[index]} ₫
+                          </span>
+                        )}
+                      </div>
                       <input
-                        type="number"
-                        value={variant.price}
-                        onChange={(e) =>
-                          handleVariantChange(index, "price", e.target.value)
-                        }
-                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
+                        type="text"
+                        value={variantPriceDisplay[index] || ""}
+                        onChange={(e) => handleVariantPriceChange(index, e)}
+                        onFocus={() => handleVariantPriceFocus(index)}
+                        onBlur={() => handleVariantPriceBlur(index)}
+                        placeholder="Nhập số tiền..."
+                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     </div>
-                    {/* Variant Quantity */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600">
-                        Quantity *
+                        Số lượng tồn kho
                       </label>
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
                         value={variant.quantity}
                         onChange={(e) =>
                           handleVariantChange(index, "quantity", e.target.value)
                         }
+                        placeholder="Mặc định 0, cập nhật qua nhập kho"
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm"
                       />
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        Sẽ được cập nhật khi nhập kho
+                      </p>
                     </div>
                   </div>
 
-                  {/* Variant Images */}
                   <div className="mt-3">
                     <label className="block text-xs font-medium text-gray-600 mb-1">
-                      Variant Images
+                      Ảnh phân loại
                     </label>
                     <input
                       type="file"
@@ -552,15 +674,15 @@ const NewProduct = ({ placeholder }) => {
                 onClick={addVariant}
                 className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
               >
-                + Add Another Variant
+                + Thêm phân loại khác
               </button>
             </div>
           </div>
 
-          {/* Right Column: Specs & Desc */}
+          {/* Cột phải */}
           <div className="space-y-6">
             <div className="border-b pb-6">
-              <h2 className="mb-4 text-xl font-semibold">Specifications</h2>
+              <h2 className="mb-4 text-xl font-semibold">Thông số kỹ thuật</h2>
               <div className="grid grid-cols-1 gap-4">
                 {[
                   "screen",
@@ -573,23 +695,59 @@ const NewProduct = ({ placeholder }) => {
                   "battery",
                   "sim",
                   "design",
-                ].map((field) => (
-                  <div key={field}>
-                    <label className="block text-sm font-medium text-gray-700 capitalize">
-                      {field.replace(/([A-Z])/g, " $1").trim()}{" "}
-                      {/* Convert camelCase to Space */}
-                    </label>
-                    <input
-                      {...register(field)}
-                      className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
-                    />
-                  </div>
-                ))}
+                ].map((field) => {
+                  let label = field;
+                  switch (field) {
+                    case "screen":
+                      label = "Màn hình";
+                      break;
+                    case "os":
+                      label = "Hệ điều hành";
+                      break;
+                    case "frontCamera":
+                      label = "Camera trước";
+                      break;
+                    case "rearCamera":
+                      label = "Camera sau";
+                      break;
+                    case "processor":
+                      label = "CPU";
+                      break;
+                    case "ram":
+                      label = "RAM";
+                      break;
+                    case "storage":
+                      label = "ROM";
+                      break;
+                    case "battery":
+                      label = "Pin & Sạc";
+                      break;
+                    case "sim":
+                      label = "SIM";
+                      break;
+                    case "design":
+                      label = "Thiết kế";
+                      break;
+                    default:
+                      label = field;
+                  }
+                  return (
+                    <div key={field}>
+                      <label className="block text-sm font-medium text-gray-700 capitalize">
+                        {label}
+                      </label>
+                      <input
+                        {...register(field)}
+                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
             <div className="pb-6">
-              <h2 className="mb-4 text-xl font-semibold">Description</h2>
+              <h2 className="mb-4 text-xl font-semibold">Mô tả sản phẩm</h2>
               <JoditEditor
                 ref={editor}
                 value={description}
@@ -606,7 +764,7 @@ const NewProduct = ({ placeholder }) => {
                 className="rounded-lg px-4 py-2 text-gray-700 border border-gray-300 hover:bg-gray-50"
                 disabled={isSubmitting}
               >
-                Cancel
+                Huỷ bỏ
               </button>
               <button
                 type="submit"
@@ -617,7 +775,7 @@ const NewProduct = ({ placeholder }) => {
                 }`}
                 disabled={isSubmitting || isUploading}
               >
-                {isSubmitting ? "Saving..." : "Save Product"}
+                {isSubmitting ? "Đang lưu..." : "Lưu sản phẩm"}
               </button>
             </div>
           </div>

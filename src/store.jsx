@@ -13,6 +13,12 @@ import orderReducer from "./features/adminSlice/orders/orderSlice";
 import productClientReducer from "./features/guestSlice/product/productSlice";
 import cartReducer from "./features/guestSlice/cart/cartSlice";
 import orderClientReducer from "./features/guestSlice/order/orderSlice";
+import inventoryReducer from "./features/adminSlice/inventory/inventorySlice";
+import supplierReducer from "./features/adminSlice/supplier/supplierSlice";
+import dashboardRducer from "./features/adminSlice/dashboard/dashboardSlice"
+import blogReducerClient from "./features/guestSlice/blog/blogSlice"
+import blogCategoryReducerClient from "./features/guestSlice/blogCategory/blogCategorySlice";
+import bannerReducer from './features/adminSlice/banner/bannerSlice';
 
 export const store = configureStore({
   reducer: {
@@ -21,7 +27,11 @@ export const store = configureStore({
     productClient: productClientReducer,
     cart: cartReducer,
     orderClient: orderClientReducer,
+    blog: blogReducerClient,
+    blogCategory: blogCategoryReducerClient,
 
+
+    ///---Admin store-----////
     customer: customerReducer,
     categoryAdmin: categoryReducer,
     brandAdmin: brandReducer,
@@ -31,5 +41,10 @@ export const store = configureStore({
     blogCategoryAdmin: blogCategoryReducer,
     blogAdmin: blogReducer,
     orderAdmin: orderReducer,
+    inventory: inventoryReducer,
+    supplier: supplierReducer,
+    dashboard: dashboardRducer,
+    banner: bannerReducer,
   },
 });
+

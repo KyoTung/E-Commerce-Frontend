@@ -10,7 +10,7 @@ const initialState = {
 
 
  export const getAllProducts = createAsyncThunk(
-  "admin/product/get-all-products",
+  "/product/get-all-products",
   async (params, thunkAPI) => {
     try {
       const response = await productService.getAllProducts(params);
@@ -80,6 +80,7 @@ export const productClientSlice = createSlice({
       })
       .addCase(getAllProducts.fulfilled, (state, action) => {
         state.loading = false;
+       
         state.products = action.payload;  
       })
       .addCase(getAllProducts.rejected, (state, action) => {

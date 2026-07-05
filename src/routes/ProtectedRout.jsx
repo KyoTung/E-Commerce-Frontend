@@ -1,14 +1,21 @@
+// ProtectedRoute.jsx
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
 
-const ProtectedRoute = ({ children, requiredRole }) => {
-const  {user}  = useSelector((state) => state.auth);
+const ProtectedRoute = ({ children, allowedRoles = [] }) => {
+  const { user } = useSelector((state) => state.auth);
 
-  if (!user || ( user.role !== requiredRole)) {
+  // Nếu chưa đăng nhập -> về trang chủ
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Nếu có yêu cầu role và role hiện tại không nằm trong danh sách cho phép
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
     return <Navigate to="/" replace />;
   }
 
-  return children;  
+  return children;
 };
 
 export default ProtectedRoute;

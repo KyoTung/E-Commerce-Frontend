@@ -61,8 +61,12 @@ const Login = () => {
 
   useEffect(() => {
     if (isSuccess && user) {
-      Axios.defaults.headers.common["Authorization"] = `Bearer ${user.token}`;
-      navigate("/");
+      Axios.defaults.headers.common["Authorization"] = `Bearer ${user.accessToken}`;
+      if(user.role === "admin" || user.role === "staff") {
+        navigate("/admin/");
+      } else {
+        navigate("/");
+      }
     }
   }, [isSuccess, user, navigate]);
 

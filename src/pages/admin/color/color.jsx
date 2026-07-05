@@ -12,30 +12,50 @@ import {
   getAllColor,
 } from "../../../features/adminSlice/color/colorSlice";
 
+// Ánh xạ màu tiếng Việt sang mã màu
+const colorMap = {
+  "đỏ": "#ef4444",
+  "xanh lá": "#22c55e",
+  "xanh lá cây": "#22c55e",
+  "xanh dương": "#3b82f6",
+  "xanh nước biển": "#3b82f6",
+  "vàng": "#eab308",
+  "đen": "#1f2937",
+  "trắng": "#f9fafb",
+  "cam": "#f97316",
+  "tím": "#a855f7",
+  "hồng": "#ec4899",
+  "xám": "#9ca3af",
+  "ghi": "#9ca3af",
+  "nâu": "#8b4513",
+};
+
+const getValidColor = (colorTitle) => {
+  if (!colorTitle) return "#e5e7eb";
+  const normalized = colorTitle.trim().toLowerCase();
+  return colorMap[normalized] || "#cbd5e1";
+};
+
 const Colors = () => {
   const dispatch = useDispatch();
-  
-  // Redux State
   const { colors, loading } = useSelector((state) => state.colorAdmin);
 
-  // Local State
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState("add"); // 'add' | 'edit'
+  const [modalMode, setModalMode] = useState("add");
   const [currentColor, setCurrentColor] = useState({ id: null, title: "" });
+  const [error, setError] = useState("");
 
-  // 1. Fetch Data
   useEffect(() => {
     dispatch(getAllColor());
   }, [dispatch]);
 
-  // 2. Client-side Search
   const filteredColors = colors.filter((color) =>
     color.title?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // 3. Modal Handlers
   const openModal = (mode, color = null) => {
+    setError("");
     setModalMode(mode);
     if (mode === "edit" && color) {
       setCurrentColor({ id: color._id || color.id, title: color.title });
@@ -48,29 +68,35 @@ const Colors = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setCurrentColor({ id: null, title: "" });
+    setError("");
   };
 
-  // 4. Submit Handler (Create & Update)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!currentColor.title.trim()) {
-      toast.warning("Color title is required");
+    const title = currentColor.title.trim();
+    if (!title) {
+      toast.warning("Vui lòng nhập tên màu");
       return;
     }
 
+    const duplicate = colors.some(
+      (c) =>
+        c.title.toLowerCase() === title.toLowerCase() &&
+        (modalMode === "add" || c._id !== currentColor.id)
+    );
+    if (duplicate) {
+      setError("Tên màu đã tồn tại");
+      return;
+    }
+    setError("");
+
     try {
       let resultAction;
-
       if (modalMode === "add") {
-        // --- CREATE ---
-        resultAction = await dispatch(createColor({ title: currentColor.title }));
+        resultAction = await dispatch(createColor({ title }));
       } else {
-        // --- UPDATE ---
         resultAction = await dispatch(
-          updateColor({
-            colorId: currentColor.id,
-            colorData: { title: currentColor.title },
-          })
+          updateColor({ colorId: currentColor.id, colorData: { title } })
         );
       }
 
@@ -78,46 +104,38 @@ const Colors = () => {
         createColor.fulfilled.match(resultAction) ||
         updateColor.fulfilled.match(resultAction)
       ) {
-        toast.success(
-          modalMode === "add"
-            ? "Color created successfully"
-            : "Color updated successfully"
-        );
+        toast.success(modalMode === "add" ? "Thêm màu thành công" : "Cập nhật thành công");
         dispatch(getAllColor());
         closeModal();
       } else {
-        toast.error(resultAction.payload?.message || "Action failed");
+        toast.error(resultAction.payload?.message || "Thao tác thất bại");
       }
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      toast.error("Lỗi hệ thống");
     }
   };
 
-  // 5. Delete Handler
   const onDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this color?")) {
-      return;
-    }
+    if (!window.confirm("Bạn có chắc chắn muốn xóa màu này?")) return;
     try {
       const resultAction = await dispatch(deleteColor(id));
       if (deleteColor.fulfilled.match(resultAction)) {
-        toast.success("Color deleted successfully");
+        toast.success("Xóa màu thành công");
         dispatch(getAllColor());
       } else {
-        toast.error(resultAction.payload?.message || "Failed to delete color");
+        toast.error(resultAction.payload?.message || "Xóa thất bại");
       }
     } catch {
-      toast.error("Error deleting color");
+      toast.error("Lỗi khi xóa");
     }
   };
 
   return (
     <div>
       <ToastContainer />
-      <h1 className="title mb-6">Colors Management</h1>
+      <h1 className="title mb-6">Quản lý màu sắc</h1>
 
       <div className="card">
-        {/* --- TOOLBAR --- */}
         <div className="card-header flex flex-col md:flex-row items-center gap-4 py-4 px-6 border-b border-gray-100">
           <div className="flex gap-2 w-full md:w-auto">
             <button
@@ -125,14 +143,14 @@ const Colors = () => {
               className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition w-full md:w-auto"
             >
               <Plus size={18} />
-              Add New
+              Thêm mới
             </button>
             <button
               onClick={() => dispatch(getAllColor())}
               className="flex items-center justify-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition"
             >
               <RefreshCw size={18} />
-              Refresh
+              Làm mới
             </button>
           </div>
 
@@ -141,13 +159,12 @@ const Colors = () => {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search colors..."
+              placeholder="Tìm kiếm màu..."
               className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
         </div>
 
-        {/* --- TABLE --- */}
         {loading ? (
           <div className="p-12">
             <Loading className="flex items-center justify-center" />
@@ -157,35 +174,27 @@ const Colors = () => {
             <div className="relative w-full overflow-x-auto">
               {filteredColors.length === 0 ? (
                 <div className="p-8 text-center text-gray-500 italic">
-                  No colors found.
+                  Không tìm thấy màu nào.
                 </div>
               ) : (
                 <table className="w-full text-left text-sm text-gray-500">
                   <thead className="bg-gray-50 text-xs uppercase text-gray-700">
                     <tr>
                       <th className="px-6 py-3 w-16 text-center">#</th>
-                      <th className="px-6 py-3">Color Name</th>
-                      <th className="px-6 py-3">Preview</th>
-                      <th className="px-6 py-3 w-40 text-center">Actions</th>
+                      <th className="px-6 py-3">Tên màu</th>
+                      <th className="px-6 py-3">Xem trước</th>
+                      <th className="px-6 py-3 w-40 text-center">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
                     {filteredColors.map((color, index) => (
-                      <tr
-                        key={color._id || color.id}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
-                        <td className="px-6 py-4 text-center text-gray-400">
-                          {index + 1}
-                        </td>
-                        <td className="px-6 py-4 font-medium text-gray-900">
-                          {color.title}
-                        </td>
+                      <tr key={color._id || color.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 text-center text-gray-400">{index + 1}</td>
+                        <td className="px-6 py-4 font-medium text-gray-900">{color.title}</td>
                         <td className="px-6 py-4">
-                          {/* Hiển thị mẫu màu nếu title là mã hex hợp lệ */}
                           <div
                             className="h-6 w-6 rounded-full border border-gray-200 shadow-sm"
-                            style={{ backgroundColor: color.title }}
+                            style={{ backgroundColor: getValidColor(color.title) }}
                             title={color.title}
                           ></div>
                         </td>
@@ -194,14 +203,14 @@ const Colors = () => {
                             <button
                               onClick={() => openModal("edit", color)}
                               className="rounded p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition"
-                              title="Edit"
+                              title="Sửa"
                             >
                               <PencilLine size={18} />
                             </button>
                             <button
                               onClick={() => onDelete(color._id || color.id)}
                               className="rounded p-1 text-red-600 hover:bg-red-50 hover:text-red-800 transition"
-                              title="Delete"
+                              title="Xóa"
                             >
                               <Trash size={18} />
                             </button>
@@ -217,18 +226,15 @@ const Colors = () => {
         )}
       </div>
 
-      {/* --- MODAL --- */}
+      {/* Modal chỉ có text input, không color picker */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-xl bg-white shadow-2xl transform transition-all scale-100">
             <div className="flex items-center justify-between border-b p-4">
               <h3 className="text-lg font-bold text-gray-800">
-                {modalMode === "add" ? "Add New Color" : "Edit Color"}
+                {modalMode === "add" ? "Thêm màu mới" : "Chỉnh sửa màu"}
               </h3>
-              <button
-                onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600"
-              >
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
                 <X size={20} />
               </button>
             </div>
@@ -236,43 +242,50 @@ const Colors = () => {
             <form onSubmit={handleSubmit} className="p-6">
               <div className="mb-4">
                 <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Title / Hex Code <span className="text-red-500">*</span>
+                  Tên màu <span className="text-red-500">*</span>
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={currentColor.title}
-                    onChange={(e) =>
-                      setCurrentColor({ ...currentColor, title: e.target.value })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                    placeholder="e.g. Red or #ff0000"
-                    autoFocus
-                  />
-                  {/* Color Picker helper */}
-                  <input 
-                    type="color" 
-                    value={currentColor.title.startsWith('#') ? currentColor.title : '#000000'}
-                    onChange={(e) => setCurrentColor({ ...currentColor, title: e.target.value })}
-                    className="h-10 w-10 cursor-pointer rounded-lg border border-gray-300 p-1"
-                    title="Pick a color"
-                  />
-                </div>
+                <input
+                  type="text"
+                  value={currentColor.title}
+                  onChange={(e) => {
+                    setCurrentColor({ ...currentColor, title: e.target.value });
+                    setError("");
+                  }}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="VD: Đỏ, Xanh dương, Vàng..."
+                  autoFocus
+                />
+                {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+                <p className="mt-1 text-xs text-gray-400">
+                  Hỗ trợ các tên: đỏ, xanh lá, xanh dương, vàng, đen, trắng, cam, tím, hồng, xám, nâu
+                </p>
               </div>
 
-              <div className="flex justify-end gap-3 mt-6">
+              {/* Preview màu dựa trên tên */}
+              <div className="mb-5 flex items-center gap-3 rounded-lg bg-gray-50 p-3">
+                <div
+                  className="h-8 w-8 rounded-full border shadow-sm"
+                  style={{ backgroundColor: getValidColor(currentColor.title) }}
+                />
+                <span className="text-sm text-gray-600">
+                  Màu hiển thị:{" "}
+                  <span className="font-mono text-xs">{getValidColor(currentColor.title)}</span>
+                </span>
+              </div>
+
+              <div className="flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={closeModal}
                   className="rounded-lg px-4 py-2 text-gray-600 hover:bg-gray-100 transition border border-gray-200"
                 >
-                  Cancel
+                  Hủy
                 </button>
                 <button
                   type="submit"
                   className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white hover:bg-blue-700 transition shadow-sm"
                 >
-                  {modalMode === "add" ? "Create" : "Save Changes"}
+                  {modalMode === "add" ? "Thêm" : "Lưu thay đổi"}
                 </button>
               </div>
             </form>

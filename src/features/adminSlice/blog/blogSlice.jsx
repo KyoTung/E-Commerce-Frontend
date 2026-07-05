@@ -3,11 +3,13 @@ import blogService from "./blogService";
 
 const initialState = {
   blogs: [],
-  blog: null,
+  total: 0,
+  page: 1,
+  limit: 10,
+  totalPages: 1,
   loading: false,
   error: null,
 };
-
 
 export const createBlog = createAsyncThunk(
   "admin/blog/create-blog",
@@ -19,9 +21,8 @@ export const createBlog = createAsyncThunk(
       const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue({ message });
     }
-  }
+  },
 );
-
 
 export const updateBlog = createAsyncThunk(
   "admin/blog/update",
@@ -33,7 +34,7 @@ export const updateBlog = createAsyncThunk(
       const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue({ message });
     }
-  }
+  },
 );
 
 export const getAllBlog = createAsyncThunk(
@@ -46,9 +47,8 @@ export const getAllBlog = createAsyncThunk(
       const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue({ message });
     }
-  }
+  },
 );
-
 
 export const getBlog = createAsyncThunk(
   "admin/blog/get-blog",
@@ -60,33 +60,31 @@ export const getBlog = createAsyncThunk(
       const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue({ message });
     }
-  }
+  },
 );
-
 
 export const deleteBlog = createAsyncThunk(
   "admin/blog/delete-blog",
   async (blogId, thunkAPI) => {
     try {
       const response = await blogService.deleteBlog(blogId);
-      return response; 
+      return response;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue({ message });
     }
-  }
+  },
 );
 
 export const blogSlice = createSlice({
   name: "blog-admin",
   initialState,
   reducers: {
-    
     resetBlogState: (state) => {
       state.error = null;
       state.loading = false;
       state.message = "";
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -97,8 +95,8 @@ export const blogSlice = createSlice({
       })
       .addCase(createBlog.fulfilled, (state, action) => {
         state.loading = false;
-        
-        state.blogs.unshift(action.payload); 
+
+        state.blogs.unshift(action.payload);
       })
       .addCase(createBlog.rejected, (state, action) => {
         state.loading = false;
@@ -112,16 +110,18 @@ export const blogSlice = createSlice({
       })
       .addCase(updateBlog.fulfilled, (state, action) => {
         state.loading = false;
-       
+
         const updatedBlog = action.payload;
-        const index = state.blogs.findIndex((blog) => blog._id === updatedBlog._id || blog.id === updatedBlog.id);
-        
+        const index = state.blogs.findIndex(
+          (blog) => blog._id === updatedBlog._id || blog.id === updatedBlog.id,
+        );
+
         if (index !== -1) {
           state.blogs[index] = updatedBlog;
         }
-       
-        if (state.blog && (state.blog._id === updatedBlog._id)) {
-            state.blog = updatedBlog;
+
+        if (state.blog && state.blog._id === updatedBlog._id) {
+          state.blog = updatedBlog;
         }
       })
       .addCase(updateBlog.rejected, (state, action) => {
@@ -136,11 +136,11 @@ export const blogSlice = createSlice({
       })
       .addCase(deleteBlog.fulfilled, (state, action) => {
         state.loading = false;
-        
-        const idToDelete = action.payload.deletedId; 
-        
+
+        const idToDelete = action.payload.deletedId;
+
         state.blogs = state.blogs.filter(
-          (blog) => blog._id !== idToDelete && blog.id !== idToDelete
+          (blog) => blog._id !== idToDelete && blog.id !== idToDelete,
         );
       })
       .addCase(deleteBlog.rejected, (state, action) => {
@@ -169,7 +169,20 @@ export const blogSlice = createSlice({
       })
       .addCase(getAllBlog.fulfilled, (state, action) => {
         state.loading = false;
-        state.blogs = action.payload;
+        // Kiểm tra nếu payload có dạng phân trang (chứa blogs)
+        if (action.payload && Array.isArray(action.payload.blogs)) {
+          state.blogs = action.payload.blogs;
+          state.total = action.payload.total;
+          state.page = action.payload.page;
+          state.limit = action.payload.limit;
+          state.totalPages = action.payload.totalPages;
+        }
+        // Fallback nếu payload là mảng trực tiếp (API cũ)
+        else if (Array.isArray(action.payload)) {
+          state.blogs = action.payload;
+        } else {
+          state.blogs = [];
+        }
       })
       .addCase(getAllBlog.rejected, (state, action) => {
         state.loading = false;

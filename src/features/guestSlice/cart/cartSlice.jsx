@@ -66,16 +66,6 @@ export const deleteCart = createAsyncThunk(
   }
 );
 
-export const applyCoupon = createAsyncThunk(
-  "cart/apply-coupon",
-  async (coupon, thunkAPI) => {
-    try {
-      return await cartService.applyCoupon(coupon);
-    } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data || error.message);
-    }
-  }
-);
 
 export const cartSlice = createSlice({
   name: "cart",
@@ -114,14 +104,14 @@ export const cartSlice = createSlice({
         state.isSuccess = true;
         state.isError = false;
         state.cart = action.payload;
-        toast.success("Đã thêm vào giỏ hàng!");
+        toast.success("Thêm sản phẩm vào giỏ hàng thành công")
       })
       .addCase(addToCart.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.isSuccess = false;
         state.message = action.payload?.message;
-        toast.error(action.payload?.message || "Thêm vào giỏ thất bại");
+       toast.error("Thêm sản phẩm vào giỏ hàng thất bại")
       })
 
       // --- DELETE ITEM ---
@@ -132,12 +122,12 @@ export const cartSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.cart = action.payload;
-        toast.success("Đã xóa sản phẩm!");
+       toast.success("Xóa sản phẩm khỏi giỏ hàng thành công")
       })
       .addCase(deleteCartItem.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
-        toast.error(action.payload?.message || "Xóa thất bại");
+        toast.error("Xóa sản phẩm khỏi giỏ hàng thất bại")
       })
       .addCase(updateCartItem.pending, (state) => {
         state.isLoading = true;
@@ -146,34 +136,26 @@ export const cartSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.cart = action.payload;
+         toast.success("Cập nhật giỏ hàng thành công")
       })
       .addCase(updateCartItem.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
-        toast.error(action.payload?.message || "Cập nhật thất bại");
+        state.message = action.payload?.message
+        toast.error(state?.message || "Cập nhật giỏ hàng thất bại")
+
+       
       })
 
       .addCase(deleteCart.fulfilled, (state) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.cart = null;
-        toast.success("Đã xóa toàn bộ giỏ hàng");
+        state.cart = null;  
       })
-
-      .addCase(applyCoupon.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(applyCoupon.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-
-        state.cart = action.payload;
-        toast.success("Áp dụng mã giảm giá thành công!");
-      })
-      .addCase(applyCoupon.rejected, (state, action) => {
+      .addCase(deleteCart.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
-        toast.error(action.payload?.message || "Mã giảm giá không hợp lệ");
+        toast.error("Xóa giỏ hàng thất bại")
       });
   },
 });

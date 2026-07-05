@@ -1,4 +1,21 @@
-import { ChartColumn, Home, NotepadText, Package, PackagePlus, Settings, ShoppingBag, UserCheck, UserPlus, Users, LogOut } from "lucide-react";
+import {
+  ChartColumn,
+  Home,
+  NotepadText,
+  Package,
+  PackagePlus,
+  Settings,
+  ShoppingBag,
+  UserCheck,
+  UserPlus,
+  Users,
+  LogOut,
+  Building2,        
+  PackageMinus,     
+  Warehouse,        
+  History,
+  Image          
+} from "lucide-react";
 import ProfileImage from "../assets/profile-image.jpg";
 import ProductImage from "../assets/product-image.jpg";
 import { BiCategoryAlt } from "react-icons/bi";
@@ -11,118 +28,72 @@ import { RiCoupon2Line } from "react-icons/ri";
 const _path = "/admin";
 
 export const navbarLinks = [
-    {
-        //title: "Dashboard",
-        links: [
-            {
-                label: "Dashboard",
-                icon: Home,
-                path: _path,
-            },
-        ],
-    },
-    {
-        //title: "User",
-        links: [
-            {
-                label: "Users",
-                icon: Users,
-                path: `${_path}/users`,
-            },
-        ],
-    },
-    {
-        links: [
-            {
-                label: "Categories",
-                icon: BiCategoryAlt,
-                path: `${_path}/categories`,
-            },
-        ],
-    },
-    {
-        links: [
-            {
-                label: "Brands",
-                icon: BiCategoryAlt,
-                path: `${_path}/brands`,
-            },
-        ],
-    },
-     {
-        links: [
-            {
-                label: "Colors",
-                icon: MdOutlineInvertColors,
-                path: `${_path}/colors`,
-            },
-        ],
-    },
-    {
-        links: [
-            {
-                label: "Products",
-                icon: Package,
-                path: `${_path}/products`,
-            },
-        ],
-    },
-    {
-        links: [
-            {
-                label: "Orders",
-                icon: MdOutlineEventNote,
-                path: `${_path}/orders`,
-            },
-        ],
-    },
-    {
-        links: [
-            {
-                label: "Coupons",
-                icon: RiCoupon2Line,
-                path: `${_path}/coupons`,
-            },
-        ],
-    },
-   
-    // {
-    //     links: [
-    //         {
-    //             label: "Enquiries",
-    //             icon: RiQuestionAnswerLine,
-    //             path: `${_path}/enquiries`,
-    //         },
-    //     ],
-    // },
-     {
-        links: [
-            {
-                label: "Blog categories",
-                icon: MdOutlineEventNote,
-                path: `${_path}/blog-categories`,
-            },
-        ],
-    },
-     {
-        links: [
-            {
-                label: "Blogs",
-                icon: BsFillFileEarmarkPostFill,
-                path: `${_path}/blogs`,
-            },
-        ],
-    },
+  // 1. Tổng quan
+  {
+    title: "Tổng quan",
+    links: [
+      { label: "Dashboard", icon: Home, path: _path },
+      { label: "Báo cáo/Thống kê", icon: ChartColumn, path: `${_path}/sale-report` },
+    ],
+  },
 
-    {
-        links: [
-            {
-                label: "Back to client page",
-                icon: LogOut,
-                path: "/",
-            },
-        ],
-    },
+  // 2. Người dùng
+  {
+    title: "Người dùng",
+    links: [
+      { label: "Quản lý người dùng", icon: Users, path: `${_path}/users` },
+    ],
+  },
+
+  // 3. Quản lý sản phẩm
+  {
+    title: "Quản lý sản phẩm",
+    links: [
+      { label: "Danh mục", icon: BiCategoryAlt, path: `${_path}/categories` },
+      { label: "Thương hiệu", icon: BiCategoryAlt, path: `${_path}/brands` },
+      { label: "Màu sắc", icon: MdOutlineInvertColors, path: `${_path}/colors` },
+      { label: "Sản phẩm", icon: Package, path: `${_path}/products` },
+    ],
+  },
+
+  // 4. Quản lý kho
+  {
+    title: "Quản lý kho",
+    links: [
+      { label: "Nhà cung cấp", icon: Building2, path: `${_path}/suppliers` },
+      { label: "Nhập kho", icon: PackagePlus, path: `${_path}/inventory/import` },
+      { label: "Xuất kho", icon: PackageMinus, path: `${_path}/inventory/export` },
+      { label: "Tồn kho", icon: Warehouse, path: `${_path}/inventory/stock` },
+      { label: "Lịch sử giao dịch", icon: History, path: `${_path}/inventory/transactions` },
+    ],
+  },
+
+  // 5. Đơn hàng & Khuyến mãi
+  {
+    title: "Đơn hàng & Khuyến mãi",
+    links: [
+      { label: "Đơn hàng", icon: ShoppingBag, path: `${_path}/orders` },
+      { label: "Mã giảm giá", icon: RiCoupon2Line, path: `${_path}/coupons` },
+    ],
+  },
+
+  // 6. Nội dung
+  {
+    title: "Nội dung",
+    links: [
+      { label: "Danh mục bài viết", icon: MdOutlineEventNote, path: `${_path}/blog-categories` },
+      { label: "Bài viết", icon: BsFillFileEarmarkPostFill, path: `${_path}/blogs` },
+      { label: "Banner", icon: Image, path: "/admin/banner" },
+    ],
+  },
+
+  // 7. Tiện ích
+  {
+    title: "Tiện ích",
+    links: [
+      { label: "Về trang khách", icon: LogOut, path: "/" },
+    ],
+  },
 ];
 
 export const overviewData = [

@@ -6,7 +6,7 @@ const getUser = async (id) => {
 };
 
 const updateUser = async (userData, id) => {
-  const response = await axiosClient.put(`/user/update-information/${id}`, userData);
+  const response = await axiosClient.put(`/user/update-informaion/${id}`, userData);
   return response.data;
 };
 

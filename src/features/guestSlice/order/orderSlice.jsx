@@ -6,6 +6,7 @@ import { resetCartState } from "../cart/cartSlice";
 const initialState = {
   orders: [],        
   currentOrder: null, 
+  checkoutReview: null,
   isLoading: false,
   isError: false,
   isSuccess: false,
@@ -78,6 +79,18 @@ export const deleteOrder = createAsyncThunk(
   }
 );
 
+// Thunk kiểm tra mã giảm giá
+export const checkCouponCheckout = createAsyncThunk(
+  "order/checkCoupon",
+  async (data, thunkAPI) => {
+    try {
+      return await orderService.checkCouponCheckout(data);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+    }
+  }
+)
+
 export const orderSlice = createSlice({
   name: "order",
   initialState,
@@ -89,6 +102,9 @@ export const orderSlice = createSlice({
       state.message = "";
       state.currentOrder = null; // Reset đơn hàng vừa tạo để chuẩn bị cho đơn mới
     },
+    resetCheckoutReview: (state) => {
+      state.checkoutReview = null; // Xóa mã giảm giá khi user đổi sản phẩm
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -101,6 +117,7 @@ export const orderSlice = createSlice({
         state.isSuccess = true;
         state.isError = false;
         state.currentOrder = action.payload.order;
+        state.checkoutReview = null;
         toast.success("Đặt hàng thành công!");
       })
       .addCase(createOrder.rejected, (state, action) => {
@@ -109,6 +126,21 @@ export const orderSlice = createSlice({
         state.isSuccess = false;
         state.message = action.payload?.error || "Đặt hàng thất bại";
         toast.error(state.message);
+      })
+
+      // Xử lý check coupon
+      .addCase(checkCouponCheckout.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(checkCouponCheckout.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.checkoutReview = action.payload; // { totalBeforeDiscount, totalAfterDiscount, discountAmount }
+        toast.success("Áp dụng mã giảm giá thành công!");
+      })
+      .addCase(checkCouponCheckout.rejected, (state, action) => {
+        state.isLoading = false;
+        state.checkoutReview = null;
+        toast.error(action.payload?.error || "Mã giảm giá không hợp lệ");
       })
 
       .addCase(getUserOrders.pending, (state) => {
@@ -192,8 +224,10 @@ export const orderSlice = createSlice({
         toast.error(state.message);
       });
 
+      
+
   },
 });
 
-export const { resetOrderState } = orderSlice.actions;
+export const { resetOrderState, resetCheckoutReview } = orderSlice.actions;
 export default orderSlice.reducer;

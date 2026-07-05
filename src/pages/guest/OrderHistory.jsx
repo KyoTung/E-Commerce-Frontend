@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { 
-  FiUser, FiShoppingBag, FiLock, FiLogOut, FiBox, 
-  FiClock, FiChevronRight, FiSearch, FiXCircle, FiCreditCard 
-} from "react-icons/fi"; 
-import { ToastContainer, toast } from "react-toastify";
-// Import Actions & Services
+import { toast, ToastContainer } from "react-toastify";
+import { FiUser, FiShoppingBag, FiLock, FiLogOut, FiBox, FiClock, FiChevronRight, FiSearch, FiXCircle } from "react-icons/fi"; // Thêm icon FiXCircle
+
+// Import Actions & Helpers
+// LƯU Ý: Đảm bảo import cancelOrder từ đúng đường dẫn slice của bạn
 import { getUserOrders, cancelOrder } from "../../features/guestSlice/order/orderSlice"; 
 import { logout } from "../../features/authSlice/authSlice";
 import orderService from "../../features/guestSlice/order/orderService";
@@ -80,7 +79,7 @@ const OrderHistory = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
-       <ToastContainer />
+      <ToastContainer/>
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           

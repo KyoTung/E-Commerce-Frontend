@@ -1,262 +1,387 @@
 import React, { useEffect, useState } from "react";
-import { PencilLine, Trash, Plus, RefreshCw } from "lucide-react"; // Thêm icon
 import { useDispatch, useSelector } from "react-redux";
-import {
-  getAllUser,
-  deleteUser,
-  blockUser,
-  unBlockUser,
-} from "../../../features/adminSlice/customerSlice/customerSlice";
 import { useNavigate, Link } from "react-router-dom";
-import Loading from "../../../components/Loading";
+import {
+  PencilLine,
+  Plus,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { MdLockOutline, MdLockOpen } from "react-icons/md";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { MdLockOutline, MdLockOpen } from "react-icons/md";
+import Loading from "../../../components/Loading";
+import {
+  getAllUser,
+  blockUser,
+  unBlockUser,
+  updateUser,
+  updateUserRole
+} from "../../../features/adminSlice/customerSlice/customerSlice";
 
 const User = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const [search, setSearch] = useState("");
+  const { allUsers = [], isLoading, total = 0, page = 1, limit = 10, totalPages = 1 } = useSelector(
+    (state) => state.customer
+  );
 
-  const { allUsers, isLoading } = useSelector((state) => state.customer);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filterRole, setFilterRole] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("active"); 
+  const [updatingUserId, setUpdatingUserId] = useState(null);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const fetchUsersList = () => {
+    dispatch(
+      getAllUser({ 
+        page: currentPage, 
+        limit, 
+        search: debouncedSearch.trim(),
+        role: filterRole !== "all" ? filterRole : undefined,
+        status: filterStatus !== "all" ? filterStatus : undefined
+      })
+    );
+  };
 
   useEffect(() => {
-    dispatch(getAllUser());
-  }, [dispatch]);
+    fetchUsersList();
+  }, [dispatch, currentPage, limit, debouncedSearch, filterRole, filterStatus]);
 
   const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    const options = {
+    if (!dateString) return "—";
+    return new Date(dateString).toLocaleString("vi-VN", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
-    };
-    return new Date(dateString)
-      .toLocaleString("en-GB", options)
-      .replace(",", "");
+    }).replace(",", "");
   };
 
-  const filteredUsers = search.trim()
-    ? allUsers.filter(
-        (user) =>
-          user.name?.toLowerCase().includes(search.toLowerCase()) ||
-          user.email?.toLowerCase().includes(search.toLowerCase()) ||
-          user.mobile?.includes(search)
-      )
-    : allUsers;
-
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-  };
-
-  const onDelete = async (user) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) {
-      return;
-    }
-    try {
-      const id = user._id || user.id;
-      const resultAction = await dispatch(deleteUser(id));
-
-      if (deleteUser.fulfilled.match(resultAction)) {
-        toast.success("User deleted successfully");
-        // dispatch(getAllUser()); // KHÔNG CẦN GỌI LẠI
-      } else {
-        const errorMsg =
-          resultAction.payload?.message || "Failed to delete user";
-        toast.error(errorMsg);
-      }
-    } catch (error) {
-      toast.error("An error occurred");
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const onBlockUser = async (user) => {
-    if (!window.confirm("Are you sure you want to block this user?")) {
-      return;
-    }
+    const userName = user.name || user.fullName || user.email;
+    if (!window.confirm(`Bạn có chắc chắn muốn KHÓA tài khoản của thành viên [${userName}]?`)) return;
     try {
-      const id = user._id || user.id;
-      const resultAction = await dispatch(blockUser(id));
-
-      if (blockUser.fulfilled.match(resultAction)) {
-        toast.success(resultAction.payload?.message || "User blocked successfully");
-        // dispatch(getAllUser()); // KHÔNG CẦN GỌI LẠI
-      } else {
-        toast.error(resultAction.payload?.message || "Failed to block user");
-      }
-    } catch (error) {
-      toast.error("An error occurred");
+      await dispatch(blockUser(user._id)).unwrap();
+      toast.success("Đã khóa tài khoản thành công");
+      fetchUsersList();
+    } catch (err) {
+      toast.error(err?.message || "Thao tác khóa thất bại");
     }
   };
 
   const onUnBlockUser = async (user) => {
-    if (!window.confirm("Are you sure you want to unblock this user?")) {
-      return;
-    }
+    const userName = user.name || user.fullName || user.email;
+    if (!window.confirm(`Bạn có chắc chắn muốn MỞ KHÓA tài khoản cho thành viên [${userName}]?`)) return;
     try {
-      const id = user._id || user.id;
-      const resultAction = await dispatch(unBlockUser(id));
+      await dispatch(unBlockUser(user._id)).unwrap();
+      toast.success("Đã mở khóa tài khoản thành công");
+      fetchUsersList();
+    } catch (err) {
+      toast.error(err?.message || "Thao tác mở khóa thất bại");
+    }
+  };
 
-      if (unBlockUser.fulfilled.match(resultAction)) {
-        toast.success(resultAction.payload?.message || "User unblocked successfully");
-        // dispatch(getAllUser()); // KHÔNG CẦN GỌI LẠI
-      } else {
-        toast.error(resultAction.payload?.message || "Failed to unblock user");
+  // ĐÃ FIX BUG: Đổi cấu trúc gọi hàm khớp hoàn toàn với extraReducers { userId, userData } của updateUser Thunk
+  const handleRoleChange = async (user, newRole) => {
+    const roleLabels = { admin: "Quản trị viên", staff: "Nhân viên", user: "Khách hàng" };
+    const userName = user.name || user.fullName || `${user.firstname} ${user.lastname}`;
+    
+    if (window.confirm(`Bạn có chắc muốn đổi vai trò của [${userName}] sang [${roleLabels[newRole]}]?`)) {
+      setUpdatingUserId(user._id);
+      try {
+        const result = await dispatch(
+          updateUserRole({
+            userId: user._id,
+            userData: { role: newRole },
+          })
+        );
+
+        if (updateUserRole.fulfilled.match(result)) {
+          toast.success("Cập nhật phân quyền thành công!");
+          fetchUsersList();
+        } else {
+          toast.error(result.payload?.message || "Cập nhật phân quyền thất bại!");
+        }
+      } catch (error) {
+        toast.error("Đã xảy ra lỗi hệ thống!");
+      } finally {
+        setUpdatingUserId(null);
       }
-    } catch (error) {
-      toast.error("An error occurred");
+    }
+  };
+
+  const getRoleSelectClass = (role) => {
+    switch (role) {
+      case "admin":
+        return "bg-red-50 text-red-700 border-red-200 focus:ring-red-500/20";
+      case "staff":
+        return "bg-amber-50 text-amber-700 border-amber-200 focus:ring-amber-500/20";
+      default:
+        return "bg-blue-50 text-blue-700 border-blue-200 focus:ring-blue-500/20";
     }
   };
 
   return (
-    <div>
+    <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
       <ToastContainer />
-      <h1 className="title mb-6">Users Management</h1>
       
-      <div className="card">
-        {/* --- TOOLBAR --- */}
-        <div className="card-header flex flex-col md:flex-row items-center gap-4 py-4 px-6 border-b border-gray-100">
-          <div className="flex gap-2 w-full md:w-auto">
-            <Link
-              to="/admin/new-user"
-              className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition w-full md:w-auto"
-            >
-              <Plus size={18} />
-              Add New
-            </Link>
-            <button
-              onClick={() => dispatch(getAllUser())}
-              className="flex items-center justify-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition"
-            >
-              <RefreshCw size={18} />
-              Refresh
-            </button>
-          </div>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Quản lý thành viên</h1>
+          <p className="text-sm text-gray-500 mt-1">Tổng số kết quả tìm thấy: {total}</p>
+        </div>
+        <div className="flex gap-2">
+          <Link
+            to="/admin/new-user"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+          >
+            <Plus size={18} /> Thêm người dùng
+          </Link>
+          <button
+            onClick={fetchUsersList}
+            className="flex items-center gap-2 rounded-lg bg-white border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition shadow-sm"
+          >
+            <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} /> Tải lại
+          </button>
+        </div>
+      </div>
 
-          <div className="w-full md:ml-auto md:w-80">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 space-y-4">
+        <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
+          <div className="w-full md:w-80">
             <input
               type="text"
               value={search}
-              onChange={handleSearchChange}
-              placeholder="Search user..."
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Tìm theo tên, email hoặc số điện thoại..."
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
+          </div>
+
+          <div className="flex items-center gap-2 text-sm w-full md:w-auto justify-end">
+            <span className="font-semibold text-gray-500 whitespace-nowrap">Trạng thái tài khoản:</span>
+            <select
+              value={filterStatus}
+              onChange={(e) => {
+                setFilterStatus(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="border rounded-lg p-2 font-medium text-sm outline-none text-gray-700 bg-gray-50 cursor-pointer focus:border-blue-500 transition"
+            >
+              <option value="active">Đang mở (Hoạt động)</option>
+              <option value="blocked">Đang đóng (Bị khóa)</option>
+              <option value="all">Tất cả tài khoản</option>
+            </select>
           </div>
         </div>
 
-        {/* --- TABLE --- */}
-        {isLoading ? (
-          <div className="p-12">
-            <Loading className="flex items-center justify-center" />
-          </div>
+        <div className="flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none] border-t pt-3">
+          {[
+            { key: "all", label: "Tất cả vai trò" },
+            { key: "admin", label: "Quản trị viên" },
+            { key: "staff", label: "Nhân viên" },
+            { key: "user", label: "Khách hàng" },
+          ].map((item) => (
+            <button
+              key={item.key}
+              onClick={() => {
+                setFilterRole(item.key);
+                setCurrentPage(1);
+              }}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+                filterRole === item.key
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-xl bg-white shadow-sm border border-gray-100">
+        {isLoading && allUsers.length === 0 ? (
+          <div className="py-20"><Loading /></div>
         ) : (
-          <div className="card-body p-0">
-            <div className="relative w-full overflow-x-auto">
-              <table className="w-full text-left text-sm text-gray-500">
-                <thead className="bg-gray-50 text-xs uppercase text-gray-700">
+          <div className="overflow-x-auto">
+            {allUsers.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">Không tìm thấy người dùng nào phù hợp với điều kiện lọc hiện tại.</div>
+            ) : (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50 text-gray-600 font-semibold text-xs uppercase tracking-wider">
                   <tr>
-                    <th className="px-6 py-3 w-16 text-center">#</th>
-                    <th className="px-6 py-3">Name</th>
-                    <th className="px-6 py-3">Email</th>
-                    <th className="px-6 py-3">Phone</th>
-                    <th className="px-6 py-3">Created At</th>
-                    <th className="px-6 py-3 text-center">Role</th>
-                    <th className="px-6 py-3 text-center">Actions</th>
+                    <th className="px-6 py-3.5 text-left">#</th>
+                    <th className="px-6 py-3.5 text-left">Tên thành viên</th>
+                    <th className="px-6 py-3.5 text-left">Email</th>
+                    <th className="px-6 py-3.5 text-left">Số điện thoại</th>
+                    <th className="px-6 py-3.5 text-left">Ngày tạo</th>
+                    <th className="px-6 py-3.5 text-center w-48">Phân quyền</th>
+                    <th className="px-6 py-3.5 text-center">Trạng thái</th>
+                    <th className="px-6 py-3.5 text-right w-24">Thao tác</th>
                   </tr>
                 </thead>
-
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {filteredUsers.length > 0 ? (
-                    filteredUsers.map((user, index) => (
-                      <tr
-                        key={user._id || user.id}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
-                        <td className="px-6 py-4 text-center text-gray-400">
-                          {index + 1}
-                        </td>
-                        <td className="px-6 py-4 font-medium text-gray-900">
-                          {user.name || user.fullName || user.firstname + " " + user.lastname}
-                        </td>
-                        <td className="px-6 py-4">{user.email}</td>
-                        <td className="px-6 py-4 text-gray-500">
-                          {user.mobile || user.phone || "---"}
-                        </td>
-                        <td className="px-6 py-4 text-gray-500">
-                          {formatDate(user.createdAt || user.created_at)}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <span
-                            className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              user.role === "admin"
-                                ? "bg-purple-100 text-purple-800"
-                                : "bg-blue-100 text-blue-800"
-                            }`}
+                <tbody className="divide-y divide-gray-100 bg-white text-sm text-gray-700 font-medium">
+                  {allUsers.map((user, idx) => (
+                    <tr key={user._id} className="hover:bg-gray-50/50 transition">
+                      <td className="whitespace-nowrap px-6 py-4 text-gray-400">
+                        {(currentPage - 1) * limit + idx + 1}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 font-bold text-gray-900">
+                        {user.name || user.fullName || `${user.firstname} ${user.lastname}`}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-gray-500">{user.email}</td>
+                      <td className="whitespace-nowrap px-6 py-4 text-gray-500">
+                        {user.mobile || user.phone || "—"}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-gray-500">
+                        {formatDate(user.createdAt)}
+                      </td>
+                      
+                      <td className="whitespace-nowrap px-6 py-4 text-center">
+                        <div className="inline-flex items-center gap-2">
+                          <select
+                            value={user.role || "user"}
+                            disabled={updatingUserId === user._id}
+                            onChange={(e) => handleRoleChange(user, e.target.value)}
+                            className={`border text-xs rounded-lg px-2.5 py-1.5 font-bold focus:ring-2 outline-none cursor-pointer transition ${getRoleSelectClass(user.role)}`}
                           >
-                            {user.role}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-center gap-3">
-                            {/* Edit */}
-                            <button
-                              onClick={() =>
-                                navigate(`/admin/edit-user/${user._id || user.id}`)
-                              }
-                              className="rounded p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition"
-                              title="Edit"
-                            >
-                              <PencilLine size={18} />
-                            </button>
+                            <option value="user" className="bg-white text-gray-700">Khách hàng</option>
+                            <option value="staff" className="bg-white text-gray-700">Nhân viên</option>
+                            <option value="admin" className="bg-white text-gray-700">Quản trị viên</option>
+                          </select>
+                          {updatingUserId === user._id && (
+                            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                          )}
+                        </div>
+                      </td>
 
-                            {/* Block / Unblock */}
-                            {user.isBlock ? (
-                              <button
-                                onClick={() => onUnBlockUser(user)}
-                                className="rounded p-1 text-amber-600 hover:bg-amber-50 hover:text-amber-800 transition"
-                                title="Unblock (Click to activate)"
-                              >
-                                <MdLockOutline size={20} />
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => onBlockUser(user)}
-                                className="rounded p-1 text-green-600 hover:bg-green-50 hover:text-green-800 transition"
-                                title="Block (Click to deactivate)"
-                              >
-                                <MdLockOpen size={20} />
-                              </button>
-                            )}
-
-                            {/* Delete */}
-                            <button
-                              onClick={() => onDelete(user)}
-                              className="rounded p-1 text-red-600 hover:bg-red-50 hover:text-red-800 transition"
-                              title="Delete"
+                      <td className="whitespace-nowrap px-6 py-4 text-center">
+                        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${
+                          user.isBlock ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
+                        }`}>
+                          {user.isBlock ? "Bị khóa" : "Hoạt động"}
+                        </span>
+                      </td>
+                      
+                      <td className="whitespace-nowrap px-6 py-4 text-right">
+                        <div className="flex justify-end gap-1">
+                          <button
+                            onClick={() => navigate(`/admin/edit-user/${user._id}`)}
+                            className="rounded-lg p-2 text-blue-600 hover:bg-blue-50 transition"
+                            title="Chỉnh sửa thông tin"
+                          >
+                            <PencilLine size={16} />
+                          </button>
+                          {user.isBlock ? (
+                            <button 
+                              onClick={() => onUnBlockUser(user)} 
+                              className="rounded-lg p-2 text-amber-600 hover:bg-amber-50 transition" 
+                              title="Mở khóa tài khoản"
                             >
-                              <Trash size={18} />
+                              <MdLockOutline size={18} />
                             </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={7} className="py-12 text-center text-gray-500 italic">
-                        No users found.
+                          ) : (
+                            <button 
+                              onClick={() => onBlockUser(user)} 
+                              className="rounded-lg p-2 text-green-600 hover:bg-green-50 transition" 
+                              title="Khóa tài khoản"
+                            >
+                              <MdLockOpen size={18} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
-                  )}
+                  ))}
                 </tbody>
               </table>
-            </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* Phân trang */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between border-t border-gray-200 bg-white px-4 py-3 mt-4 rounded-lg shadow-sm gap-4">
+          <div className="text-sm text-gray-700 font-medium">
+            Hiển thị từ <span className="font-semibold">{(currentPage - 1) * limit + 1}</span> đến{" "}
+            <span className="font-semibold">{Math.min(currentPage * limit, total)}</span> trong tổng số{" "}
+            <span className="font-semibold">{total}</span> thành viên
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium transition ${
+                currentPage === 1
+                  ? "text-gray-300 cursor-not-allowed bg-gray-50"
+                  : "text-gray-700 hover:bg-gray-50 active:bg-gray-100"
+              }`}
+            >
+              <ChevronLeft size={16} className="mr-1" /> Trước
+            </button>
+
+            <div className="hidden md:flex items-center gap-1">
+              {[...Array(totalPages)].map((_, index) => {
+                const pageNumber = index + 1;
+                return (
+                  <button
+                    key={pageNumber}
+                    onClick={() => handlePageChange(pageNumber)}
+                    className={`min-w-[36px] h-9 rounded-lg text-sm font-bold transition ${
+                      currentPage === pageNumber
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "text-gray-700 hover:bg-gray-100 border border-transparent hover:border-gray-200"
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              })}
+            </div>
+
+            <span className="text-sm text-gray-700 md:hidden font-semibold">
+              Trang {currentPage} / {totalPages}
+            </span>
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium transition ${
+                currentPage === totalPages
+                  ? "text-gray-300 cursor-not-allowed bg-gray-50"
+                  : "text-gray-700 hover:bg-gray-50 active:bg-gray-100"
+              }`}
+            >
+              Sau <ChevronRight size={16} className="ml-1" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -7,17 +7,15 @@ import { useSelector, useDispatch } from "react-redux";
 import PropTypes from "prop-types";
 import { logout as logoutThunk } from "@/features/authSlice/authSlice";
 
-
-
 export const Header = ({ collapsed, setCollapsed }) => {
-    const user = useSelector((state) => state.auth);
+    const { user } = useSelector((state) => state.auth);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef(null);
     const buttonRef = useRef(null);
     const { theme, setTheme } = useTheme();
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    // Đóng menu khi click bên ngoài
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (menuRef.current && !menuRef.current.contains(event.target) && !buttonRef.current.contains(event.target)) {
@@ -41,11 +39,10 @@ export const Header = ({ collapsed, setCollapsed }) => {
     }, []);
 
     const handleLogout = async () => {
+        setIsMenuOpen(false); 
         await dispatch(logoutThunk());
         navigate("/login");
     };
-
-    
 
     return (
         <header className="relative z-10 flex h-[60px] items-center justify-between bg-white px-4 shadow-md transition-colors dark:bg-slate-900">
@@ -54,7 +51,7 @@ export const Header = ({ collapsed, setCollapsed }) => {
                     className="btn-ghost size-10"
                     onClick={() => setCollapsed(!collapsed)}
                 >
-                    <ChevronsLeft className={collapsed && "rotate-180"} />
+                    <ChevronsLeft className={collapsed ? "rotate-180" : ""} />
                 </button>
                 <div className="input">
                     <Search
@@ -87,13 +84,7 @@ export const Header = ({ collapsed, setCollapsed }) => {
                 <button className="btn-ghost size-10">
                     <Bell size={20} />
                 </button>
-                {/* <button className="size-10 overflow-hidden rounded-full">
-                    <img
-                        src={profileImg}
-                        alt="profile image"
-                        className="size-full object-cover"
-                    />
-                </button> */}
+                
                 <div
                     className="relative"
                     ref={menuRef}
@@ -118,12 +109,13 @@ export const Header = ({ collapsed, setCollapsed }) => {
                     {isMenuOpen && (
                         <div className="absolute right-0 z-50 mt-2 w-48 rounded-lg bg-white py-2 shadow-lg">
                             <div className="border-b px-4 py-2 text-sm text-gray-700">
-                                <p className="font-medium">{user.fullName}</p>
-                                <p className="truncate text-gray-500">{user.email}</p>
+                                {/* FIX 3: Thêm Optional Chaining (dấu ?) để không bị crash khi user = null */}
+                                <p className="font-medium">{user?.fullName || "Người dùng"}</p>
+                                <p className="truncate text-gray-500">{user?.email}</p>
                             </div>
 
                             <ul className="text-sm text-gray-700">
-                                <li>
+                                {/* <li>
                                     <button
                                         className="w-full px-4 py-2 text-left hover:bg-gray-100"
                                         onClick={() => console.log("Xem thông tin")}
@@ -138,16 +130,17 @@ export const Header = ({ collapsed, setCollapsed }) => {
                                     >
                                         Update Profile
                                     </button>
-                                </li>
+                                </li> */}
                             </ul>
 
-                            <div className="mt-2 flex items-center border-t">
-                                <LogOut className="ml-4 text-red-600" />
+                            <div className="mt-2 border-t">
+                                {/* FIX 4: Đưa Icon LogOut vào TRONG button để click đâu cũng ăn */}
                                 <button
-                                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+                                    className="flex w-full items-center gap-x-3 px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
                                     onClick={handleLogout}
                                 >
-                                    Logout
+                                    <LogOut size={16} />
+                                    <span>Logout</span>
                                 </button>
                             </div>
                         </div>

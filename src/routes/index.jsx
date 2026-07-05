@@ -20,9 +20,13 @@ import ForgotPassword from "../pages/guest/ForgotPassword";
 import AllProducts from "../pages/guest/AllProducts";
 import Wishlist from "../pages/guest/Wishlist";
 import LoginSuccess from "../pages/authen/LoginSuccess";
+import RecruitmentPage from "../pages/guest/RecruitmentPage";
+import PolicyPage from "../pages/guest/PolicyPage";
+import ComingSoonPage from "../pages/guest/ComingSoonPage";
 
 import AdminLayout from "../layouts/admin/layout";
-import DashboardPage from "../pages/admin/dashboard/page";
+import Dashboard from "../pages/admin/dashboard/Dashboard";
+import ReportsPage from "../pages/admin/dashboard/ReportsPage";
 import User from "../pages/admin/user/users";
 import EditUser from "../pages/admin/user/editUser";
 import NewUser from "../pages/admin/user/newUser";
@@ -40,6 +44,15 @@ import Enquiries from "../pages/admin/enquiry/users";
 import Blog from "../pages/admin/blogs/Blog";
 import EditBlog from "../pages/admin/blogs/editBlog";
 import NewBlog from "../pages/admin/blogs/newBlog";
+import AdminProductDetail from "../pages/admin/products/adminProductDetail";
+import AdminCreateOrder from "../pages/admin/orders/AdminCreateOrder";
+import Supplier from "../pages/admin/supplier/SupplierList";
+import ImportStock from "../pages/admin/inventory/ImportStock";
+import StockOverview from "../pages/admin/inventory/StockOverview";
+import ExportStock from "../pages/admin/inventory/ExportStock";
+import TransactionHistory from "../pages/admin/inventory/TransactionHistory";
+import BannerManager from "../pages/admin/banner/BannerManager";
+import ImeiLookup from "../pages/guest/ImeiLookup";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginForm /> },
@@ -59,6 +72,10 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <Home />,
+      },
+      {
+        path: "/warranty-lookup",
+        element: <ImeiLookup />,
       },
       {
         path: "/products",
@@ -102,12 +119,28 @@ export const router = createBrowserRouter([
         element: <BlogPage />,
       },
       {
-        path: "/blog-detail",
+        path: "/blog-detail/:id",
         element: <BlogDetail />,
       },
       {
         path: "/change-password",
         element: <ChangePassword />,
+      },
+      {
+        path: "/about",
+        element: <About />,
+      },
+      {
+        path: "/recruitment",
+        element: <RecruitmentPage />,
+      },
+      {
+        path: "/policy",
+        element: <PolicyPage />,
+      },
+      {
+        path: "/comingsoon",
+        element: <ComingSoonPage />,
       },
     ],
   },
@@ -115,7 +148,7 @@ export const router = createBrowserRouter([
   {
     path: "/admin",
     element: (
-      <ProtectedRoute requiredRole="admin">
+      <ProtectedRoute allowedRoles={["admin", "staff"]}>
         <AdminLayout />
       </ProtectedRoute>
     ),
@@ -123,7 +156,11 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <DashboardPage />,
+        element: <Dashboard />,
+      },
+      {
+        path: "sale-report",
+        element: <ReportsPage />,
       },
       {
         path: "users",
@@ -170,6 +207,10 @@ export const router = createBrowserRouter([
         element: <EditProduct />,
       },
       {
+        path: "product-detail/:product_id",
+        element: <AdminProductDetail />,
+      },
+      {
         path: "orders",
         element: <Orders />,
       },
@@ -177,6 +218,37 @@ export const router = createBrowserRouter([
         path: "order-detail/:id",
         element: <OrderDetail />,
       },
+
+      {
+        path: "create-order",
+        element: <AdminCreateOrder />,
+      },
+
+      {
+        path: "suppliers",
+        element: <Supplier />,
+      },
+
+      {
+        path: "inventory/import",
+        element: <ImportStock />,
+      },
+
+      {
+        path: "inventory/export",
+        element: <ExportStock />,
+      },
+
+      {
+        path: "inventory/stock",
+        element: <StockOverview />,
+      },
+
+      {
+        path: "inventory/transactions",
+        element: <TransactionHistory />,
+      },
+
       {
         path: "blogs",
         element: <Blog />,
@@ -193,6 +265,11 @@ export const router = createBrowserRouter([
         path: "enquiries",
         element: <Enquiries />,
       },
+      {
+        path: "banner",
+        element: <BannerManager />,
+      },
+
       {
         path: "settings",
         element: <h1 className="title">Settings</h1>,

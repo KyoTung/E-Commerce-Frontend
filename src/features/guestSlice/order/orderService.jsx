@@ -60,6 +60,10 @@ const deleteOrder = async (orderId) => {
   return response.data;
 };
 
+const checkCouponCheckout = async (data) => {
+  const response = await axiosClient.post("/order/checkout/coupon", data);
+  return response.data;
+};
 const orderService = {
   createOrder,
   getUserOrders,
@@ -69,7 +73,9 @@ const orderService = {
   repayOrder,
   switchToCOD,   
   simulatePaymentSuccess,
-  deleteOrder
+  checkCouponCheckout,
+  deleteOrder,
+
 };
 
 export default orderService;
