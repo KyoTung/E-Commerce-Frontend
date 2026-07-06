@@ -3,15 +3,14 @@ import axiosClient, { setAccessToken, clearAccessToken } from '../../api/axiosCl
 const login = async (userData) => {
   const response = await axiosClient.post('/user/login', userData);
   
-  const { accessToken, ...userInfo } = response.data;
-
-  if (accessToken) {
-    setAccessToken(accessToken);
+  // Đưa token vào bộ nhớ axios
+  const actualToken = response.data.accessToken || response.data.token;
+  if (actualToken) {
+    setAccessToken(actualToken);
   }
 
-  return userInfo;
+  return response.data;
 };
-
 const register = async (userData) => {
   const response = await axiosClient.post('/user/register', userData);
   return response.data;

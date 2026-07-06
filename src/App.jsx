@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { router } from "./routes";
 import { setAccessToken } from "./api/axiosClient";
-import { loginSuccess } from "./features/authSlice/authSlice"; 
+import { loginSuccess } from "./features/authSlice/authSlice";
 
 function App() {
   const dispatch = useDispatch();
@@ -12,28 +12,20 @@ function App() {
 
   useEffect(() => {
     const initApp = () => {
-      // 1. Chỉ đọc dữ liệu từ LocalStorage
       const customerStr = localStorage.getItem("customer");
 
       if (customerStr) {
         try {
           const parsedCustomer = JSON.parse(customerStr);
-          
-          // 2. Nạp token vào bộ nhớ của Axios để gọi các API khác
           if (parsedCustomer.token || parsedCustomer.accessToken) {
             setAccessToken(parsedCustomer.token || parsedCustomer.accessToken);
           }
-          
-          // 3. CHỐT CHẶN: Phục hồi State cho Redux ngay lập tức để không bị văng ra Login
-          dispatch(loginSuccess(parsedCustomer)); 
-          
+          // Nạp lại dữ liệu cho Redux để giữ phiên đăng nhập
+          dispatch(loginSuccess(parsedCustomer));
         } catch (error) {
           console.error("Lỗi parse dữ liệu customer", error);
         }
       }
-      
-      // Không gọi axios.post('/user/refresh') ở đây! 
-      // Việc lấy lại token (nếu thực sự hết hạn) đã có interceptor ở axiosClient.js lo liệu.
       setIsReady(true);
     };
 
