@@ -711,13 +711,13 @@ const NewProduct = ({ placeholder }) => {
                       label = "Camera sau";
                       break;
                     case "processor":
-                      label = "CPU";
+                      label = "Bộ vi xử lý";
                       break;
                     case "ram":
                       label = "RAM";
                       break;
                     case "storage":
-                      label = "ROM";
+                      label = "Bộ nhớ trong";
                       break;
                     case "battery":
                       label = "Pin & Sạc";
