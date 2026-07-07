@@ -736,7 +736,7 @@ const NewProduct = ({ placeholder }) => {
                       <label className="block text-sm font-medium text-gray-700 capitalize">
                         {label}
                       </label>
-                      <input
+                      <textarea
                         {...register(field)}
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm"
                       />
